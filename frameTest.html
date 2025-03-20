@@ -9,11 +9,29 @@
     <h1>Frame test</h1>
     <a href="https://www.baidu.com" target="_blank" >新窗口打开百度</a>
     <div style="width: 100%; height: 60rpx ;border-width: 1px; border-style: solid;">
+        no_sandbox<br>
         <iframe src="panel/dist-setting/setting.html" frameborder="0" id="assistant-setting-webifrid"></iframe>
+    </div>
+    <div style="width: 100%; height: 60rpx ;border-width: 1px; border-style: solid;">
+        sandbox="allow-top-navigation"<br>
+        <iframe src="panel/dist-setting/setting.html" frameborder="0" id="assistant-setting-webifrid" sandbox="allow-top-navigation"></iframe>
+    </div>
+    <div style="width: 100%; height: 60rpx ;border-width: 1px; border-style: solid;">
+        sandbox="allow-top-navigation-by-user-activation"<br>
+        <iframe src="panel/dist-setting/setting.html" frameborder="0" id="assistant-setting-webifrid" sandbox="allow-top-navigation-by-user-activation"></iframe>
     </div>
     <br>
     <div style="width: 100%; height: 100rpx ;border-width: 1px; border-style: solid;"></div>
-        <iframe src="https://www.baidu.com" frameborder="0" id="assistant-setting-webifrid" style="width: 100%;"></iframe>
+        no_sandbox<br>
+        <iframe src="https://www.baidu.com" frameborder="0" id="assistant-setting-webifrid" style="width: 100%;" sandbox="allow-top-navigation"></iframe>
+    </div>
+    <div style="width: 100%; height: 100rpx ;border-width: 1px; border-style: solid;"></div>
+        sandbox="allow-top-navigation"<br>
+        <iframe src="https://www.baidu.com" frameborder="0" id="assistant-setting-webifrid" style="width: 100%;" sandbox="allow-top-navigation"></iframe>
+    </div>
+    <div style="width: 100%; height: 100rpx ;border-width: 1px; border-style: solid;"></div>
+        sandbox="allow-top-navigation-by-user-activation"<br>
+        <iframe src="https://www.baidu.com" frameborder="0" id="assistant-setting-webifrid" style="width: 100%;" sandbox="allow-top-navigation-by-user-activation"></iframe>
     </div>
 </body>
 </html>
