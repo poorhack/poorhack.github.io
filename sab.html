@@ -19,9 +19,11 @@
         if (typeof SharedArrayBuffer !== 'undefined') {
             // 浏览器支持SharedArrayBuffer
             elm.innerText="Current Browser support Shared Array Buffer";
+            console.log("Current Browser support Shared Array Buffer");
         } else {
-        // 浏览器不支持SharedArrayBuffer
-        elm.innerText="Current Browser NOT support Shared Array Buffer";
+            // 浏览器不支持SharedArrayBuffer
+            elm.innerText="Current Browser NOT support Shared Array Buffer";
+            console.log("Current Browser NOT support Shared Array Buffer");
         }
     }
     detectSab();
