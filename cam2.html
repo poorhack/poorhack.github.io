@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>html5调用摄像头录制视频</title>
+</head>
+<body>
+<div class="left">
+  <div id="startButton" class="button">Start</div>
+  <h2>Preview</h2>
+  <div class="video"><video id="preview" width="50%" height="auto" autoplay muted></video></div>
+</div>
+ 
+<div class="right">
+  <div class="rightBtn">
+    <div id="stopButton" class="button">Stop</div>
+    <a id="downloadButton" class="button">Download</a>
+  </div>
+  <h2>Recording</h2>
+  
+  <div class="video"><video id="recording" width="160" height="120" controls></video></div>
+</div>
+ 
+<script>
+ let preview = document.getElementById("preview");
+let recording = document.getElementById("recording");
+let startButton = document.getElementById("startButton");
+let stopButton = document.getElementById("stopButton");
+let downloadButton = document.getElementById("downloadButton");
+let dataChunks = [];
+let recorder;
+ 
+// 开始录制
+function startRecording(stream, lengthInMS) {
+  recorder = new MediaRecorder(stream);
+ 
+  recorder.ondataavailable = (event) => {
+    let data = event.data;
+    dataChunks.push(data);
+  };
+  recorder.start(1000);
+  console.log(recorder.state + " start to recording .....");
+}
+ 
+stopButton.addEventListener("click", () => {
+  // close the recording
+  preview.srcObject.getTracks().forEach((track) => track.stop());
+  recorder.stop();
+ 
+  // Play recorded video
+  let recordedBlob = new Blob(dataChunks, { type: "video/webm" });
+  recording.src = URL.createObjectURL(recordedBlob);
+ 
+  // Save download video， click the download button， you can download it
+  downloadButton.href = recording.src;
+  downloadButton.download = "RecordedVideo.webm";
+});
+ 
+startButton.addEventListener("click", () => {
+  // get the stream
+  navigator.mediaDevices
+    .getUserMedia({
+      audio: true,
+      video: true,
+    })
+    .then((stream) => {
+      // set the stream to left video
+      preview.srcObject = stream;
+      // set the stream to <a> for download
+      downloadButton.href = stream;
+      // captureStream: which is streaming a real-time capture of the content being rendered in the media element. 
+      // A MediaStream object  which can be used as a source for audio or video data by other media
+      preview.captureStream =
+        preview.captureStream || preview.mozCaptureStream;
+      startRecording(preview.captureStream());
+    })
+    .catch((err) => {
+      console.log("recording error: ", err);
+    });
+});
+ 
+</script>
+</body>
+</html>
