@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="show" style="width: 50%; border-width: 1px; border-style: dashed; border-color: antiquewhite;">hello</div>
+    <button id="startTim">click to start</button>
+</body>
+<script>
+    var win = document.getElementById("show");
+    var btn = document.getElementById("startTim");
+    btn.addEventListener('click', function(e) {
+        console.log("start 5s timer!");
+        win.innerHTML = "start 5s timer!";
+        setTimeout(function(){
+            console.log("5s time outttt");
+            win.innerHTML = "5s time outttt";
+        }, 5000);
+    });
+</script>
+</html>
