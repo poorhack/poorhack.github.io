@@ -11,6 +11,11 @@
     <input type="button" title="HTML5摄像头" value="开启摄像头" onclick="getMedia()" />
     <input type="button" title="关闭摄像头" value="关闭摄像头" onclick="stopMedia(video)" />
     <button id="snap" onclick="takePhoto()">拍照</button>
+	<br>
+    方式二
+    <video id="videoPreview" autoplay playsinline style="width: 500px; height: 500px;"></video>
+    <select id="cameraSelect"></select>
+    <button onclick="startCamera()">开始预览</button>
     <script>
         function getMedia() {
             let constraints = {
@@ -47,6 +52,32 @@
  
 	    videoElem.srcObject = null;  
         } 
+	    const videoEle = document.getElementById('videoPreview');
+        const selectEle = document.getElementById('cameraSelect');
+        async function getCameraDevices() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevs = devices.filter(device => device.kind === 'videoinput');
+            selectEle.innerHTML='';
+            videoDevs.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `摄像头 ${index + 1}`;
+                selectEle.appendChild(option);
+            });
+        }
+
+        async function startCamera() {
+            const selectedId = selectEle.value;
+            const constraints2 = {
+                video: {
+                    deviceId: selectedId ? {exact: selectedId} : undefined
+                }
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints2);
+            videoEle.srcObject = stream;
+        }
+
+        window.onload = getCameraDevices;
     </script>
 </body>
 </html>
