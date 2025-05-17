@@ -7,7 +7,14 @@
 </head>
 <body>
     <div>
-        <video src="./SampleVideo_1280x720_1mb.mkv" width="50%">1280 x 720</video>
+        <audio id="bgMusic" src="http://8.130.54.221/web/media/ANGEL.mp3" autoplay muted loop>背景音乐</audio>
     </div>
 </body>
+    <script>
+    const bgMusic = document.getElementById('bgMusic');
+    // 用户首次交互（如点击页面）后解除静音
+    document.addEventListener('click', () => {
+        bgMusic.muted = false; // 解除静音
+    }, { once: true }); // 仅执行一次
+</script>
 </html>
