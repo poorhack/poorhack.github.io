@@ -9,12 +9,15 @@
     <div>Current UA</div>
     <div id="showUA" style="width: 50%; border-width: 1px; border-style: dashed; border-color: rgb(148, 119, 82);"></div><br>
     <div>Current URL</div>
-    <div id="showURL" style="width: 50%; border-width: 1px; border-style: dashed; border-color: rgb(148, 119, 82);"></div>
+    <div id="showURL" style="width: 50%; border-width: 1px; border-style: dashed; border-color: rgb(148, 119, 82);"></div><br>
+    <div>Note</div>
+    <div id="showNote" style="width: 50%; height: 20px; border-width: 1px; border-style: dashed; border-color: rgb(148, 119, 82);"></div>
 </body>
 <script>
 function main() {
     var win = document.getElementById("showUA");
     var curUrl = document.getElementById("showURL");
+    var note = document.getElementById("showNote");
     var sUserAgent = navigator.userAgent;
     mobileAgents = ['Windows NT'];
     console.log("current ua is ", sUserAgent);
@@ -25,6 +28,7 @@ function main() {
     for (var i = 0, len = mobileAgents.length; i < len; i++) {
         if (sUserAgent.indexOf(mobileAgents[i]) !== -1) { // 遍历mobileAgents，检查UserAgent是否匹配任一移动设备关键字
             console.log("js not jump to pc url");
+            note.innerHTML="NOTTTT jump to PC url by js";
             // location.href = 'https://poorhack.github.io/phoneua.html'; // 匹配则跳转到移动端首页
             break; // 匹配后立即终止循环
         }
