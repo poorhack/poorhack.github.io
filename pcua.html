@@ -28,7 +28,7 @@ function main() {
     for (var i = 0, len = mobileAgents.length; i < len; i++) {
         if (sUserAgent.indexOf(mobileAgents[i]) !== -1) { // 遍历mobileAgents，检查UserAgent是否匹配任一移动设备关键字
             console.log("jump to phone url");
-            note.innerHTML="jump to phone url by js after 5s";
+            note.innerHTML="jump to phone url by js";
             location.href = 'https://poorhack.github.io/phoneua.html'; // 匹配则跳转到移动端首页
             break; // 匹配后立即终止循环
         }
