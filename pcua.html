@@ -25,7 +25,7 @@ function main() {
     var _url = location.href; // 获取当前页面的完整URL
     console.log("current url is ", _url);
     curUrl.innerHTML = _url;
-    note.innerHTML="phoneua.html never jump in js";
+    note.innerHTML="phoneua.html网页没有js跳转代码，不会通过js跳转到pcua.html";
     for (var i = 0, len = mobileAgents.length; i < len; i++) {
         if (sUserAgent.indexOf(mobileAgents[i]) !== -1) { // 遍历mobileAgents，检查UserAgent是否匹配任一移动设备关键字
             console.log("jump to phone url");
