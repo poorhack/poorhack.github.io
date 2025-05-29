@@ -6,6 +6,24 @@
     <title>PCUA</title>
 </head>
 <body>
+    <div id="show" style="width: 50%; border-width: 1px; border-style: dashed; border-color: antiquewhite;">hello detecting UA</div>
     
 </body>
-</html>
+<script>
+function main() {
+    var win = document.getElementById("show");
+    var sUserAgent = navigator.userAgent;
+    mobileAgents = ['Windows CE', 'iPod', 'Symbian', 'iPhone', 'BlackBerry', 'Android', 'Windows Phone'];
+    console.log("current ua is ", sUserAgent);
+    win.innerHTML=sUserAgent;
+    var _url = location.href; // 获取当前页面的完整URL
+    console.log("current url is ", _url);
+    for (var i = 0, len = mobileAgents.length; i < len; i++) {
+        if (sUserAgent.indexOf(mobileAgents[i]) !== -1) { // 遍历mobileAgents，检查UserAgent是否匹配任一移动设备关键字
+            console.log("jump to phone url");
+            location.href = 'https://poorhack.github.io/phoneua.html'; // 匹配则跳转到移动端首页
+            break; // 匹配后立即终止循环
+        }
+    }
+}
+main()
