@@ -6,18 +6,22 @@
     <title>PCUA</title>
 </head>
 <body>
-    <div id="show" style="width: 50%; border-width: 1px; border-style: dashed; border-color: antiquewhite;">hello detecting UA</div>
-    
+    <div>Current UA</div><br>
+    <div id="showUA" style="width: 50%; border-width: 1px; border-style: dashed; border-color: rgb(148, 119, 82);"></div>
+    <div>Current URL</div><br>
+    <div id="showURL" style="width: 50%; border-width: 1px; border-style: dashed; border-color: rgb(148, 119, 82);"></div>
 </body>
 <script>
 function main() {
-    var win = document.getElementById("show");
+    var win = document.getElementById("showUA");
+    var curUrl = document.getElementById("showURL");
     var sUserAgent = navigator.userAgent;
     mobileAgents = ['Windows CE', 'iPod', 'Symbian', 'iPhone', 'BlackBerry', 'Android', 'Windows Phone'];
     console.log("current ua is ", sUserAgent);
     win.innerHTML=sUserAgent;
     var _url = location.href; // 获取当前页面的完整URL
     console.log("current url is ", _url);
+    curUrl.innerHTML = _url;
     for (var i = 0, len = mobileAgents.length; i < len; i++) {
         if (sUserAgent.indexOf(mobileAgents[i]) !== -1) { // 遍历mobileAgents，检查UserAgent是否匹配任一移动设备关键字
             console.log("jump to phone url");
