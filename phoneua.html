@@ -20,8 +20,8 @@ function main() {
     console.log("current url is ", _url);
     for (var i = 0, len = mobileAgents.length; i < len; i++) {
         if (sUserAgent.indexOf(mobileAgents[i]) !== -1) { // 遍历mobileAgents，检查UserAgent是否匹配任一移动设备关键字
-            console.log("jump to phone url");
-            location.href = 'https://poorhack.github.io/phoneua.html'; // 匹配则跳转到移动端首页
+            console.log("js not jump to pc url");
+            // location.href = 'https://poorhack.github.io/phoneua.html'; // 匹配则跳转到移动端首页
             break; // 匹配后立即终止循环
         }
     }
