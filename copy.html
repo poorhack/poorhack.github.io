@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button id="copyButton">navigator.clipboard.writeText复制文本</button>
+</body>
+<script>
+  document.getElementById('copyButton').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText('这是要复制的文本');
+      alert('文本已复制!');
+    } catch (err) {
+      console.error('复制失败:', err);
+      alert('复制失败，请手动复制');
+    }
+  });
+</script>
+</html>
+
+
+
