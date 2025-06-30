@@ -18,6 +18,19 @@
       alert('复制失败，请手动复制');
     }
   });
+    <script>
+document.addEventListener('keydown', (e) => {
+  console.log('keydown:', e.key, 'Code:', e.code);
+});
+
+document.addEventListener('keypress', (e) => {
+  console.log('keypress:', e.key, 'Code:', e.code); // 按 Ctrl 时不会触发
+});
+
+document.addEventListener('keyup', (e) => {
+  console.log('keyup:', e.key, 'Code:', e.code);
+});
+</script>
 </script>
 </html>
 
