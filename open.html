@@ -1,1 +1,22 @@
-.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点击打开新窗口</title>
+</head>
+<body>
+    <button id = "baidu">点击打开百度</button><br>
+    <button id = "bing">点击打开bing</button>
+</body>
+<script>
+    const baBtn = document.getElementById('baidu');
+    baBtn.addEventListener('click', () => {
+            window.open('https://www.baidu.com');
+        });
+    const bingBtn = document.getElementById('bing');
+    bingBtn.addEventListener('click', () => {
+            window.open('https://www.bing.com');
+        });
+</script>
+</html>
