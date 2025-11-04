@@ -9,5 +9,19 @@
     <h1>hello world</h1>
     <a href="hwwebview://net-export" target="_blank">双框</a><br/>
     <a href="hwbrowser://net-export" target="_blank">单框</a>
+     <button onclick="openApp()">打开双框netlog</button>
+     <script>
+        function openApp() {
+            // 使用私有 schema 打开应用
+            window.location.href = 'hwwebview://net-export';
+            
+            // 如果应用未安装，3秒后跳转到下载页
+            setTimeout(function() {
+                console.log("try jump to oh");
+                window.location.href = 'hwbrowser://net-export';
+            }, 3000);
+        }
+    </script>
 </body>
+    
 </html>
