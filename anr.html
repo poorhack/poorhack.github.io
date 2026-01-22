@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浏览器无响应演示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .warning {
+            background-color: #ffcccc;
+            border: 2px solid red;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .demo {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .danger {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+        }
+        .info {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning">
+        <strong>警告：</strong>这个页面包含可能使浏览器无响应的代码。请保存所有工作后再测试。
+    </div>
+
+    <h1>浏览器无响应演示</h1>
+    
+    <div class="demo">
+        <h2>方法1：无限循环（CPU占用）</h2>
+        <p>创建无限循环消耗CPU资源</p>
+        <button class="danger" onclick="runInfiniteLoop()">运行无限循环</button>
+        <button onclick="stopInfiniteLoop()">停止</button>
+        <div class="info">状态：<span id="status1">未运行</span></div>
+    </div>
+    
+    <div class="demo">
+        <h2>方法2：阻塞主线程</h2>
+        <p>同步阻塞JavaScript执行</p>
+        <button class="danger" onclick="blockMainThread()">阻塞主线程5秒</button>
+        <div class="info">状态：<span id="status2">就绪</span></div>
+    </div>
+    
+    <div class="demo">
+        <h2>方法3：内存泄漏</h2>
+        <p>持续分配内存而不释放</p>
+        <button class="danger" onclick="startMemoryLeak()">开始内存泄漏</button>
+        <button onclick="stopMemoryLeak()">停止</button>
+        <div class="info">状态：<span id="status3">未运行</span></div>
+    </div>
+    
+    <div class="demo">
+        <h2>方法4：密集DOM操作</h2>
+        <p>快速大量修改DOM导致浏览器冻结</p>
+        <button class="danger" onclick="intensiveDOM()">密集DOM操作</button>
+        <button onclick="stopDOM()">停止</button>
+        <div class="info">状态：<span id="status4">就绪</span></div>
+    </div>
+    
+    <div class="demo">
+        <h2>紧急停止所有操作</h2>
+        <button style="background-color: #ff3333; color: white; padding: 15px;" onclick="stopAll()">紧急停止所有操作</button>
+        <p>如果页面完全卡死，请关闭浏览器标签页或进程</p>
+    </div>
+
+    <script>
+        let infiniteLoopRunning = false;
+        let memoryLeakRunning = false;
+        let domOperationRunning = false;
+        
+        // 方法1：无限循环
+        function runInfiniteLoop() {
+            infiniteLoopRunning = true;
+            document.getElementById('status1').textContent = '运行中...';
+            
+            // 这个循环永远不会结束
+            while(infiniteLoopRunning) {
+                // 做一些无意义的计算
+                Math.sqrt(Date.now());
+            }
+            
+            document.getElementById('status1').textContent = '已停止';
+        }
+        
+        function stopInfiniteLoop() {
+            infiniteLoopRunning = false;
+            document.getElementById('status1').textContent = '已停止';
+        }
+        
+        // 方法2：阻塞主线程
+        function blockMainThread() {
+            document.getElementById('status2').textContent = '阻塞中...';
+            
+            // 阻塞主线程5秒
+            const start = Date.now();
+            while (Date.now() - start < 5000) {
+                // 空循环阻塞
+            }
+            
+            document.getElementById('status2').textContent = '完成';
+        }
+        
+        // 方法3：内存泄漏
+        let leakData = [];
+        function startMemoryLeak() {
+            memoryLeakRunning = true;
+            document.getElementById('status3').textContent = '运行中...';
+            
+            function leakMemory() {
+                if (!memoryLeakRunning) return;
+                
+                // 每次分配100MB数据
+                for (let i = 0; i < 100000; i++) {
+                    leakData.push(new Array(1000).fill('内存泄漏数据').join(''));
+                }
+                
+                document.getElementById('status3').textContent = 
+                    `运行中... 已分配 ${Math.round(leakData.length / 100)} MB`;
+                
+                // 继续泄漏
+                setTimeout(leakMemory, 100);
+            }
+            
+            leakMemory();
+        }
+        
+        function stopMemoryLeak() {
+            memoryLeakRunning = false;
+            leakData = []; // 释放内存
+            document.getElementById('status3').textContent = '已停止';
+        }
+        
+        // 方法4：密集DOM操作
+        function intensiveDOM() {
+            domOperationRunning = true;
+            document.getElementById('status4').textContent = '运行中...';
+            
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            function updateDOM() {
+                if (!domOperationRunning) return;
+                
+                // 快速创建和删除大量DOM元素
+                for (let i = 0; i < 1000; i++) {
+                    const element = document.createElement('div');
+                    element.textContent = 'DOM操作 ' + i + ' ' + new Date().getTime();
+                    container.appendChild(element);
+                }
+                
+                // 删除所有子元素
+                while (container.firstChild) {
+                    container.removeChild(container.firstChild);
+                }
+                
+                // 继续操作
+                setTimeout(updateDOM, 0);
+            }
+            
+            updateDOM();
+        }
+        
+        function stopDOM() {
+            domOperationRunning = false;
+            document.getElementById('status4').textContent = '已停止';
+        }
+        
+        // 紧急停止所有
+        function stopAll() {
+            infiniteLoopRunning = false;
+            memoryLeakRunning = false;
+            domOperationRunning = false;
+            leakData = [];
+            
+            // 更新所有状态
+            document.getElementById('status1').textContent = '已停止';
+            document.getElementById('status3').textContent = '已停止';
+            document.getElementById('status4').textContent = '已停止';
+            alert('已尝试停止所有操作');
+        }
+    </script>
+</body>
+</html>
