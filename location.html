@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>获取当前位置</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status.loading {
+            display: block;
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid #1565c0;
+        }
+        
+        .status.success {
+            display: block;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+        
+        .status.error {
+            display: block;
+            background-color: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+        
+        .location-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+        
+        .location-info p {
+            margin-bottom: 10px;
+        }
+        
+        .location-info strong {
+            display: inline-block;
+            width: 120px;
+            color: #555;
+        }
+        
+        button {
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1976d2;
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .permission-note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff8e1;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #5d4037;
+            border-left: 4px solid #ffb300;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>获取当前位置</h1>
+        
+        <div id="status" class="status loading">
+            正在获取您的位置...
+        </div>
+        
+        <div id="locationInfo" class="location-info" style="display: none;">
+            <p><strong>纬度：</strong><span id="latitude">-</span></p>
+            <p><strong>经度：</strong><span id="longitude">-</span></p>
+            <p><strong>精确度：</strong><span id="accuracy">-</span> 米</p>
+            <p><strong>海拔：</strong><span id="altitude">-</span> 米</p>
+            <p><strong>海拔精确度：</strong><span id="altitudeAccuracy">-</span> 米</p>
+            <p><strong>方向：</strong><span id="heading">-</span> 度</p>
+            <p><strong>速度：</strong><span id="speed">-</span> 米/秒</p>
+            <p><strong>时间戳：</strong><span id="timestamp">-</span></p>
+        </div>
+        
+        <button id="getLocationBtn">重新获取位置</button>
+        
+        <div class="permission-note">
+            <p><strong>注意：</strong>此功能需要您授权地理位置权限。如果您之前拒绝了权限，请更新浏览器设置以允许此网站访问您的位置。</p>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const statusEl = document.getElementById('status');
+        const locationInfoEl = document.getElementById('locationInfo');
+        const getLocationBtn = document.getElementById('getLocationBtn');
+        
+        // 更新状态显示
+        function updateStatus(type, message) {
+            statusEl.className = 'status ' + type;
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+        }
+        
+        // 显示位置信息
+        function showLocation(position) {
+            const coords = position.coords;
+            
+            // 更新位置信息
+            document.getElementById('latitude').textContent = coords.latitude.toFixed(6);
+            document.getElementById('longitude').textContent = coords.longitude.toFixed(6);
+            document.getElementById('accuracy').textContent = Math.round(coords.accuracy);
+            
+            // 海拔信息（可能不可用）
+            document.getElementById('altitude').textContent = 
+                coords.altitude ? Math.round(coords.altitude) : '不可用';
+            document.getElementById('altitudeAccuracy').textContent = 
+                coords.altitudeAccuracy ? Math.round(coords.altitudeAccuracy) : '不可用';
+            
+            // 方向和速度信息（可能不可用）
+            document.getElementById('heading').textContent = 
+                coords.heading ? Math.round(coords.heading) : '不可用';
+            document.getElementById('speed').textContent = 
+                coords.speed ? Math.round(coords.speed) : '不可用';
+            
+            // 时间戳
+            const timestamp = new Date(position.timestamp);
+            document.getElementById('timestamp').textContent = 
+                timestamp.toLocaleString('zh-CN');
+            
+            // 显示位置信息并更新状态
+            locationInfoEl.style.display = 'block';
+            updateStatus('success', '位置获取成功！');
+            
+            // 启用按钮
+            getLocationBtn.disabled = false;
+        }
+        
+        // 处理位置错误
+        function handleLocationError(error) {
+            let errorMessage = '无法获取您的位置。';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = '您拒绝了位置访问权限。请允许此网站访问您的位置。';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = '位置信息不可用。请检查您的设备是否支持定位功能。';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = '获取位置信息超时。请重试。';
+                    break;
+                case error.UNKNOWN_ERROR:
+                    errorMessage = '发生了未知错误。';
+                    break;
+            }
+            
+            updateStatus('error', errorMessage);
+            
+            // 启用按钮
+            getLocationBtn.disabled = false;
+        }
+        
+        // 获取当前位置
+        function getCurrentLocation() {
+            // 禁用按钮并显示加载状态
+            getLocationBtn.disabled = true;
+            updateStatus('loading', '正在获取您的位置...');
+            
+            // 隐藏之前的位置信息
+            locationInfoEl.style.display = 'none';
+            
+            // 检查浏览器是否支持地理位置API
+            if (!navigator.geolocation) {
+                updateStatus('error', '您的浏览器不支持地理位置功能。');
+                getLocationBtn.disabled = false;
+                return;
+            }
+            
+            // 获取当前位置
+            navigator.geolocation.getCurrentPosition(
+                showLocation,
+                handleLocationError,
+                {
+                    enableHighAccuracy: true, // 尝试获取高精度位置
+                    timeout: 10000, // 10秒超时
+                    maximumAge: 0 // 不使用缓存位置
+                }
+            );
+        }
+        
+        // 页面加载完成后自动获取位置
+        document.addEventListener('DOMContentLoaded', function() {
+            getCurrentLocation();
+        });
+        
+        // 按钮点击事件
+        getLocationBtn.addEventListener('click', getCurrentLocation);
+    </script>
+</body>
+</html>
