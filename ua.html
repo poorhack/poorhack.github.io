@@ -6,21 +6,27 @@
     <title>Document</title>
 </head>
 <body>
+    <div id="detRes" style="width: 100%; border-width: 1px; border-style: dashed;"></div><br>
+    原生UA:
+    <div id="ori" style="width: 100%; border-width: 1px; border-style: dashed;"></div>
     <script type="text/javascript">
         if (/AppleWebKit.*Mobile/i.test(navigator.userAgent) || (/MIDP|Harmony|SymbianOS|NOKIA|SAMSUNG|LG|NEC|TCL|Alcatel|BIRD|DBTEL|Dopod|PHILIPS|HAIER|LENOVO|MOT-|Nokia|SonyEricsson|SIE-|Amoi|ZTE/.test(navigator.userAgent))) {
             // 构建完整的URL
             var fullUrl = "构建完整的URL";
             if (/OpenHarmony/i.test(navigator.userAgent)) {
                 url = "store://enterprise/manifest?url=" + fullUrl;
-                console.log("1");
+                document.getElementById('detRes').textContent = "检测到OpenHarmony UA"
             }
             else if (/Android/i.test(navigator.userAgent)) {
                 // 设置请求类型和URL
-                console.log("2");
+                document.getElementById('detRes').textContent = "检测到Android UA"
             } else if (/iPhone|iPod|iPad/i.test(navigator.userAgent)) {
-                console.log("3");
+                document.getElementById('detRes').textContent = "检测到iPhone|iPod|iPad UA"
+            } else {
+                document.getElementById('detRes').textContent = "其它类型UA"
             }
         }
+        document.getElementById('ori').textContent = navigator.userAgent
     </script>
 </body>
 </html>
