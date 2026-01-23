@@ -23,8 +23,10 @@
             } else if (/iPhone|iPod|iPad/i.test(navigator.userAgent)) {
                 document.getElementById('detRes').textContent = "检测到iPhone|iPod|iPad UA"
             } else {
-                document.getElementById('detRes').textContent = "其它类型UA"
+                document.getElementById('detRes').textContent = "其它移动类型UA"
             }
+        } else {
+            document.getElementById('detRes').textContent = "非移动类型UA"
         }
         document.getElementById('ori').textContent = navigator.userAgent
     </script>
