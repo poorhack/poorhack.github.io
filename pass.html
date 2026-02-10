@@ -7,8 +7,8 @@
 </head>
 <body>
     <form id="myform1" action="../tim.html">
-        用户名：<input type="text"><br/>
-        密码：<input type="password"><br/>
+        用户名：<input type="text" id="username1"><br/>
+        密码：<input type="password" id="password1"><br/>
         <button type="submit">submit</button>
         <div>
             <label for="salutation">称呼 *</label>
@@ -20,9 +20,23 @@
         </div>
     </form>
     <form id="myform2" action="../tim.html">
-        用户名：<input type="text" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly')"><br/>
-        密码：<input type="password" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly')"><br/>
+        用户名：<input type="text" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly')" id="username2"><br/>
+        密码：<input type="password" autocomplete="off" readonly="readonly" onfocus="this.removeAttribute('readonly')" id="password2"><br/>
         <button type="submit">submit</button>
     </form>
+    <script>
+    document.getElementById('myform1').addEventListener('submit', function(event) {
+        const username = document.getElementById('username1').value;
+        const password = document.getElementById('password1').value;
+        console.log('用户名:', username);
+        console.log('密码:', password);
+    });
+    document.getElementById('myform2').addEventListener('submit', function(event) {
+        const username = document.getElementById('username2').value;
+        const password = document.getElementById('password2').value;
+        console.log('用户名:', username);
+        console.log('密码:', password);
+    });
+</script>
 </body>
 </html>
