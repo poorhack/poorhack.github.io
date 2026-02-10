@@ -11,5 +11,13 @@
         密码：<input type="password" autocomplete="current-password"><br/>
         <button type="submit">submit</button>
     </form>
+<script>
+    document.getElementById('myform2').addEventListener('submit', function(event) {
+        const inputs = this.querySelectorAll('input[type="text"], input[type="password"]');
+        inputs.forEach(input => {
+            console.log(`${input.type === 'text' ? '用户名' : '密码'}:`, input.value);
+        });
+    });
+</script>
 </body>
 </html>
