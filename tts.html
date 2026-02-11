@@ -1,25 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TTS示例</title>
 </head>
 <body>
-    <textarea id="textInput" rows="4" cols="50">
-        请输入要转换的文字...
+    <textarea id="textInput" rows="4" cols="50" style="width: 100%;">
+请输入要转换的文字...
     </textarea><br>
     
-    <label>语速: <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"></label>
-    <label>音高: <input type="range" id="pitch" min="0" max="2" step="0.1" value="1"></label>
-    <label>音量: <input type="range" id="volume" min="0" max="1" step="0.1" value="1"></label><br>
+    <div style="width: 100%;">
+        <label>语速: <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"></label>
+        <label>音高: <input type="range" id="pitch" min="0" max="2" step="0.1" value="1"></label>
+        <label>音量: <input type="range" id="volume" min="0" max="1" step="0.1" value="1"></label><br>
+    </div>
+
     
-    <select id="voiceSelect"></select><br>
+    <select id="voiceSelect" style="width: 100%;"></select><br>
     
-    <button onclick="speak()">朗读</button>
-    <button onclick="pause()">暂停</button>
-    <button onclick="resume()">恢复</button>
-    <button onclick="stop()">停止</button>
-    <div id="tts-status"></div>
-    <button onclick="checkAndSpeak()">测试朗读</button>
+    <button onclick="speak()" style="width: 100%;">朗读</button><br><br>
+    <button onclick="pause()" style="width: 100%;">暂停</button><br><br>
+    <button onclick="resume()" style="width: 100%;">恢复</button><br><br>
+    <button onclick="stop()" style="width: 100%;">停止</button><br><br>
+    <div id="tts-status"></div><br>
+    <button onclick="checkAndSpeak()" style="width: 100%;">测试朗读</button><br>
 
     <script>
         let synth = window.speechSynthesis;
