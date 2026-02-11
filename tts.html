@@ -18,6 +18,8 @@
     <button onclick="pause()">暂停</button>
     <button onclick="resume()">恢复</button>
     <button onclick="stop()">停止</button>
+    <div id="tts-status"></div>
+    <button onclick="checkAndSpeak()">测试朗读</button>
 
     <script>
         let synth = window.speechSynthesis;
@@ -66,6 +68,46 @@
         
         // 初始化
         loadVoices();
+        async function checkAndSpeak() {
+            const statusEl = document.getElementById('tts-status');
+            
+            // 基础检测
+            if (!('speechSynthesis' in window)) {
+                statusEl.innerHTML = '❌ 浏览器不支持语音合成';
+                return;
+            }
+            
+            statusEl.innerHTML = '🔍 检测设备支持...';
+            
+            const synth = window.speechSynthesis;
+            
+            // 等待语音加载（移动端需要）
+            await new Promise(resolve => {
+                if (synth.getVoices().length > 0) {
+                    resolve();
+                } else {
+                    synth.onvoiceschanged = resolve;
+                    // 超时处理
+                    setTimeout(resolve, 1500);
+                }
+            });
+            
+            const voices = synth.getVoices();
+            
+            if (voices.length === 0) {
+                // 可能是移动端，尝试静默朗读
+                statusEl.innerHTML = '📱 使用设备默认语音';
+                const utterance = new SpeechSynthesisUtterance('测试语音');
+                utterance.lang = 'zh-CN';
+                utterance.onend = () => {
+                    statusEl.innerHTML = '✅ 朗读完成（无声列表模式）';
+                };
+                synth.speak(utterance);
+            } else {
+                statusEl.innerHTML = `✅ 支持，找到${voices.length}个语音`;
+                // 正常使用
+            }
+        }
     </script>
 </body>
 </html>
