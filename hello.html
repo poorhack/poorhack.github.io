@@ -7,19 +7,34 @@
 </head>
 <body>
     <h1>hello world</h1>
-    <a href="hwwebview://net-export" target="_blank">双框</a><br/>
-    <a href="hwbrowser://net-export" target="_blank">单框</a>
-     <button onclick="openApp()">打开双框netlog</button>
+     <button onclick="log()">console.log</button><br>
+    <button onclick="warn()">console.warn</button><br>
+    <button onclick="info()">console.info</button><br>
+    <button onclick="error()">console.error</button><br>
+    <button onclick="debug()">console.debug</button><br>
+    <button onclick="trace()">console.trace</button><br>
+    <button onclick="table()">console.table</button><br>
      <script>
-        function openApp() {
-            // 使用私有 schema 打开应用
-            window.location.href = 'hwwebview://net-export';
-            
-            // 如果应用未安装，3秒后跳转到下载页
-            setTimeout(function() {
-                console.log("try jump to oh");
-                window.location.href = 'hwbrowser://net-export';
-            }, 3000);
+        function log() {
+            console.log("this is console.log message");
+        }
+        function warn() {
+            console.warn("this is console.warn message");
+        }
+        function info() {
+            console.info("this is console.info message");
+        }
+        function error() {
+            console.error("this is console.error message");
+        }
+        function debug() {
+            console.debug("this is console.debug message");
+        }
+        function trace() {
+            console.trace("this is console.trace message");
+        }
+        function table() {
+            console.table("this is console.table message");
         }
     </script>
 </body>
