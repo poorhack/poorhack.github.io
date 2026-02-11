@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TTS示例</title>
+</head>
+<body>
+    <textarea id="textInput" rows="4" cols="50">
+        请输入要转换的文字...
+    </textarea><br>
+    
+    <label>语速: <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"></label>
+    <label>音高: <input type="range" id="pitch" min="0" max="2" step="0.1" value="1"></label>
+    <label>音量: <input type="range" id="volume" min="0" max="1" step="0.1" value="1"></label><br>
+    
+    <select id="voiceSelect"></select><br>
+    
+    <button onclick="speak()">朗读</button>
+    <button onclick="pause()">暂停</button>
+    <button onclick="resume()">恢复</button>
+    <button onclick="stop()">停止</button>
+
+    <script>
+        let synth = window.speechSynthesis;
+        let voices = [];
+        
+        // 加载可用语音
+        function loadVoices() {
+            voices = synth.getVoices();
+            const select = document.getElementById('voiceSelect');
+            select.innerHTML = '';
+            
+            voices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.name;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                select.appendChild(option);
+            });
+        }
+        
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        
+        function speak() {
+            const text = document.getElementById('textInput').value;
+            if (!text) return;
+            
+            synth.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = document.getElementById('rate').value;
+            utterance.pitch = document.getElementById('pitch').value;
+            utterance.volume = document.getElementById('volume').value;
+            
+            const selectedVoice = voices.find(
+                voice => voice.name === document.getElementById('voiceSelect').value
+            );
+            if (selectedVoice) utterance.voice = selectedVoice;
+            
+            synth.speak(utterance);
+        }
+        
+        function pause() { synth.pause(); }
+        function resume() { synth.resume(); }
+        function stop() { synth.cancel(); }
+        
+        // 初始化
+        loadVoices();
+    </script>
+</body>
+</html>
