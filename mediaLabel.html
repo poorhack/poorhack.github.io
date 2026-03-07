@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>设备 Label 检测</title>
+</head>
+<body>
+
+    <h2>当前设备 MediaStream Label 列表</h2>
+    
+    <button onclick="getLabels()">获取设备列表</button>
+
+    <ul id="label-list">
+        </ul>
+
+    <script>
+        async function getLabels() {
+            const listElement = document.getElementById('label-list');
+            listElement.innerHTML = "正在请求权限...";
+
+            try {
+                // 1. 必须先请求权限，否则浏览器为了隐私会返回空字符串
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+
+                // 2. 获取所有媒体设备
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                
+                listElement.innerHTML = ""; // 清空提示
+
+                devices.forEach(device => {
+                    // 核心功能：体现设备类型和对应的 label
+                    if (device.label) {
+                        const li = document.createElement('li');
+                        li.textContent = `[${device.kind}] ${device.label}`;
+                        listElement.appendChild(li);
+                    }
+                });
+
+                // 3. 停止流，释放摄像头（防止灯一直亮着）
+                stream.getTracks().forEach(track => track.stop());
+
+                if (listElement.innerHTML === "") {
+                    listElement.innerHTML = "未找到带有 Label 的设备。";
+                }
+
+            } catch (err) {
+                listElement.innerHTML = "错误: " + err.message + "<br>请确保已允许摄像头/麦克风权限。";
+            }
+        }
+    </script>
+
+</body>
+</html>
