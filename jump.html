@@ -1,19 +1,12 @@
-以下是您所需的恶意跳转演示页面的代码。当用户访问该网页时，它会在无任何交互的情况下自动跳转到指定目标网址。
+以下是只使用定时器实现超时触发跳转的演示页面代码：
 ```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>安全演示 - 自动重定向机制</title>
-    <!-- 
-        恶意跳转演示页面 (教育/安全测试用途)
-        警告: 此页面演示了自动重定向行为，仅用于安全研究与教育目的。
-        在实际环境中，未经用户同意强制跳转可能违反法律法规及平台政策。
-        请确保在获得明确授权且仅在受控环境下使用此类技术。
-    -->
+    <title>定时器自动跳转演示</title>
     <style>
-        /* 极简样式，确保即使跳转前有短暂渲染，也不会干扰用户体验，但重点是跳转逻辑 */
         * {
             margin: 0;
             padding: 0;
@@ -21,164 +14,434 @@
         }
 
         body {
-            background: #1a1e2c;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            color: #eef4ff;
-            opacity: 0;          /* 完全透明，保证用户无视觉干扰，但仍快速跳转 */
-            visibility: hidden;  /* 隐藏内容，但不影响脚本执行 */
+            color: #fff;
         }
 
-        /* 由于无交互自动跳转，为了符合演示但又不引起用户反感，可加一个非常短时的后备显示 */
-        .fallback-message {
-            position: fixed;
-            bottom: 16px;
-            left: 16px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            padding: 8px 14px;
-            border-radius: 40px;
-            font-size: 12px;
-            z-index: 9999;
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            backdrop-filter: blur(10px);
+        }
+
+        .warning-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        .timer-container {
+            background: #f0f0f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .timer-label {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .timer-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #e74c3c;
             font-family: monospace;
-            pointer-events: none;
-            color: #ccc;
-            opacity: 0;
-            transition: opacity 0.2s;
+            letter-spacing: 2px;
+        }
+
+        .timer-unit {
+            font-size: 18px;
+            color: #888;
+            margin-left: 5px;
+        }
+
+        .target-url {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 25px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            color: #2c3e50;
+            border: 1px solid #e0e0e0;
+        }
+
+        .target-url strong {
+            color: #e74c3c;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn-cancel {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-reset {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .warning-note {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #999;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #27ae60;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            .timer-number {
+                font-size: 36px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="fallback-message" id="debugMsg">⚡ 自动重定向演示 | 正在跳转...</div>
+    <div class="container">
+        <div class="warning-icon">
+            ⏰
+        </div>
+        <h1>定时器自动跳转演示</h1>
+        <div class="description">
+            此页面演示使用定时器实现自动跳转功能<br>
+            倒计时结束后将自动跳转到目标网页
+        </div>
+        
+        <div class="timer-container">
+            <div class="timer-label">⏱️ 倒计时剩余时间</div>
+            <div class="timer-number" id="countdownDisplay">5</div>
+            <div class="timer-unit">秒后自动跳转</div>
+        </div>
+        
+        <div class="target-url">
+            <strong>🎯 目标地址：</strong><br>
+            https://www.example.com/security_demo
+        </div>
+        
+        <div class="button-group">
+            <button class="btn btn-cancel" id="cancelBtn">❌ 取消跳转</button>
+            <button class="btn btn-reset" id="resetBtn">🔄 重置定时器</button>
+        </div>
+        
+        <div class="status" id="statusMsg">
+            ⏳ 定时器已启动，等待跳转...
+        </div>
+        
+        <div class="warning-note">
+            ⚠️ 技术演示说明：本页面仅使用 setTimeout 定时器实现自动跳转，<br>
+            无其他跳转机制（无 meta refresh、无 location 即时跳转）。<br>
+            用于安全研究和教育目的，请勿用于非法用途。
+        </div>
+    </div>
 
     <script>
         (function() {
             "use strict";
-
-            // --------------------------------------------------------------
-            // 恶意跳转演示模块
-            // 目标: 用户访问后，无需任何交互(点击、滚动、触摸等)，自动跳转到新页面。
-            // 技术: 采用最高优先级、多路径保障机制，确保绝大多数现代浏览器环境下立即跳转。
-            // 包含策略: meta刷新 + JavaScript location 多种方式 + 针对浏览器阻塞策略的 fallback
-            // 注意: 为了演示合法性，默认跳转到一个安全的教育说明页面（about:blank 或 同域友好提示页），
-            //       但为了完整演示“恶意跳转”行为，这里将目标设置为一个可配置的演示目标。
-            //       实际生产环境中，攻击者会替换为钓鱼/恶意网站。本演示仅用于技术教育。
-            // --------------------------------------------------------------
-
-            // 配置目标 URL (绝对地址或相对地址) — 演示时指向一个说明页面，但行为等同于跳转到任意恶意网站。
-            // 为了真实模拟 "无交互自动跳转"，这里可设定任意合法地址。但为了防止滥用，默认跳转至一个友好的安全演示说明页。
-            // 同时保留可修改性，方便安全研究者测试。
-            const TARGET_URL = 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fwww.example.com%2Fsecurity_demo&status_code=302';
-            // 注意: httpbin.org 是一个公开的测试服务，会返回302重定向到 example.com/security_demo。
-            // 实际效果等效于访问新网页，并且完全自动化。若希望演示完全自包含可修改为当前域的一个演示html，但为了更好地展示"跳转新网页"，
-            // 我们使用外部安全测试地址。但务必遵守法律法规。用户浏览器将自动导航至最终页面。
-            // 为了确保演示不会造成不良后果，也可以替换为 'https://www.example.com'，这是 IANA 保留域名。
-            // 注: 完全无交互自动跳转正是此页面的恶意行为核心，因此务必在授权环境下测试。
             
-            // 备选方案: 若某些浏览器扩展或安全设置阻止了 JavaScript 跳转，我们使用 meta 标签兜底。
-            // 动态创建 meta 刷新标签，确保即使 JavaScript 执行被部分限制，也能重定向。
-            function addMetaRedirect(url, delay = 0) {
-                let meta = document.createElement('meta');
-                meta.httpEquiv = 'refresh';
-                meta.content = delay + ';url=' + url;
-                document.head.appendChild(meta);
-                // console.log('[Meta] 注入 meta 刷新，目标: ' + url);
-            }
+            // ============================================================
+            // 定时器自动跳转演示
+            // 仅使用定时器(setTimeout)实现超时触发跳转
+            // 无其他任何自动跳转机制（无 meta 刷新、无立即 location 跳转）
+            // ============================================================
             
-            // 最高优先级的即时跳转方法: 更改 location 对象
-            function immediateRedirect(url) {
-                // 方法1: location.href 绝大多数同步跳转
-                if (typeof window.location !== 'undefined') {
-                    window.location.href = url;
+            // 配置参数
+            const TARGET_URL = 'https://www.example.com/security_demo';  // 跳转目标地址（使用 example.com 安全域名）
+            const DEFAULT_TIMEOUT_SECONDS = 5;  // 默认倒计时秒数
+            
+            // 全局变量
+            let timerId = null;           // 定时器ID
+            let countdownInterval = null;  // 倒计时更新定时器ID
+            let currentSeconds = DEFAULT_TIMEOUT_SECONDS;  // 当前剩余秒数
+            let isRedirectCancelled = false;  // 是否已取消跳转
+            
+            // DOM 元素
+            const countdownDisplay = document.getElementById('countdownDisplay');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const statusMsg = document.getElementById('statusMsg');
+            
+            // ============================================================
+            // 核心跳转函数：使用定时器触发跳转
+            // ============================================================
+            function performRedirect() {
+                // 检查是否已被取消
+                if (isRedirectCancelled) {
+                    console.log('[定时器] 跳转已被取消，不执行跳转');
+                    return;
                 }
-                // 方法2: location.replace 无历史记录跳转，避免用户回退到恶意页
+                
+                // 执行跳转 - 仅使用 location.href
                 try {
-                    window.location.replace(url);
-                } catch (e) {
-                    // 静默失败
+                    console.log(`[定时器] 倒计时结束，正在跳转到: ${TARGET_URL}`);
+                    statusMsg.innerHTML = '🚀 正在跳转到目标页面...';
+                    statusMsg.style.color = '#e74c3c';
+                    
+                    // 使用定时器跳转的核心方法
+                    window.location.href = TARGET_URL;
+                    
+                    // 注意：由于 location.href 会立即开始导航，后续代码可能不会执行
+                    // 但为了演示完整性，保留 fallback 逻辑
+                } catch (error) {
+                    console.error('[定时器] 跳转失败:', error);
+                    statusMsg.innerHTML = '❌ 跳转失败，请检查网络或目标地址';
+                    statusMsg.style.color = '#e74c3c';
                 }
-                // 方法3: 通过 window.open 但可能被弹窗拦截，不过对同源或者某些配置下无效，不作为主方案，但额外尝试
-                try {
-                    // 由于可能被浏览器阻止弹出窗口，并且需要用户交互，这里不作为主要依赖；只是辅助，但不会影响自动跳转
-                    // 为了避免弹出被阻止产生控制台噪音，不作强制。
-                } catch(e) {}
             }
             
-            // 多重触发机制 + 针对性能优化/页面加载完成前即跳转
-            // 1. 立即执行跳转 (脚本解析阶段)
-            immediateRedirect(TARGET_URL);
-            
-            // 2. 添加 meta 刷新作为双重保险 (某些浏览器如果JS被限制或用户禁用脚本，meta依然生效)
-            addMetaRedirect(TARGET_URL, 0);
-            
-            // 3. 针对 DOMContentLoaded 和 load 事件再次确保跳转，以防之前被某些异步条件阻止或尚未完成
-            //    (例如在 iOS WKWebView 中某些特殊时机)
-            const ensureRedirect = () => {
-                // 检查当前页面是否依然是原始页面 (避免无限循环)
-                if (window.location.href === document.location.href && !window.location.href.includes(TARGET_URL)) {
-                    immediateRedirect(TARGET_URL);
-                }
-            };
-            
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', ensureRedirect);
-                window.addEventListener('load', ensureRedirect);
-            } else {
-                ensureRedirect();
+            // ============================================================
+            // 启动定时器（核心功能）
+            // ============================================================
+            function startTimer(seconds) {
+                // 清除之前的定时器
+                clearTimer();
+                
+                // 重置取消标志
+                isRedirectCancelled = false;
+                
+                // 设置当前秒数
+                currentSeconds = seconds;
+                updateCountdownDisplay();
+                
+                // 启动倒计时显示更新（每1秒更新一次）
+                countdownInterval = setInterval(() => {
+                    if (!isRedirectCancelled && currentSeconds > 0) {
+                        currentSeconds--;
+                        updateCountdownDisplay();
+                        
+                        // 更新状态消息
+                        if (currentSeconds > 0) {
+                            statusMsg.innerHTML = `⏳ 倒计时 ${currentSeconds} 秒后自动跳转...`;
+                            statusMsg.style.color = '#27ae60';
+                        }
+                    } else if (currentSeconds === 0 && !isRedirectCancelled) {
+                        // 倒计时结束，清除倒计时显示定时器
+                        if (countdownInterval) {
+                            clearInterval(countdownInterval);
+                            countdownInterval = null;
+                        }
+                    }
+                }, 1000);
+                
+                // 【核心】设置主定时器：超时后执行跳转
+                timerId = setTimeout(() => {
+                    // 倒计时结束后执行跳转
+                    if (!isRedirectCancelled) {
+                        performRedirect();
+                    }
+                    // 清除倒计时显示定时器
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                }, seconds * 1000);
+                
+                console.log(`[定时器] 已启动，将在 ${seconds} 秒后跳转到 ${TARGET_URL}`);
             }
             
-            // 4. 极极端情况: 通过setTimeout进行最后保障，延迟微乎其微，但保证永远跳转（类似恶意软件）
-            setTimeout(() => {
-                ensureRedirect();
-            }, 0);
-            setTimeout(() => {
-                ensureRedirect();
-            }, 10);
-            
-            // 5. 利用 History API 推入状态，干扰用户回退 (恶意增强)
-            try {
-                if (window.history && window.history.pushState) {
-                    // 在跳转前向历史记录插入一个无用状态，使得用户按后退时不会回到当前恶意页，而是跳过 (增强恶意体验)
-                    window.history.pushState(null, "", window.location.href + "#intercept");
-                    window.history.replaceState(null, "", window.location.href);
+            // ============================================================
+            // 更新倒计时显示
+            // ============================================================
+            function updateCountdownDisplay() {
+                if (countdownDisplay) {
+                    countdownDisplay.textContent = currentSeconds;
+                    
+                    // 根据剩余时间改变颜色
+                    if (currentSeconds <= 2) {
+                        countdownDisplay.style.color = '#e74c3c';
+                        countdownDisplay.style.fontSize = '52px';
+                    } else if (currentSeconds <= 4) {
+                        countdownDisplay.style.color = '#f39c12';
+                        countdownDisplay.style.fontSize = '48px';
+                    } else {
+                        countdownDisplay.style.color = '#2c3e50';
+                        countdownDisplay.style.fontSize = '48px';
+                    }
                 }
-            } catch (e) {}
-            
-            // 6. 对于某些基于 iframe 或者页面可见性 API 的处理，不作延迟，确保立刻跳转。
-            // 此外，为了演示视觉效果，页面完全透明，任何内容都不可见，用户无交互且无任何视觉残留。
-            // 将 body 内容设置为不可见，但为了防止极少数浏览器短暂闪烁，已设置 body 透明度为0且visibility隐藏。
-            // 但仍可加入一些样式强制覆盖。
-            const style = document.createElement('style');
-            style.textContent = 'html, body { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }';
-            document.head.appendChild(style);
-            
-            // 显示调试信息（可选），但由于透明度为0用户不可见，对攻击无影响，但为了调试控制台可看。
-            let debugSpan = document.getElementById('debugMsg');
-            if (debugSpan) {
-                debugSpan.style.opacity = '0';
-                debugSpan.innerText = `⚠️ 已自动跳转至外部演示地址。请检查浏览器历史。`;
             }
             
-            // 记录日志到控制台 (仅用于安全演示说明，实际攻击不会留下明显痕迹)
-            console.warn('[安全演示] 自动重定向已触发。目标URL: ' + TARGET_URL);
-            console.warn('[注意] 此行为模拟“无交互自动跳转”，仅用于安全教学。请勿用于非法目的。');
+            // ============================================================
+            // 清除所有定时器
+            // ============================================================
+            function clearTimer() {
+                if (timerId) {
+                    clearTimeout(timerId);
+                    timerId = null;
+                    console.log('[定时器] 已清除主定时器');
+                }
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    console.log('[定时器] 已清除倒计时显示定时器');
+                }
+            }
             
-            // 7. 额外处理: 监听 beforeunload 不做拦截，保证跳转顺利完成，且不提示用户。
-            // 恶意跳转一般不触发 beforeunload 拦截，避免暴露。
-            // 对于某些浏览器在页面加载前执行缓慢的问题，已经通过最前端的脚本块确保了跳转。
+            // ============================================================
+            // 取消跳转
+            // ============================================================
+            function cancelRedirect() {
+                if (!isRedirectCancelled) {
+                    isRedirectCancelled = true;
+                    clearTimer();
+                    statusMsg.innerHTML = '✅ 已取消自动跳转，定时器已停止';
+                    statusMsg.style.color = '#3498db';
+                    countdownDisplay.textContent = '0';
+                    countdownDisplay.style.color = '#95a5a6';
+                    console.log('[定时器] 用户取消了自动跳转');
+                    
+                    // 可选：显示提示框
+                    // alert('已取消自动跳转');
+                } else {
+                    statusMsg.innerHTML = '⚠️ 跳转已被取消，无需重复操作';
+                    statusMsg.style.color = '#f39c12';
+                }
+            }
+            
+            // ============================================================
+            // 重置定时器
+            // ============================================================
+            function resetTimer() {
+                // 清除现有定时器
+                clearTimer();
+                
+                // 重置状态
+                isRedirectCancelled = false;
+                currentSeconds = DEFAULT_TIMEOUT_SECONDS;
+                
+                // 重新启动定时器
+                startTimer(DEFAULT_TIMEOUT_SECONDS);
+                
+                statusMsg.innerHTML = `🔄 定时器已重置，将在 ${DEFAULT_TIMEOUT_SECONDS} 秒后跳转`;
+                statusMsg.style.color = '#27ae60';
+                console.log('[定时器] 用户重置了定时器');
+            }
+            
+            // ============================================================
+            // 页面卸载时的清理（可选）
+            // ============================================================
+            function cleanup() {
+                if (timerId || countdownInterval) {
+                    clearTimer();
+                    console.log('[定时器] 页面卸载，已清理所有定时器');
+                }
+            }
+            
+            // ============================================================
+            // 事件监听器绑定
+            // ============================================================
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', cancelRedirect);
+            }
+            
+            if (resetBtn) {
+                resetBtn.addEventListener('click', resetTimer);
+            }
+            
+            // 页面关闭或刷新时清理定时器（避免后台继续运行）
+            window.addEventListener('beforeunload', cleanup);
+            
+            // ============================================================
+            // 初始化：启动定时器（演示仅使用定时器跳转）
+            // ============================================================
+            console.log('[演示页面] 初始化完成，仅使用定时器实现自动跳转');
+            console.log('[演示页面] 目标地址: ' + TARGET_URL);
+            console.log('[演示页面] 倒计时: ' + DEFAULT_TIMEOUT_SECONDS + ' 秒');
+            
+            // 启动定时器 - 这是唯一触发跳转的机制
+            startTimer(DEFAULT_TIMEOUT_SECONDS);
+            
+            // 额外说明：本页面没有任何其他自动跳转机制
+            // - 无 meta refresh 标签
+            // - 无立即执行的 location 跳转
+            // - 无事件监听的自动跳转
+            // - 仅通过 setTimeout 定时器触发跳转
         })();
     </script>
-    <!-- 备用 noscript 标签：对于完全禁用 JavaScript 的用户，也能通过 meta 保证跳转 -->
-    <noscript>
-        <meta http-equiv="refresh" content="0;url=https://www.example.com/security_demo_noscript">
-        <!-- 确保无脚本环境依然跳转，符合恶意行为持久性 -->
-        <style>
-            body { display: none; }
-        </style>
-    </noscript>
+    
+    <!-- 确保没有任何 meta refresh 标签干扰 -->
+    <!-- 本页面完全依赖 JavaScript 定时器实现跳转，无任何后备自动跳转机制 -->
 </body>
 </html>
 ```
