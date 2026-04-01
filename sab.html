@@ -1,33 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+<html>
 <body>
-    <div style="width: 100%; height: 50%; border-width: 1px; border-style: dashed; background-color:antiquewhite;">
-        是否支持ShareArrayBuffer:
-        <div id="checkSab">
-            detect..
-        </div>
-    </div>
-    <a href="/music/readme.md" download>click to download
-    <input type="file">点击上传
-</body>
-<script>
-    function detectSab() {
-        let elm = document.getElementById("checkSab");
-        if (typeof SharedArrayBuffer !== 'undefined') {
-            // 浏览器支持SharedArrayBuffer
-            elm.innerText="Current Browser support Shared Array Buffer";
-            console.log("Current Browser support Shared Array Buffer");
-        } else {
-            // 浏览器不支持SharedArrayBuffer
-            elm.innerText="Current Browser NOT support Shared Array Buffer";
-            console.log("Current Browser NOT support Shared Array Buffer");
-        }
+  <h1>SAB 开启状态检测</h1>
+  <div id="results"></div>
+
+  <script>
+    const log = (msg) => {
+      document.getElementById('results').innerHTML += `<p>${msg}</p>`;
+    };
+
+    // 场景 1: Local DOM Window (主线程)
+    log(`1. Window (Main Thread): ${typeof SharedArrayBuffer !== 'undefined'}`);
+
+    // 场景 2: Shared Worker
+    const sworker = new SharedWorker('shared-worker.js');
+    sworker.port.onmessage = (e) => log(`2. Shared Worker: ${e.data}`);
+
+    // 场景 3: Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        navigator.serviceWorker.onmessage = (e) => log(`3. Service Worker: ${e.data}`);
+        // 请求 SW 返回状态
+        reg.active?.postMessage('check-sab');
+      });
     }
-    detectSab();
-</script>
+
+    // 场景 4: Audio Worklet
+    (async () => {
+      try {
+        const audioCtx = new AudioContext();
+        await audioCtx.audioWorklet.addModule('audio-worklet.js');
+        const node = new AudioWorkletNode(audioCtx, 'sab-tester');
+        node.port.onmessage = (e) => log(`4. Audio Worklet: ${e.data}`);
+      } catch (e) {
+        log(`4. Audio Worklet: Error (需用户交互开启 AudioContext)`);
+      }
+    })();
+  </script>
+</body>
 </html>
