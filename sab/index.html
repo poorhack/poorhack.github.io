@@ -15,7 +15,7 @@
     // 场景 2: Shared Worker
     const sworker = new SharedWorker('shared-worker.js');
     sworker.port.onmessage = (e) => log(`2. Shared Worker: ${e.data}`);
-
+    sworker.port.start();
     // 场景 3: Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(reg => {
