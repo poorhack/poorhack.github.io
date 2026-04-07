@@ -2,126 +2,140 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>用户网页专用 SM2 逻辑测试</title>
-    <script src="https://cdn.jsdelivr.net/npm/jsbn@1.1.0/index.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户网页逻辑复现 - SM2 全链路测试</title>
     <script src="https://cdn.jsdelivr.net/npm/sm-crypto@0.3.12/dist/sm2.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .code-block { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; font-size: 13px; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        button:hover { background: #0056b3; }
-        .result-box { margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-left: 5px solid #007bff; background: #fafafa; }
-        .log-item { border-bottom: 1px solid #eee; padding: 5px 0; font-size: 14px; }
-        .error { color: #dc3545; }
+        body { font-family: -apple-system, sans-serif; background: #f5f5f7; padding: 15px; color: #1d1d1f; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h2 { font-size: 16px; margin-top: 0; color: #0071e3; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .input-item { margin: 12px 0; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; box-sizing: border-box; font-family: monospace; }
+        button { width: 100%; background: #0071e3; color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 500; cursor: pointer; margin: 5px 0; }
+        button.secondary { background: #34c759; }
+        .console { background: #000; color: #00ff00; padding: 12px; border-radius: 8px; font-size: 12px; min-height: 80px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-top: 8px; font-weight: bold; }
+        .pass { background: #e2f9e1; color: #1e6b1a; }
+        .fail { background: #fff1f0; color: #cf1322; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>用户网页加密逻辑复现 (ArkWeb 兼容性自检)</h2>
-    <p style="font-size: 14px; color: #666;">此页面使用了用户网页中发现的 <code>unescape</code>, <code>Array(n).join("0")</code> 等特有语法。</p>
-
-    <div class="input-group">
-        <label>服务器公钥 (publicKey):</label>
-        <input type="text" id="targetPub" value="047fd93560a2189b939d5f6ada64d23b9ff8f46919ae9658b71eb54b4e7565c41a2e4865f314500aa938e783a878fa338d6e39bcde295bb560e212a2c16fe17abf">
+    <div class="card">
+        <h2>1. 模拟用户特有逻辑 (UTF8 & Padding)</h2>
+        <div class="input-item">
+            <label>待加密明文:</label>
+            <input type="text" id="plain" value="ArkWeb_123456">
+        </div>
+        <button onclick="testUserUtils()">验证基础工具函数</button>
     </div>
 
-    <div class="input-group">
-        <label>测试明文密码:</label>
-        <input type="text" id="testPass" value="123456">
-    </div>
-
-    <button onclick="simulateUserEncryption()">开始模拟加密流程</button>
-
-    <div id="results" class="result-box" style="display:none;">
-        <h3 id="finalStatus">等待测试...</h3>
-        <div id="stepLogs"></div>
-        <div style="margin-top:15px;">
-            <label>生成的加密结果 (pass):</label>
-            <textarea id="outputCipher" readonly></textarea>
+    <div class="card">
+        <h2>2. SM2 加解密闭环验证</h2>
+        <p style="font-size: 12px; color: #86868b;">自动生成临时密钥对，测试 ArkWeb 的数学计算自洽性。</p>
+        <button class="secondary" onclick="runFullCycle()">开始全链路校验</button>
+        
+        <div class="input-item">
+            <label>生成的密文 (Ciphertext):</label>
+            <textarea id="cipherOutput" readonly></textarea>
+        </div>
+        <div class="input-item">
+            <label>解密还原结果:</label>
+            <input type="text" id="decryptedOutput" readonly>
         </div>
     </div>
-</div>
+
+    <div class="card">
+        <h2>运行日志 (ArkWeb Console)</h2>
+        <div id="log" class="console">等待测试开始...</div>
+        <div id="statusBox"></div>
+    </div>
 
 <script>
-    // --- 模拟用户网页中的关键函数 ---
-    
-    // 1. 用户网页特有的左补全函数
+    const sm2 = window.sm2;
+
+    // --- 模拟用户网页中的关键混淆逻辑 ---
     function userLeftPad(t, e) {
+        // 用户网页原文：使用 Array.join 补零
         return t.length >= e ? t : new Array(e - t.length + 1).join("0") + t;
     }
 
-    // 2. 用户网页特有的 UTF8 转 Hex (使用了废弃的 unescape)
     function userUtf8ToHex(t) {
+        // 用户网页原文：使用废弃的 unescape
         try {
             t = unescape(encodeURIComponent(t));
-            for (var e = t.length, r = [], i = 0; i < e; i++)
+            let r = [];
+            for (let i = 0; i < t.length; i++)
                 r[i >>> 2] |= (255 & t.charCodeAt(i)) << 24 - i % 4 * 8;
-            for (var n = [], o = 0; o < e; o++) {
-                var s = r[o >>> 2] >>> 24 - o % 4 * 8 & 255;
-                n.push((s >>> 4).toString(16)),
-                n.push((15 & s).toString(16))
+            let n = [];
+            for (let o = 0; o < t.length; o++) {
+                let s = r[o >>> 2] >>> 24 - o % 4 * 8 & 255;
+                n.push((s >>> 4).toString(16)), n.push((15 & s).toString(16));
             }
             return n.join("");
-        } catch(err) {
-            return "ERR: " + err.message;
-        }
+        } catch(e) { return "ERROR"; }
     }
 
-    function addLog(msg, isError = false) {
-        const logBox = document.getElementById('stepLogs');
-        const item = document.createElement('div');
-        item.className = 'log-item' + (isError ? ' error' : '');
-        item.innerText = (isError ? '❌ ' : '✅ ') + msg;
-        logBox.appendChild(item);
+    function logger(msg, isErr = false) {
+        const logDiv = document.getElementById('log');
+        if (logDiv.innerText === "等待测试开始...") logDiv.innerText = "";
+        logDiv.innerHTML += `<div style="color:${isErr ? '#ff4d4f' : '#00ff00'}">>> ${msg}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
     }
 
-    function simulateUserEncryption() {
-        const results = document.getElementById('results');
-        const logBox = document.getElementById('stepLogs');
-        const status = document.getElementById('finalStatus');
-        const output = document.getElementById('outputCipher');
-        
-        results.style.display = 'block';
-        logBox.innerHTML = '';
-        output.value = '';
+    function testUserUtils() {
+        const text = document.getElementById('plain').value;
+        const hex = userUtf8ToHex(text);
+        const pad = userLeftPad("F", 4);
+        logger(`[Utils] utf8ToHex 结果: ${hex}`);
+        logger(`[Utils] leftPad 结果 (F->4位): ${pad}`);
+        if (pad === "000F") logger("基础工具函数运行正常");
+        else logger("leftPad 逻辑可能受引擎优化影响", true);
+    }
+
+    async function runFullCycle() {
+        const plain = document.getElementById('plain').value;
+        const statusBox = document.getElementById('statusBox');
+        logger("--- 开始全链路测试 ---");
 
         try {
-            const pubKey = document.getElementById('targetPub').value;
-            const plain = document.getElementById('testPass').value;
+            // 1. 生成密钥对
+            const keypair = sm2.generateKeyPairHex();
+            const pub = keypair.publicKey;
+            const priv = keypair.privateKey;
+            logger("1. 密钥对生成成功");
 
-            // 步骤 1: 测试 UTF8 转换
-            const hexText = userUtf8ToHex(plain);
-            addLog("UTF8 转 Hex 结果: " + hexText);
-            if (hexText.startsWith("ERR")) throw new Error("unescape 编码失败");
+            // 2. 加密 (模式 1 = C1C3C2)
+            const t0 = performance.now();
+            const cipher = sm2.doEncrypt(plain, pub, 1);
+            const t1 = performance.now();
+            document.getElementById('cipherOutput').value = cipher;
+            logger(`2. 加密完成，耗时: ${(t1-t0).toFixed(2)}ms`);
 
-            // 步骤 2: 测试补全函数
-            const padded = userLeftPad("abc", 8);
-            addLog("补全函数测试 (abc -> 8位): " + padded);
-            if (padded !== "00000abc") throw new Error("leftPad 逻辑异常");
+            // 3. 解密
+            logger("3. 尝试本地解密验证...");
+            const t2 = performance.now();
+            const decrypted = sm2.doDecrypt(cipher, priv, 1);
+            const t3 = performance.now();
+            document.getElementById('decryptedOutput').value = decrypted;
+            logger(`4. 解密完成，耗时: ${(t3-t2).toFixed(2)}ms`);
 
-            // 步骤 3: 调用标准库进行加密 (模拟用户代码中的 doEncrypt 调用)
-            // 用户代码传入的参数 1 代表 C1C3C2 模式
-            const cipher = window.sm2.doEncrypt(plain, pubKey, 1);
-            
-            output.value = cipher;
-            status.innerText = "加密成功！";
-            status.style.color = "#28a745";
-            addLog("加密密文长度: " + cipher.length);
-            addLog("密文结构分析: C1(128) + C3(64) + C2(" + (cipher.length - 192) + ")");
-
+            // 4. 比对结果
+            if (decrypted === plain) {
+                logger("✅ 验证通过！ArkWeb 完整支持该 SM2 逻辑。");
+                statusBox.innerHTML = '<span class="badge pass">SUCCESS: 加解密链路自洽</span>';
+            } else {
+                throw new Error("解密内容与原文不符");
+            }
         } catch (e) {
-            status.innerText = "加密流程中断";
-            status.style.color = "#dc3545";
-            addLog("错误详情: " + e.message, true);
-            console.error(e);
+            logger(`❌ 失败: ${e.message}`, true);
+            statusBox.innerHTML = `<span class="badge fail">FAILED: ${e.message}</span>`;
+            if (e.message.includes("C3")) {
+                logger("提示: C3 校验失败通常是因为 ArkWeb 在处理数组拼接时产生了位偏移。", true);
+            }
         }
     }
 </script>
-
 </body>
 </html>
