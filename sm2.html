@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SM2 加解密兼容性测试 (ArkWeb)</title>
+    <script src="https://cdn.jsdelivr.net/npm/sm-crypto@0.3.12/dist/sm2.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; color: #333; }
+        .card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #007bff; margin-top: 0; }
+        textarea { width: 100%; height: 80px; margin: 10px 0; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        button:active { background: #0056b3; }
+        .status { padding: 10px; border-radius: 4px; margin-top: 10px; font-weight: bold; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <h1>SM2 兼容性自检</h1>
+    <p>此工具用于测试当前浏览器环境（ArkWeb）是否能正确执行国密 SM2 的数学运算。</p>
+
+    <div class="card">
+        <h2>1. 生成密钥对</h2>
+        <button onclick="generateKeys()">生成新密钥对</button>
+        <div>公钥 (hex): <pre id="pubkey">-</pre></div>
+        <div>私钥 (hex): <pre id="privkey">-</pre></div>
+    </div>
+
+    <div class="card">
+        <h2>2. 加密测试 (C1C3C2 模式)</h2>
+        <label>输入明文:</label>
+        <textarea id="plainText">Hello ArkWeb 123456</textarea>
+        <button onclick="runEncrypt()">执行加密</button>
+        <div>加密结果 (Ciphertext): <pre id="cipherText">-</pre></div>
+    </div>
+
+    <div class="card">
+        <h2>3. 解密验证</h2>
+        <button onclick="runDecrypt()">执行解密并验证</button>
+        <div id="resultStatus" class="status" style="display:none;"></div>
+        <div>解密结果: <pre id="decryptedText">-</pre></div>
+    </div>
+
+    <script>
+        // 这里的 sm2 对象由 CDN 脚本提供
+        const sm2 = window.sm2;
+        let currentPriv = '';
+        let currentPub = '';
+
+        function log(id, msg) {
+            document.getElementById(id).innerText = msg;
+        }
+
+        function generateKeys() {
+            try {
+                let keypair = sm2.generateKeyPairHex();
+                currentPriv = keypair.privateKey;
+                currentPub = keypair.publicKey;
+                log('pubkey', currentPub);
+                log('privkey', currentPriv);
+                showStatus('密钥生成成功', 'success');
+            } catch (e) {
+                showStatus('密钥生成失败: ' + e.message, 'error');
+                console.error(e);
+            }
+        }
+
+        function runEncrypt() {
+            if (!currentPub) return alert('请先生成密钥对');
+            const msg = document.getElementById('plainText').value;
+            try {
+                // 模式 1 对应 C1C3C2，与你之前分析的代码一致
+                let encryptData = sm2.doEncrypt(msg, currentPub, 1);
+                log('cipherText', encryptData);
+                showStatus('加密运算完成', 'success');
+            } catch (e) {
+                showStatus('加密失败: ' + e.message, 'error');
+            }
+        }
+
+        function runDecrypt() {
+            if (!currentPriv) return alert('请先生成密钥对');
+            const cipher = document.getElementById('cipherText').innerText;
+            if (cipher === '-') return alert('请先执行加密');
+
+            try {
+                // 解密也需要对应模式 1
+                let decryptData = sm2.doDecrypt(cipher, currentPriv, 1);
+                log('decryptedText', decryptData);
+                
+                const original = document.getElementById('plainText').value;
+                if (decryptData === original) {
+                    showStatus('验证通过！此环境完整支持 SM2 加解密。', 'success');
+                } else {
+                    showStatus('验证失败：解密结果与原始明文不符。', 'error');
+                }
+            } catch (e) {
+                showStatus('解密失败（可能是 C3 校验未通过）：' + e.message, 'error');
+            }
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('resultStatus');
+            el.style.display = 'block';
+            el.className = 'status ' + type;
+            el.innerText = msg;
+        }
+    </script>
+</body>
+</html>
