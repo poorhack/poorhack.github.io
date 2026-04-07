@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户网页专用 SM2 逻辑测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbn@1.1.0/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sm-crypto@0.3.12/dist/sm2.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .code-block { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; font-size: 13px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #0056b3; }
+        .result-box { margin-top: 20px; padding: 15px; border: 1px solid #e0e0e0; border-left: 5px solid #007bff; background: #fafafa; }
+        .log-item { border-bottom: 1px solid #eee; padding: 5px 0; font-size: 14px; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>用户网页加密逻辑复现 (ArkWeb 兼容性自检)</h2>
+    <p style="font-size: 14px; color: #666;">此页面使用了用户网页中发现的 <code>unescape</code>, <code>Array(n).join("0")</code> 等特有语法。</p>
+
+    <div class="input-group">
+        <label>服务器公钥 (publicKey):</label>
+        <input type="text" id="targetPub" value="047fd93560a2189b939d5f6ada64d23b9ff8f46919ae9658b71eb54b4e7565c41a2e4865f314500aa938e783a878fa338d6e39bcde295bb560e212a2c16fe17abf">
+    </div>
+
+    <div class="input-group">
+        <label>测试明文密码:</label>
+        <input type="text" id="testPass" value="123456">
+    </div>
+
+    <button onclick="simulateUserEncryption()">开始模拟加密流程</button>
+
+    <div id="results" class="result-box" style="display:none;">
+        <h3 id="finalStatus">等待测试...</h3>
+        <div id="stepLogs"></div>
+        <div style="margin-top:15px;">
+            <label>生成的加密结果 (pass):</label>
+            <textarea id="outputCipher" readonly></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 模拟用户网页中的关键函数 ---
+    
+    // 1. 用户网页特有的左补全函数
+    function userLeftPad(t, e) {
+        return t.length >= e ? t : new Array(e - t.length + 1).join("0") + t;
+    }
+
+    // 2. 用户网页特有的 UTF8 转 Hex (使用了废弃的 unescape)
+    function userUtf8ToHex(t) {
+        try {
+            t = unescape(encodeURIComponent(t));
+            for (var e = t.length, r = [], i = 0; i < e; i++)
+                r[i >>> 2] |= (255 & t.charCodeAt(i)) << 24 - i % 4 * 8;
+            for (var n = [], o = 0; o < e; o++) {
+                var s = r[o >>> 2] >>> 24 - o % 4 * 8 & 255;
+                n.push((s >>> 4).toString(16)),
+                n.push((15 & s).toString(16))
+            }
+            return n.join("");
+        } catch(err) {
+            return "ERR: " + err.message;
+        }
+    }
+
+    function addLog(msg, isError = false) {
+        const logBox = document.getElementById('stepLogs');
+        const item = document.createElement('div');
+        item.className = 'log-item' + (isError ? ' error' : '');
+        item.innerText = (isError ? '❌ ' : '✅ ') + msg;
+        logBox.appendChild(item);
+    }
+
+    function simulateUserEncryption() {
+        const results = document.getElementById('results');
+        const logBox = document.getElementById('stepLogs');
+        const status = document.getElementById('finalStatus');
+        const output = document.getElementById('outputCipher');
+        
+        results.style.display = 'block';
+        logBox.innerHTML = '';
+        output.value = '';
+
+        try {
+            const pubKey = document.getElementById('targetPub').value;
+            const plain = document.getElementById('testPass').value;
+
+            // 步骤 1: 测试 UTF8 转换
+            const hexText = userUtf8ToHex(plain);
+            addLog("UTF8 转 Hex 结果: " + hexText);
+            if (hexText.startsWith("ERR")) throw new Error("unescape 编码失败");
+
+            // 步骤 2: 测试补全函数
+            const padded = userLeftPad("abc", 8);
+            addLog("补全函数测试 (abc -> 8位): " + padded);
+            if (padded !== "00000abc") throw new Error("leftPad 逻辑异常");
+
+            // 步骤 3: 调用标准库进行加密 (模拟用户代码中的 doEncrypt 调用)
+            // 用户代码传入的参数 1 代表 C1C3C2 模式
+            const cipher = window.sm2.doEncrypt(plain, pubKey, 1);
+            
+            output.value = cipher;
+            status.innerText = "加密成功！";
+            status.style.color = "#28a745";
+            addLog("加密密文长度: " + cipher.length);
+            addLog("密文结构分析: C1(128) + C3(64) + C2(" + (cipher.length - 192) + ")");
+
+        } catch (e) {
+            status.innerText = "加密流程中断";
+            status.style.color = "#dc3545";
+            addLog("错误详情: " + e.message, true);
+            console.error(e);
+        }
+    }
+</script>
+
+</body>
+</html>
