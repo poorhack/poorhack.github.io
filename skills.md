@@ -13,81 +13,233 @@
 
 ---
 
-## 1. Agent Skills（官方技能框架）
+## 1. Agent Skills（Addy Osmani 技能框架）
 
 ### 1.1 简介
 
-Agent Skills 是 Anthropic 官方提供的模块化技能框架，已深度集成到 Claude Code 中。技能本质上是包含指令的 `SKILL.md` 文件，用于赋予 AI 特定领域的专业知识。
+Agent Skills 是由 Addy Osmani 创建的完整软件开发方法论框架，包含 20 个专业技能和 7 个斜杠命令，覆盖从需求定义到发布上线的完整开发流程。
+
+**核心设计理念：**
+- **流程而非散文**：提供步骤式工作流程
+- **反理性化**：针对常见的"跳过步骤借口"提供应对方案
+- **验证不可妥协**：必须提供证据证明完成
+- **渐进式披露**：最小化 token 消耗
 
 ### 1.2 安装方式
 
-#### 方法一：通过插件市场安装
+#### Claude Code（推荐）
 
 ```bash
-# 添加官方技能市场
-/plugin marketplace add anthropics/skills
+# 添加技能市场
+/plugin marketplace add addyosmani/agent-skills
 
-# 然后在 Claude Code 中：
-# 1. 选择 Browse and install plugins
-# 2. 选择 anthropic-agent-skills
-# 3. 选择需要的技能集（如 document-skills、example-skills）
-# 4. 点击 Install now
+# 安装技能包
+/plugin install agent-skills@addy-agent-skills
 ```
 
-#### 方法二：直接安装特定技能
+#### 本地安装
 
 ```bash
-# 安装文档技能集
-/plugin install document-skills@anthropic-agent-skills
+# 克隆仓库
+git clone https://github.com/addyosmani/agent-skills.git
 
-# 安装示例技能集
-/plugin install example-skills@anthropic-agent-skills
+# 使用本地目录启动
+claude --plugin-dir /path/to/agent-skills
 ```
 
-### 1.3 可用技能集
-
-| 技能集 | 描述 |
-|--------|------|
-| `document-skills` | 文档处理技能（PDF、DOCX、PPTX、XLSX） |
-| `example-skills` | 示例技能集合 |
-| `creative-skills` | 创意设计技能 |
-| `development-skills` | 开发相关技能 |
-| `enterprise-skills` | 企业级技能 |
-
-### 1.4 使用示例
+#### Gemini CLI
 
 ```bash
-# 用户输入
-> Use the PDF skill to extract the form fields from report.pdf
-
-# 用户输入
-> Use the document skill to summarize this DOCX file
+gemini skills install https://github.com/addyosmani/agent-skills.git --path skills
 ```
 
-### 1.5 创建自定义技能
+#### Cursor
 
-创建一个文件夹，包含 `SKILL.md` 文件：
+```bash
+# 将 SKILL.md 文件复制到 .cursor/rules/ 目录
+cp skills/*/SKILL.md .cursor/rules/
+```
 
-```markdown
----
-name: my-custom-skill
-description: 处理 Python 代码审查的自定义技能
----
+### 1.3 七大斜杠命令
 
-# Python Code Review Skill
+| 命令 | 核心原则 | 用途 |
+|------|---------|------|
+| `/spec` | **Spec before code** | 先写规范，再写代码 |
+| `/plan` | **Small, atomic tasks** | 拆分为原子级小任务 |
+| `/build` | **One slice at a time** | 一次实现一个切片 |
+| `/test` | **Tests are proof** | 测试是完成的证明 |
+| `/review` | **Improve code health** | 改善代码健康度 |
+| `/code-simplify` | **Clarity over cleverness** | 清晰胜于炫技 |
+| `/ship` | **Faster is safer** | 快速发布更安全 |
 
-当执行代码审查时，请遵循以下规则：
+### 1.4 完整技能列表（20 个）
 
-## 检查清单
-- 检查类型注解是否完整
-- 检查是否有 SQL 注入风险
-- 检查是否有硬编码的敏感信息
+#### Define 阶段（定义）
 
-## 输出格式
-对于每个问题，输出：
-1. 文件路径和行号
-2. 问题描述
-3. 建议修复方案
+| 技能 | 用途 |
+|------|------|
+| `idea-refine` | 想法精炼，验证想法可行性 |
+| `spec-driven-development` | 规范驱动开发，先写规范再编码 |
+
+#### Plan 阶段（规划）
+
+| 技能 | 用途 |
+|------|------|
+| `planning-and-task-breakdown` | 任务拆分，将大任务分解为原子级步骤 |
+
+#### Build 阶段（构建）
+
+| 技能 | 用途 |
+|------|------|
+| `incremental-implementation` | 渐进式实现，一次一个切片 |
+| `context-engineering` | 上下文工程，优化 AI 理解效率 |
+| `source-driven-development` | 源码驱动开发，基于实际代码而非假设 |
+| `frontend-ui-engineering` | 前端 UI 工程，组件化开发最佳实践 |
+| `test-driven-development` | 测试驱动开发，RED-GREEN-REFACTOR |
+| `api-and-interface-design` | API 与接口设计，RESTful 最佳实践 |
+
+#### Verify 阶段（验证）
+
+| 技能 | 用途 |
+|------|------|
+| `browser-testing-with-devtools` | 使用 DevTools 进行浏览器测试 |
+| `debugging-and-error-recovery` | 调试与错误恢复，系统化排查问题 |
+
+#### Review 阶段（审查）
+
+| 技能 | 用途 |
+|------|------|
+| `code-review-and-quality` | 代码审查与质量检查 |
+| `code-simplification` | 代码简化，消除冗余 |
+| `security-and-hardening` | 安全加固，OWASP 漏洞检查 |
+| `performance-optimization` | 性能优化，识别瓶颈 |
+
+#### Ship 阶段（发布）
+
+| 技能 | 用途 |
+|------|------|
+| `git-workflow-and-versioning` | Git 工作流与版本管理 |
+| `ci-cd-and-automation` | CI/CD 与自动化部署 |
+| `deprecation-and-migration` | 弃用与迁移策略 |
+| `documentation-and-adrs` | 文档与架构决策记录（ADR） |
+| `shipping-and-launch` | 发布上线流程 |
+
+### 1.5 代理角色（Agent Personas）
+
+| 角色 | 视角 | 用途 |
+|------|------|------|
+| `code-reviewer` | Staff Engineer 视角 | 高标准代码审查 |
+| `test-engineer` | QA/测试策略视角 | 测试覆盖与质量保证 |
+| `security-auditor` | OWASP/漏洞视角 | 安全审计与加固 |
+
+### 1.6 完整开发流程示例
+
+```bash
+# ========== Define 阶段 ==========
+
+# 步骤 1: 精炼想法
+> /spec
+我想开发一个实时协作的白板应用，支持多人同时绘制
+
+# Claude 将引导你：
+# - 定义核心功能边界
+# - 识别技术可行性
+# - 生成初步规范文档
+
+# 步骤 2: 规范驱动开发
+> /spec-driven-development
+为白板应用创建详细规范
+
+# ========== Plan 阶段 ==========
+
+# 步骤 3: 任务拆分
+> /plan
+将白板应用拆分为可执行的小任务
+
+# Claude 将输出：
+# Phase 1: 核心画布组件
+#   - [ ] Canvas 组件基础结构
+#   - [ ] 绘制工具栏
+#   - [ ] 颜色选择器
+# Phase 2: 实时同步
+#   - [ ] WebSocket 连接
+#   - [ ] 操作广播机制
+# Phase 3: 用户管理
+#   - [ ] 用户标识
+#   - [ ] 光标显示
+
+# ========== Build 阶段 ==========
+
+# 步骤 4: 渐进式实现
+> /build
+实现 Canvas 组件，一次一个功能切片
+
+# 步骤 5: 测试驱动开发
+> /test-driven-development
+为绘制功能编写测试
+
+# Claude 将执行：
+# RED: 编写失败的测试
+def test_canvas_draw_line():
+    canvas = Canvas()
+    canvas.draw_line(0, 0, 100, 100)
+    assert canvas.has_line_at(0, 0, 100, 100)  # 失败
+
+# GREEN: 实现最小代码
+class Canvas:
+    def __init__(self):
+        self.lines = []
+    def draw_line(self, x1, y1, x2, y2):
+        self.lines.append((x1, y1, x2, y2))
+    def has_line_at(self, x1, y1, x2, y2):
+        return (x1, y1, x2, y2) in self.lines
+
+# REFACTOR: 优化结构
+class Canvas:
+    """实时协作画布"""
+    def __init__(self):
+        self._elements: List[DrawElement] = []
+    
+    def draw_line(self, start: Point, end: Point) -> Line:
+        line = Line(start, end)
+        self._elements.append(line)
+        return line
+
+# ========== Verify 阶段 ==========
+
+# 步骤 6: 浏览器测试
+> /browser-testing-with-devtools
+测试画布在 Chrome 中的渲染性能
+
+# 步骤 7: 调试错误
+> /debugging-and-error-recovery
+排查 WebSocket 连接断开的问题
+
+# ========== Review 阶段 ==========
+
+# 步骤 8: 代码审查
+> /review
+审查整个白板应用的代码质量
+
+# 步骤 9: 安全审计
+> /security-auditor
+检查 WebSocket 连接的安全漏洞
+
+# ========== Ship 阶段 ==========
+
+# 步骤 10: 简化代码
+> /code-simplify
+简化 Canvas 组件的实现
+
+# 步骤 11: 发布上线
+> /ship
+准备白板应用的发布
+
+# Claude 将执行：
+# - 创建 Git tag
+# - 更新 CHANGELOG
+# - 验证 CI/CD 流程
+# - 准备发布说明
 ```
 
 ---
@@ -412,24 +564,24 @@ my-ecommerce-app/
 
 | 维度 | Agent Skills | Superpowers | Spec Kit |
 |------|-------------|-------------|----------|
-| **来源** | Anthropic 官方 | 社区 | GitHub 官方 |
+| **来源** | Addy Osmani（社区） | Jesse Vincent（社区） | GitHub 官方 |
+| **技能数量** | 20 个 + 7 命令 | 7 个核心技能 | 3 个核心命令 |
 | **安装复杂度** | 低 | 低 | 中 |
-| **学习曲线** | 低 | 中 | 中 |
-| **平台支持** | Claude Code 专用 | Claude Code 为主 | 20+ AI 平台 |
-| **方法论强度** | 中 | 高（TDD） | 高（规范驱动） |
-| **文档处理** | 强 | 中 | 弱 |
-| **代码审查** | 中 | 强 | 中 |
-| **项目管理** | 弱 | 中 | 强 |
+| **学习曲线** | 中 | 中 | 中 |
+| **平台支持** | Claude Code + Gemini + Cursor | Claude Code 为主 | 20+ AI 平台 |
+| **方法论强度** | 高（六阶段流程） | 高（TDD） | 高（规范驱动） |
+| **代理角色** | 3 个（审查/测试/安全） | 无 | 无 |
+| **发布流程** | 完整 CI/CD 技能 | 中等 | 中 |
 
 ### 4.2 使用场景推荐
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  选择 Agent Skills 如果：                               │
-│  • 需要 PDF/DOCX/PPTX 文档处理                          │
-│  • 追求官方稳定方案                                      │
-│  • 快速上手，学习成本低                                  │
-│  • 只使用 Claude Code                                   │
+│  • 需要完整的六阶段开发流程（定义→发布）                  │
+│  • 需要专业代理角色（审查/测试/安全）                     │
+│  • 希望有清晰的斜杠命令驱动                              │
+│  • 跨平台需求（Claude/Gemini/Cursor）                    │
 └─────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────┐
@@ -454,17 +606,18 @@ my-ecommerce-app/
 三者可以组合使用：
 
 ```bash
-# 1. 使用 Spec Kit 建立项目规范
+# 1. 安装 Agent Skills（完整开发流程）
+/plugin marketplace add addyosmani/agent-skills
+/plugin install agent-skills@addy-agent-skills
+
+# 2. 使用 Spec Kit 建立项目规范
 specify init my-project --integration claude
 
-# 2. 使用 Agent Skills 处理文档
-/plugin install document-skills@anthropic-agent-skills
-
-# 3. 使用 Superpowers 进行 TDD 开发
+# 3. 使用 Superpowers 进行深度 TDD 开发
 /plugin install superpowers@claude-plugins-official
 
 # 工作流：
-# Spec Kit（规划）→ Agent Skills（文档处理）→ Superpowers（TDD 实现）
+# Spec Kit（项目规划）→ Agent Skills（六阶段开发）→ Superpowers（深度 TDD）
 ```
 
 ---
@@ -474,9 +627,9 @@ specify init my-project --integration claude
 ### Q1: 可以同时安装多个框架吗？
 
 可以，它们互不冲突。建议根据项目阶段选择：
-- 规划阶段：Spec Kit
-- 文档处理：Agent Skills
-- 编码阶段：Superpowers
+- 项目规划：Spec Kit
+- 六阶段开发：Agent Skills
+- 深度 TDD：Superpowers
 
 ### Q2: 哪个框架对中文支持最好？
 
@@ -487,7 +640,7 @@ specify init my-project --integration claude
 
 ```bash
 # Agent Skills
-/plugin update document-skills@anthropic-agent-skills
+/plugin update agent-skills@addy-agent-skills
 
 # Superpowers
 /plugin update superpowers@claude-plugins-official
@@ -500,7 +653,7 @@ pipx upgrade specify-cli
 
 ## 参考资料
 
-- [Anthropic Skills 官方仓库](https://github.com/anthropics/skills)
+- [Agent Skills (Addy Osmani) 官方仓库](https://github.com/addyosmani/agent-skills)
 - [Superpowers 官方仓库](https://github.com/obra/superpowers)
 - [Superpowers 中文版](https://github.com/jnMetaCode/superpowers-zh)
 - [Spec Kit 官方仓库](https://github.com/github/spec-kit)
