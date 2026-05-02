@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 四大技能框架使用指南</title>
+    <style>
+        :root {
+            --primary-color: #7c3aed;
+            --secondary-color: #2563eb;
+            --accent-color: #059669;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --code-bg: #0d1117;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .intro {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 1rem;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        /* 导航目录 */
+        .toc {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .toc h2 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .toc-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .toc-list a {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .toc-list a:hover, .toc-list a:focus {
+            background: var(--primary-color);
+        }
+
+        /* 章节样式 */
+        section {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            color: var(--accent-color);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        h4 {
+            font-size: 1rem;
+            color: var(--text-color);
+            margin: 1rem 0 0.5rem;
+        }
+
+        p {
+            margin-bottom: 0.75rem;
+        }
+
+        /* 表格样式 - 移动端优化 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            display: block;
+        }
+
+        thead {
+            background: var(--bg-color);
+        }
+
+        th, td {
+            padding: 0.6rem 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        th {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* 代码块 */
+        pre, code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: var(--code-bg);
+            border-radius: 4px;
+        }
+
+        code {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.85em;
+        }
+
+        pre {
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            border: 1px solid var(--border-color);
+        }
+
+        pre code {
+            padding: 0;
+            background: none;
+        }
+
+        /* 列表 */
+        ul, ol {
+            padding-left: 1.5rem;
+            margin: 0.75rem 0;
+        }
+
+        li {
+            margin-bottom: 0.3rem;
+        }
+
+        /* 强调块 */
+        blockquote {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-style: italic;
+        }
+
+        /* 流程图容器 */
+        .flow-diagram {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-size: 0.75rem;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        /* 框架卡片 */
+        .framework-card {
+            background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg-color) 100%);
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .framework-card h3 {
+            margin-top: 0;
+        }
+
+        /* 徽章 */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.3rem;
+        }
+
+        .badge-purple { background: var(--primary-color); }
+        .badge-blue { background: var(--secondary-color); }
+        .badge-green { background: var(--accent-color); }
+        .badge-gray { background: var(--text-muted); }
+
+        /* 锚点链接 */
+        a[href^="#"] {
+            color: var(--secondary-color);
+        }
+
+        /* 参考链接 */
+        .references {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .references ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .references a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            display: block;
+            padding: 0.3rem 0;
+        }
+
+        .references a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 600px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            pre {
+                padding: 0.75rem;
+                font-size: 0.7rem;
+            }
+
+            table {
+                font-size: 0.75rem;
+            }
+
+            th, td {
+                padding: 0.4rem 0.3rem;
+            }
+
+            .flow-diagram {
+                font-size: 0.65rem;
+            }
+
+            .toc-list a {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
+        /* 返回顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Claude Code 四大技能框架使用指南</h1>
+        </header>
+
+        <div class="intro">
+            <p>本文档详细介绍 Agent Skills、Superpowers、Spec Kit 和 Claude Code Game Studios 四大框架的安装、使用方式和实战教程。</p>
+        </div>
+
+        <!-- 目录 -->
+        <nav class="toc">
+            <h2>目录导航</h2>
+            <ul class="toc-list">
+                <li><a href="#section1">Agent Skills</a></li>
+                <li><a href="#section2">Superpowers</a></li>
+                <li><a href="#section3">Spec Kit</a></li>
+                <li><a href="#section4">Game Studios</a></li>
+                <li><a href="#section5">对比选择</a></li>
+                <li><a href="#section6">常见问题</a></li>
+                <li><a href="#references">参考资料</a></li>
+            </ul>
+        </nav>
+
+        <!-- Section 1: Agent Skills -->
+        <section id="section1">
+            <h2>1. Agent Skills（Addy Osmani 技能框架）</h2>
+
+            <h3>1.1 简介</h3>
+            <p>Agent Skills 是由 Addy Osmani 创建的完整软件开发方法论框架，包含 <span class="badge badge-purple">20 个</span>专业技能和 <span class="badge badge-blue">7 个</span>斜杠命令，覆盖从需求定义到发布上线的完整开发流程。</p>
+
+            <div class="framework-card">
+                <h4>核心设计理念</h4>
+                <ul>
+                    <li><strong>流程而非散文</strong>：提供步骤式工作流程</li>
+                    <li><strong>反理性化</strong>：针对常见的"跳过步骤借口"提供应对方案</li>
+                    <li><strong>验证不可妥协</strong>：必须提供证据证明完成</li>
+                    <li><strong>渐进式披露</strong>：最小化 token 消耗</li>
+                </ul>
+            </div>
+
+            <h3>1.2 安装方式</h3>
+
+            <h4>Claude Code（推荐）</h4>
+<pre><code># 添加技能市场
+/plugin marketplace add addyosmani/agent-skills
+
+# 安装技能包
+/plugin install agent-skills@addy-agent-skills</code></pre>
+
+            <h4>本地安装</h4>
+<pre><code># 克隆仓库
+git clone https://github.com/addyosmani/agent-skills.git
+
+# 使用本地目录启动
+claude --plugin-dir /path/to/agent-skills</code></pre>
+
+            <h4>Gemini CLI</h4>
+<pre><code>gemini skills install https://github.com/addyosmani/agent-skills.git --path skills</code></pre>
+
+            <h4>Cursor</h4>
+<pre><code># 将 SKILL.md 文件复制到 .cursor/rules/ 目录
+cp skills/*/SKILL.md .cursor/rules/</code></pre>
+
+            <h3>1.3 七大斜杠命令</h3>
+            <table>
+                <thead>
+                    <tr><th>命令</th><th>核心原则</th><th>用途</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>/spec</code></td><td>Spec before code</td><td>先写规范，再写代码</td></tr>
+                    <tr><td><code>/plan</code></td><td>Small, atomic tasks</td><td>拆分为原子级小任务</td></tr>
+                    <tr><td><code>/build</code></td><td>One slice at a time</td><td>一次实现一个切片</td></tr>
+                    <tr><td><code>/test</code></td><td>Tests are proof</td><td>测试是完成的证明</td></tr>
+                    <tr><td><code>/review</code></td><td>Improve code health</td><td>改善代码健康度</td></tr>
+                    <tr><td><code>/code-simplify</code></td><td>Clarity over cleverness</td><td>清晰胜于炫技</td></tr>
+                    <tr><td><code>/ship</code></td><td>Faster is safer</td><td>快速发布更安全</td></tr>
+                </tbody>
+            </table>
+
+            <h3>1.4 完整技能列表（20 个）</h3>
+
+            <h4>Define 阶段（定义）</h4>
+            <table>
+                <thead><tr><th>技能</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>idea-refine</code></td><td>想法精炼，验证想法可行性</td></tr>
+                    <tr><td><code>spec-driven-development</code></td><td>规范驱动开发，先写规范再编码</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Plan 阶段（规划）</h4>
+            <table>
+                <thead><tr><th>技能</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>planning-and-task-breakdown</code></td><td>任务拆分，将大任务分解为原子级步骤</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Build 阶段（构建）</h4>
+            <table>
+                <thead><tr><th>技能</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>incremental-implementation</code></td><td>渐进式实现，一次一个切片</td></tr>
+                    <tr><td><code>context-engineering</code></td><td>上下文工程，优化 AI 理解效率</td></tr>
+                    <tr><td><code>source-driven-development</code></td><td>源码驱动开发，基于实际代码而非假设</td></tr>
+                    <tr><td><code>frontend-ui-engineering</code></td><td>前端 UI 工程，组件化开发最佳实践</td></tr>
+                    <tr><td><code>test-driven-development</code></td><td>测试驱动开发，RED-GREEN-REFACTOR</td></tr>
+                    <tr><td><code>api-and-interface-design</code></td><td>API 与接口设计，RESTful 最佳实践</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Verify 阶段（验证）</h4>
+            <table>
+                <thead><tr><th>技能</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>browser-testing-with-devtools</code></td><td>使用 DevTools 进行浏览器测试</td></tr>
+                    <tr><td><code>debugging-and-error-recovery</code></td><td>调试与错误恢复，系统化排查问题</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Review 阶段（审查）</h4>
+            <table>
+                <thead><tr><th>技能</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>code-review-and-quality</code></td><td>代码审查与质量检查</td></tr>
+                    <tr><td><code>code-simplification</code></td><td>代码简化，消除冗余</td></tr>
+                    <tr><td><code>security-and-hardening</code></td><td>安全加固，OWASP 漏洞检查</td></tr>
+                    <tr><td><code>performance-optimization</code></td><td>性能优化，识别瓶颈</td></tr>
+                </tbody>
+            </table>
+
+            <h4>Ship 阶段（发布）</h4>
+            <table>
+                <thead><tr><th>技能</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>git-workflow-and-versioning</code></td><td>Git 工作流与版本管理</td></tr>
+                    <tr><td><code>ci-cd-and-automation</code></td><td>CI/CD 与自动化部署</td></tr>
+                    <tr><td><code>deprecation-and-migration</code></td><td>弃用与迁移策略</td></tr>
+                    <tr><td><code>documentation-and-adrs</code></td><td>文档与架构决策记录（ADR）</td></tr>
+                    <tr><td><code>shipping-and-launch</code></td><td>发布上线流程</td></tr>
+                </tbody>
+            </table>
+
+            <h3>1.5 代理角色（Agent Personas）</h3>
+            <table>
+                <thead><tr><th>角色</th><th>视角</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>code-reviewer</code></td><td>Staff Engineer 视角</td><td>高标准代码审查</td></tr>
+                    <tr><td><code>test-engineer</code></td><td>QA/测试策略视角</td><td>测试覆盖与质量保证</td></tr>
+                    <tr><td><code>security-auditor</code></td><td>OWASP/漏洞视角</td><td>安全审计与加固</td></tr>
+                </tbody>
+            </table>
+
+            <h3>1.6 完整开发流程示例</h3>
+<pre><code># ========== Define 阶段 ==========
+
+# 步骤 1: 精炼想法
+> /spec
+我想开发一个实时协作的白板应用，支持多人同时绘制
+
+# Claude 将引导你：
+# - 定义核心功能边界
+# - 识别技术可行性
+# - 生成初步规范文档
+
+# 步骤 2: 规范驱动开发
+> /spec-driven-development
+为白板应用创建详细规范
+
+# ========== Plan 阶段 ==========
+
+# 步骤 3: 任务拆分
+> /plan
+将白板应用拆分为可执行的小任务
+
+# Claude 将输出：
+# Phase 1: 核心画布组件
+#   - [ ] Canvas 组件基础结构
+#   - [ ] 绘制工具栏
+#   - [ ] 颜色选择器
+# Phase 2: 实时同步
+#   - [ ] WebSocket 连接
+#   - [ ] 操作广播机制
+# Phase 3: 用户管理
+#   - [ ] 用户标识
+#   - [ ] 光标显示
+
+# ========== Build 阶段 ==========
+
+# 步骤 4: 渐进式实现
+> /build
+实现 Canvas 组件，一次一个功能切片
+
+# 步骤 5: 测试驱动开发
+> /test-driven-development
+为绘制功能编写测试
+
+# Claude 将执行 RED-GREEN-REFACTOR 循环
+
+# ========== Verify 阶段 ==========
+
+# 步骤 6: 浏览器测试
+> /browser-testing-with-devtools
+测试画布在 Chrome 中的渲染性能
+
+# 步骤 7: 调试错误
+> /debugging-and-error-recovery
+排查 WebSocket 连接断开的问题
+
+# ========== Review 阶段 ==========
+
+# 步骤 8: 代码审查
+> /review
+审查整个白板应用的代码质量
+
+# 步骤 9: 安全审计
+> /security-auditor
+检查 WebSocket 连接的安全漏洞
+
+# ========== Ship 阶段 ==========
+
+# 步骤 10: 简化代码
+> /code-simplify
+简化 Canvas 组件的实现
+
+# 步骤 11: 发布上线
+> /ship
+准备白板应用的发布</code></pre>
+        </section>
+
+        <!-- Section 2: Superpowers -->
+        <section id="section2">
+            <h2>2. Superpowers（超能力框架）</h2>
+
+            <h3>2.1 简介</h3>
+            <p>Superpowers 是由 Jesse Vincent 创建的完整多代理开发工作流框架，强调测试驱动开发（TDD）和结构化方法论。<span class="badge badge-green">v5.0.7</span> 已官方集成到 Claude Code。</p>
+
+            <h3>2.2 安装方式</h3>
+
+            <h4>Claude Code</h4>
+<pre><code>/plugin install superpowers@claude-plugins-official</code></pre>
+
+            <h4>其他平台</h4>
+<pre><code># OpenAI Codex CLI
+/plugins  # 搜索 "superpowers"
+
+# Cursor
+/add-plugin superpowers
+
+# GitHub Copilot CLI
+copilot plugin marketplace add obra/superpowers-marketplace
+copilot plugin install superpowers@superpowers-marketplace
+
+# Gemini CLI
+gemini extensions install https://github.com/obra/superpowers</code></pre>
+
+            <h3>2.3 核心技能列表</h3>
+            <table>
+                <thead><tr><th>技能名称</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>brainstorming</code></td><td>头脑风暴，分块验证设计想法</td></tr>
+                    <tr><td><code>using-git-worktrees</code></td><td>在新分支创建隔离工作空间</td></tr>
+                    <tr><td><code>writing-plans</code></td><td>将工作拆分为 2-5 分钟任务</td></tr>
+                    <tr><td><code>subagent-driven-development</code></td><td>调度子代理并两阶段审查</td></tr>
+                    <tr><td><code>test-driven-development</code></td><td>强制 RED-GREEN-REFACTOR 循环</td></tr>
+                    <tr><td><code>requesting-code-review</code></td><td>根据计划进行代码审查</td></tr>
+                    <tr><td><code>finishing-a-development-branch</code></td><td>合并/PR 决策工作流</td></tr>
+                </tbody>
+            </table>
+
+            <h3>2.4 完整开发流程示例</h3>
+<pre><code># 步骤 1: 头脑风暴
+> /brainstorming
+我想开发一个用户认证系统，需要支持邮箱注册和 OAuth 登录
+
+# 步骤 2: 创建隔离工作区
+> /using-git-worktrees
+为新功能创建分支 feature/auth-system
+
+# 步骤 3: 编写计划
+> /writing-plans
+为认证系统创建详细实施计划
+
+# 步骤 4: 测试驱动开发
+> /test-driven-development
+实现用户注册功能，先写测试
+
+# 步骤 5: 请求代码审查
+> /requesting-code-review
+审查认证模块的实现
+
+# 步骤 6: 完成分支
+> /finishing-a-development-branch
+合并认证系统分支</code></pre>
+
+            <h3>2.5 测试驱动开发（TDD）示例</h3>
+<pre><code># 用户输入
+> /test-driven-development
+实现一个计算器类，支持加减乘除
+
+# Claude 将执行：
+# 1. RED 阶段：先编写失败的测试
+def test_calculator_add():
+    calc = Calculator()
+    assert calc.add(2, 3) == 5
+
+# 2. GREEN 阶段：编写最小代码使测试通过
+class Calculator:
+    def add(self, a, b):
+        return a + b
+
+# 3. REFACTOR 阶段：优化代码结构
+class Calculator:
+    """支持基本四则运算的计算器"""
+    def add(self, a: int, b: int) -> int:
+        return a + b</code></pre>
+
+            <h3>2.6 核心理念</h3>
+            <div class="framework-card">
+                <ul>
+                    <li><strong>测试先行</strong>：先写测试，再写实现</li>
+                    <li><strong>系统化优于临时性</strong>：流程优于猜测</li>
+                    <li><strong>降低复杂度</strong>：简洁是首要目标</li>
+                    <li><strong>证据优于声明</strong>：验证后再宣布成功</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 3: Spec Kit -->
+        <section id="section3">
+            <h2>3. Spec Kit（规范驱动开发工具包）</h2>
+
+            <h3>3.1 简介</h3>
+            <p>Spec Kit 是 GitHub 官方开源的规范驱动开发框架，支持 <span class="badge badge-purple">20+</span> AI 编程助手，核心思想是将"随意编码（Vibe Coding）"转变为结构化的规范驱动开发。</p>
+
+            <h3>3.2 安装方式</h3>
+
+            <h4>方法一：使用 uvx（推荐）</h4>
+<pre><code>uvx --from git+https://github.com/github/spec-kit.git@vX.Y.Z specify init my-project</code></pre>
+
+            <h4>方法二：使用 pipx</h4>
+<pre><code>pipx install git+https://github.com/github/spec-kit.git@vX.Y.Z
+specify init my-project</code></pre>
+
+            <h4>方法三：离线安装</h4>
+<pre><code># 构建 wheel
+pip wheel .
+
+# 传输 dist/ 文件夹后安装
+pip install --no-index --find-links=./dist specify-cli</code></pre>
+
+            <h3>3.3 验证安装</h3>
+<pre><code>specify version</code></pre>
+
+            <h3>3.4 支持的集成平台</h3>
+<pre><code># 初始化时指定平台
+specify init my-project --integration claude
+specify init my-project --integration gemini
+specify init my-project --integration copilot
+specify init my-project --integration codebuddy
+specify init my-project --integration pi</code></pre>
+
+            <h3>3.5 四步开发流程</h3>
+            <div class="flow-diagram">
+┌─────────────────────────────────────────────────────────┐
+│  Step 1: 建立项目原则 (Project Principles)              │
+│  定义项目的核心价值观和约束条件                           │
+└─────────────────────┬───────────────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 2: 创建项目规范 (Project Specification)           │
+│  详细描述项目需求和技术规格                              │
+└─────────────────────┬───────────────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 3: 功能规范澄清 (Feature Specification)          │
+│  在规划前必须澄清的功能细节                              │
+└─────────────────────┬───────────────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│  Step 4: 实施计划 (Implementation Plan)                │
+│  具体的编码实施步骤                                     │
+└─────────────────────────────────────────────────────────┘
+            </div>
+
+            <h3>3.6 核心命令</h3>
+            <p>安装后，在 Claude Code 中可使用以下命令：</p>
+<pre><code># 创建项目规范
+/speckit.specify
+
+# 创建实施计划
+/speckit.plan
+
+# 管理任务列表
+/speckit.tasks</code></pre>
+
+            <h3>3.7 完整使用示例</h3>
+
+            <h4>步骤 1: 初始化项目</h4>
+<pre><code># 创建新项目
+specify init my-ecommerce-app --integration claude
+
+# 这将创建以下结构
+my-ecommerce-app/
+├── .specify/
+│   ├── principles.md      # 项目原则
+│   ├── specifications/     # 规范文档
+│   ├── plans/              # 实施计划
+│   └── scripts/            # 自动化脚本
+└── src/</code></pre>
+
+            <h4>步骤 2: 建立项目原则</h4>
+<pre><code># 用户输入
+> /speckit.specify
+
+# 创建 .specify/principles.md 内容示例：
+# 项目原则
+
+## 核心价值观
+- 安全性优先：所有用户输入必须验证
+- 可测试性：核心功能需有单元测试
+- 文档完整：API 必须有文档注释
+
+## 技术约束
+- 使用 TypeScript 严格模式
+- 数据库操作使用 ORM
+- API 遵循 RESTful 规范</code></pre>
+
+            <h4>步骤 3-5: 功能规范与实施</h4>
+<pre><code># 创建功能规范
+> /speckit.specify --feature user-auth
+
+# 生成实施计划
+> /speckit.plan --feature user-auth
+
+# 查看任务列表
+> /speckit.tasks</code></pre>
+        </section>
+
+        <!-- Section 4: Game Studios -->
+        <section id="section4">
+            <h2>4. Claude Code Game Studios（游戏开发工作室框架）</h2>
+
+            <h3>4.1 简介</h3>
+            <p>Claude Code Game Studios 是由 Donchitos 创建的完整游戏开发工作室框架，将单个 Claude Code 会话转变为完整的游戏开发团队。</p>
+
+            <div class="framework-card">
+                <h4>框架规模</h4>
+                <ul>
+                    <li><span class="badge badge-purple">49 个</span> 专业代理</li>
+                    <li><span class="badge badge-blue">72 个</span> 技能命令</li>
+                    <li><span class="badge badge-green">12 个</span> 自动化钩子</li>
+                    <li><span class="badge badge-gray">11 个</span> 路径规则</li>
+                </ul>
+            </div>
+
+            <h4>核心理念</h4>
+            <ul>
+                <li><strong>结构化协作而非自主执行</strong>：每个代理遵循"提问→选项→决策→草稿→批准"流程</li>
+                <li><strong>专业分工</strong>：总监→ 部门主管→ 专家三层架构</li>
+                <li><strong>跨部门协调</strong>：代理间可横向咨询但需上级裁决跨领域决策</li>
+                <li><strong>自动化安全</strong>：钩子自动验证提交、资产、代码规范</li>
+            </ul>
+
+            <h3>4.2 安装方式</h3>
+<pre><code># 克隆仓库作为项目模板
+git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git my-game
+cd my-game
+
+# 启动 Claude Code
+claude
+
+# 运行引导式入门
+> /start</code></pre>
+
+            <h3>4.3 工作室层级架构</h3>
+            <div class="flow-diagram">
+Tier 1 — 总监层（使用 Opus 模型）
+├── creative-director    创意总监 - 创意决策最高权威
+├── technical-director   技术总监 - 技术架构最高决策
+└── producer             制作人 - 生产协调与时间管理
+
+Tier 2 — 部门主管层（使用 Sonnet 模型）
+├── game-designer        游戏设计师
+├── lead-programmer      主程序员
+├── art-director         美术总监
+├── audio-director       音频总监
+├── narrative-director   叙事总监
+├── qa-lead              QA主管
+└── 更多主管角色...
+
+Tier 3 — 专家层（使用 Sonnet/Haiku 模型）
+├── gameplay-programmer  游戏逻辑程序员
+├── engine-programmer    引擎程序员
+├── ai-programmer        AI程序员
+├── network-programmer   网络程序员
+└ └更多专家角色...
+            </div>
+
+            <h3>4.4 引擎专家支持</h3>
+            <table>
+                <thead><tr><th>引擎</th><th>主专家</th><th>子专家</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Godot 4</strong></td><td><code>godot-specialist</code></td><td>GDScript、Shader、GDExtension</td></tr>
+                    <tr><td><strong>Unity</strong></td><td><code>unity-specialist</code></td><td>DOTS/ECS、Shader/VFX、Addressables</td></tr>
+                    <tr><td><strong>Unreal 5</strong></td><td><code>unreal-specialist</code></td><td>GAS、Blueprint、Replication、UMG</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.5 七大斜杠命令分类（72 个技能）</h3>
+
+            <h4>入门与导航</h4>
+            <table>
+                <thead><tr><th>命令</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>/start</code></td><td>引导式入门，检测项目状态并推荐工作流</td></tr>
+                    <tr><td><code>/help</code></td><td>显示帮助信息</td></tr>
+                    <tr><td><code>/project-stage-detect</code></td><td>分析现有项目阶段和缺失项</td></tr>
+                    <tr><td><code>/setup-engine</code></td><td>配置游戏引擎</td></tr>
+                </tbody>
+            </table>
+
+            <h4>游戏设计</h4>
+            <table>
+                <thead><tr><th>命令</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>/brainstorm</code></td><td>从零开始探索游戏创意</td></tr>
+                    <tr><td><code>/map-systems</code></td><td>将概念分解为独立系统</td></tr>
+                    <tr><td><code>/design-system</code></td><td>为每个 MVP 系统编写 GDD</td></tr>
+                    <tr><td><code>/review-all-gdds</code></td><td>跨系统一致性检查</td></tr>
+                </tbody>
+            </table>
+
+            <h4>架构设计</h4>
+            <table>
+                <thead><tr><th>命令</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>/create-architecture</code></td><td>生成主架构蓝图和 ADR 需求列表</td></tr>
+                    <tr><td><code>/architecture-decision</code></td><td>记录关键技术决策（ADR）</td></tr>
+                    <tr><td><code>/architecture-review</code></td><td>验证架构覆盖完整性</td></tr>
+                </tbody>
+            </table>
+
+            <h4>史诗与冲刺</h4>
+            <table>
+                <thead><tr><th>命令</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>/create-epics</code></td><td>将系统映射为史诗</td></tr>
+                    <tr><td><code>/create-stories</code></td><td>将史诗拆分为可实现故事</td></tr>
+                    <tr><td><code>/dev-story</code></td><td>开发单个故事</td></tr>
+                    <tr><td><code>/sprint-plan</code></td><td>规划冲刺</td></tr>
+                    <tr><td><code>/sprint-status</code></td><td>冲刺状态检查</td></tr>
+                </tbody>
+            </table>
+
+            <h4>QA 与测试</h4>
+            <table>
+                <thead><tr><th>命令</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>/qa-plan</code></td><td>创建测试计划</td></tr>
+                    <tr><td><code>/smoke-check</code></td><td>烟雾测试</td></tr>
+                    <tr><td><code>/regression-suite</code></td><td>回归测试套件</td></tr>
+                </tbody>
+            </table>
+
+            <h4>发布管理</h4>
+            <table>
+                <thead><tr><th>命令</th><th>用途</th></tr></thead>
+                <tbody>
+                    <tr><td><code>/release-checklist</code></td><td>发布检查清单</td></tr>
+                    <tr><td><code>/launch-checklist</code></td><td>上线检查清单</td></tr>
+                    <tr><td><code>/changelog</code></td><td>变更日志</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.6 自动化钩子（12 个）</h3>
+            <table>
+                <thead><tr><th>钩子</th><th>触发时机</th><th>功能</th></tr></thead>
+                <tbody>
+                    <tr><td><code>validate-commit.sh</code></td><td>PreToolUse</td><td>验证提交内容</td></tr>
+                    <tr><td><code>validate-push.sh</code></td><td>PreToolUse</td><td>保护分支推送警告</td></tr>
+                    <tr><td><code>validate-assets.sh</code></td><td>PostToolUse</td><td>验证资产命名规范</td></tr>
+                    <tr><td><code>session-start.sh</code></td><td>会话开始</td><td>显示当前分支状态</td></tr>
+                    <tr><td><code>detect-gaps.sh</code></td><td>会话开始</td><td>检测缺失设计文档</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.7 完整开发流程示例</h3>
+<pre><code># ========== Phase 1: 入门检测 ==========
+> /start
+
+# ========== Phase 2: 概念阶段 ==========
+> /brainstorm "太空探索 + cozy元素"
+> /setup-engine godot 4.6
+> /art-bible
+> /map-systems
+> /design-system Player Movement
+> /review-all-gdds
+
+# ========== Phase 3: 架构阶段 ==========
+> /create-architecture
+> /architecture-decision "使用哪种物理引擎"
+> /architecture-review
+
+# ========== Phase 4: 前期制作 ==========
+> /ux-design
+> /create-epics
+> /create-stories
+> /sprint-plan
+
+# ========== Phase 5: 生产阶段 ==========
+> /dev-story STORY-001
+> /story-done STORY-001
+> /sprint-status
+
+# ========== Phase 6: QA 阶段 ==========
+> /qa-plan
+> /smoke-check
+> /regression-suite
+
+# ========== Phase 7: 发布阶段 ==========
+> /release-checklist
+> /launch-checklist
+> /changelog</code></pre>
+
+            <h3>4.8 代理协调协议</h3>
+            <blockquote>
+                <strong>核心原则：用户控制，代理协助</strong><br>
+                1. Ask（提问）—— 代理先问问题再提方案<br>
+                2. Present Options（展示选项）—— 代理提供 2-4 个选项<br>
+                3. You Decide（你决策）—— 用户做最终决定<br>
+                4. Draft（草稿）—— 代理展示工作草稿<br>
+                5. Approve（批准）—— 用户批准后才能写入文件
+            </blockquote>
+
+            <h3>4.9 审查模式设置</h3>
+            <table>
+                <thead><tr><th>模式</th><th>适用场景</th><th>审查频率</th></tr></thead>
+                <tbody>
+                    <tr><td><code>Full</code></td><td>团队开发、学习工作流</td><td>每个关键步骤都有总监审查</td></tr>
+                    <tr><td><code>Lean</code>（推荐）</td><td>独立开发者、小团队</td><td>仅在阶段门审查</td></tr>
+                    <tr><td><code>Solo</code></td><td>Game Jam、原型</td><td>无总监审查，最大速度</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 5: Comparison -->
+        <section id="section5">
+            <h2>5. 实战对比与选择建议</h2>
+
+            <h3>5.1 快速对比表</h3>
+            <table>
+                <thead>
+                    <tr><th>维度</th><th>Agent Skills</th><th>Superpowers</th><th>Spec Kit</th><th>Game Studios</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>来源</td><td>Addy Osmani</td><td>Jesse Vincent</td><td>GitHub 官方</td><td>Donchitos</td></tr>
+                    <tr><td>技能数量</td><td>20+7</td><td>7</td><td>3</td><td>72+49代理</td></tr>
+                    <tr><td>安装复杂度</td><td>低</td><td>低</td><td>中</td><td>低</td></tr>
+                    <tr><td>方法论强度</td><td>高</td><td>高(TDD)</td><td>高</td><td>极高</td></tr>
+                    <tr><td>适用领域</td><td>通用</td><td>通用</td><td>通用</td><td>游戏开发</td></tr>
+                </tbody>
+            </table>
+
+            <h3>5.2 使用场景推荐</h3>
+
+            <div class="framework-card">
+                <h4>选择 Agent Skills 如果：</h4>
+                <ul>
+                    <li>需要完整的六阶段开发流程（定义→发布）</li>
+                    <li>需要专业代理角色（审查/测试/安全）</li>
+                    <li>跨平台需求（Claude/Gemini/Cursor）</li>
+                </ul>
+            </div>
+
+            <div class="framework-card">
+                <h4>选择 Superpowers 如果：</h4>
+                <ul>
+                    <li>团队重视 TDD 测试驱动开发</li>
+                    <li>需要完整的代码审查工作流</li>
+                    <li>需要多代理协作开发</li>
+                </ul>
+            </div>
+
+            <div class="framework-card">
+                <h4>选择 Spec Kit 如果：</h4>
+                <ul>
+                    <li>团队使用多种 AI 编程工具</li>
+                    <li>项目需要详细的规范文档</li>
+                    <li>需要从"随意编码"转向规范开发</li>
+                </ul>
+            </div>
+
+            <div class="framework-card">
+                <h4>选择 Claude Code Game Studios 如果：</h4>
+                <ul>
+                    <li>正在开发游戏项目（独立游戏/原型）</li>
+                    <li>需要模拟真实游戏工作室的协作结构</li>
+                    <li>使用 Godot/Unity/Unreal 引擎</li>
+                    <li>需要 49 个专业代理覆盖游戏开发全流程</li>
+                </ul>
+            </div>
+
+            <h3>5.3 组合使用建议</h3>
+<pre><code># 1. 安装 Agent Skills（完整开发流程）
+/plugin install agent-skills@addy-agent-skills
+
+# 2. 使用 Spec Kit 建立项目规范
+specify init my-project --integration claude
+
+# 3. 使用 Superpowers 进行深度 TDD 开发
+/plugin install superpowers@claude-plugins-official
+
+# 4. 游戏项目：使用 Claude Code Game Studios
+git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git my-game</code></pre>
+        </section>
+
+        <!-- Section 6: FAQ -->
+        <section id="section6">
+            <h2>6. 常见问题</h2>
+
+            <h3>Q1: 可以同时安装多个框架吗？</h3>
+            <p>可以，它们互不冲突。建议根据项目阶段选择：</p>
+            <ul>
+                <li>项目规划：Spec Kit</li>
+                <li>六阶段开发：Agent Skills</li>
+                <li>深度 TDD：Superpowers</li>
+                <li>游戏开发：Claude Code Game Studios</li>
+            </ul>
+
+            <h3>Q2: 哪个框架对中文支持最好？</h3>
+            <ul>
+                <li>Superpowers 中文版：<a href="https://github.com/jnMetaCode/superpowers-zh" target="_blank">superpowers-zh</a></li>
+                <li>Spec Kit 中文版：<a href="https://github.com/Linfee/spec-kit-cn" target="_blank">spec-kit-cn</a></li>
+            </ul>
+
+            <h3>Q3: 如何更新到最新版本？</h3>
+<pre><code># Agent Skills
+/plugin update agent-skills@addy-agent-skills
+
+# Superpowers
+/plugin update superpowers@claude-plugins-official
+
+# Spec Kit
+pipx upgrade specify-cli
+
+# Claude Code Game Studios
+git pull origin main</code></pre>
+
+            <h3>Q4: 游戏开发应该用哪个框架？</h3>
+            <p>如果开发游戏，强烈推荐使用 <strong>Claude Code Game Studios</strong>：</p>
+            <ul>
+                <li>专为游戏开发设计，包含 Godot/Unity/Unreal 专家代理</li>
+                <li>提供 49 个游戏专业代理（总监→主管→专家三层架构）</li>
+                <li>内置 MDA 框架、玩家心理学等专业游戏设计方法论</li>
+                <li>自动化钩子保证代码质量和资产规范</li>
+            </ul>
+            <p>非游戏项目可使用 Agent Skills + Superpowers 组合。</p>
+        </section>
+
+        <!-- References -->
+        <section id="references">
+            <h2>参考资料</h2>
+            <div class="references">
+                <ul>
+                    <li><a href="https://github.com/addyosmani/agent-skills" target="_blank">Agent Skills (Addy Osmani) 官方仓库</a></li>
+                    <li><a href="https://github.com/obra/superpowers" target="_blank">Superpowers 官方仓库</a></li>
+                    <li><a href="https://github.com/jnMetaCode/superpowers-zh" target="_blank">Superpowers 中文版</a></li>
+                    <li><a href="https://github.com/github/spec-kit" target="_blank">Spec Kit 官方仓库</a></li>
+                    <li><a href="https://github.github.com/spec-kit/installation.html" target="_blank">Spec Kit 官方文档</a></li>
+                    <li><a href="https://github.com/Linfee/spec-kit-cn" target="_blank">Spec Kit 中文版</a></li>
+                    <li><a href="https://github.com/Donchitos/Claude-Code-Game-Studios" target="_blank">Claude Code Game Studios 官方仓库</a></li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <a href="#" class="back-to-top" id="backToTop">↑ 顶部</a>
+
+    <script>
+        // 返回顶部按钮逻辑
+        const backToTop = document.getElementById('backToTop');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        backToTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 平滑滚动到锚点
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
