@@ -1,17 +1,18 @@
-# Claude Code 四大技能框架使用指南
+# Claude Code 五大技能框架使用指南
 
-> 本文档详细介绍 Agent Skills、Superpowers、Spec Kit 和 Claude Code Game Studios 四大框架的安装、使用方式和实战教程。
+> 本文档详细介绍 Agent Skills、Superpowers、Spec Kit、Claude Code Game Studios 和 UI/UX Pro Max 五大框架的安装、使用方式和实战教程。
 
 ---
 
 ## 目录
 
-1. [Agent Skills（官方技能框架）](#1-agent-skills官方技能框架)
+1. [Agent Skills（Addy Osmani 技能框架）](#1-agent-skillsaddy-osmani-技能框架)
 2. [Superpowers（超能力框架）](#2-superpowers超能力框架)
 3. [Spec Kit（规范驱动开发工具包）](#3-spec-kit规范驱动开发工具包)
 4. [Claude Code Game Studios（游戏开发工作室框架）](#4-claude-code-game-studios游戏开发工作室框架)
-5. [实战对比与选择建议](#5-实战对比与选择建议)
-6. [常见问题](#6-常见问题)
+5. [UI/UX Pro Max（UI/UX 设计智能框架）](#5-uiux-pro-maxuiux-设计智能框架)
+6. [实战对比与选择建议](#6-实战对比与选择建议)
+7. [常见问题](#7-常见问题)
 
 ---
 
@@ -999,23 +1000,338 @@ production/                  # 冲刺计划、里程碑、发布追踪
 
 ---
 
-## 5. 实战对比与选择建议
+## 5. UI/UX Pro Max（UI/UX 设计智能框架）
 
-### 5.1 快速对比表
+### 5.1 简介
 
-| 维度 | Agent Skills | Superpowers | Spec Kit | Game Studios |
-|------|-------------|-------------|----------|--------------|
-| **来源** | Addy Osmani（社区） | Jesse Vincent（社区） | GitHub 官方 | Donchitos（社区） |
-| **技能数量** | 20 个 + 7 命令 | 7 个核心技能 | 3 个核心命令 | 72 个技能 + 49 代理 |
-| **安装复杂度** | 低 | 低 | 中 | 低（克隆即用） |
-| **学习曲线** | 中 | 中 | 中 | 中高 |
-| **平台支持** | Claude Code + Gemini + Cursor | Claude Code 为主 | 20+ AI 平台 | Claude Code |
-| **方法论强度** | 高（六阶段流程） | 高（TDD） | 高（规范驱动） | 极高（七阶段流程） |
-| **代理角色** | 3 个（审查/测试/安全） | 无 | 无 | 49 个（三层架构） |
-| **发布流程** | 完整 CI/CD 技能 | 中等 | 中 | 完整发布流程 |
-| **适用领域** | 通用软件开发 | 通用软件开发 | 通用软件开发 | **游戏开发专用** |
+UI/UX Pro Max 是由 NextLevelBuilder 创建的 AI 驱动设计智能框架，提供专业级 UI/UX 设计能力，帮助 AI 编程助手生成美观、专业的界面设计。v2.5.0 版本包含 **161 个推理规则**、**67 种 UI 风格**、**161 种配色方案**、**57 种字体搭配**、**99 条 UX 指南**，支持 18 种 AI 编程助手。
 
-### 5.2 使用场景推荐
+**核心设计理念：**
+- **设计系统自动生成**：根据项目类型自动推荐最佳设计系统（风格、配色、字体、布局）
+- **行业推理规则**：161 个行业特定的设计推荐规则
+- **反模式检测**：自动识别并避免常见 UI/UX 错误
+- **多平台支持**：覆盖 Web、iOS、Android、跨平台等 15+ 技术栈
+
+### 5.2 核心功能
+
+#### 设计系统生成器（v2.0 核心功能）
+
+自动分析项目需求并生成完整设计系统：
+
+```
++----------------------------------------------------------------------------------------+
+|  TARGET: Serenity Spa - RECOMMENDED DESIGN SYSTEM                                      |
++----------------------------------------------------------------------------------------+
+|                                                                                        |
+|  PATTERN: Hero-Centric + Social Proof                                                  |
+|     Conversion: Emotion-driven with trust elements                                     |
+|     CTA: Above fold, repeated after testimonials                                       |
+|                                                                                        |
+|  STYLE: Soft UI Evolution                                                              |
+|     Keywords: Soft shadows, subtle depth, calming, premium feel                        |
+|     Best For: Wellness, beauty, lifestyle brands                                       |
+|                                                                                        |
+|  COLORS:                                                                               |
+|     Primary:    #E8B4B8 (Soft Pink)                                                    |
+|     Secondary:  #A8D5BA (Sage Green)                                                   |
+|     CTA:        #D4AF37 (Gold)                                                         |
+|     Background: #FFF5F5 (Warm White)                                                   |
+|                                                                                        |
+|  TYPOGRAPHY: Cormorant Garamond / Montserrat                                           |
+|     Mood: Elegant, calming, sophisticated                                              |
+|                                                                                        |
+|  KEY EFFECTS:                                                                          |
+|     Soft shadows + Smooth transitions (200-300ms) + Gentle hover states                |
+|                                                                                        |
+|  AVOID (Anti-patterns):                                                                |
+|     Bright neon colors + Harsh animations + AI purple/pink gradients                   |
++----------------------------------------------------------------------------------------+
+```
+
+#### 数据规模
+
+| 类别 | 数量 | 说明 |
+|------|------|------|
+| **推理规则** | 161 个 | 行业特定设计推荐 |
+| **UI 风格** | 67 种 | Glassmorphism、Minimalism、Brutalism 等 |
+| **配色方案** | 161 种 | 与产品类型 1:1 对应 |
+| **字体搭配** | 57 组 | Google Fonts 导入链接 |
+| **图表类型** | 25 种 | 数据可视化推荐 |
+| **技术栈** | 15 种 | React、Next.js、SwiftUI、Flutter 等 |
+| **UX 指南** | 99 条 | 最佳实践与反模式 |
+
+### 5.3 安装方式
+
+#### Claude Code Marketplace（推荐）
+
+```bash
+# 添加技能市场
+/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
+
+# 安装技能包
+/plugin install ui-ux-pro-max@ui-ux-pro-max-skill
+```
+
+#### 使用 CLI 安装（支持 18 种平台）
+
+```bash
+# 安装 CLI 工具
+npm install -g uipro-cli
+
+# 进入项目目录
+cd /path/to/your/project
+
+# 安装到指定平台
+uipro init --ai claude      # Claude Code
+uipro init --ai cursor      # Cursor
+uipro init --ai windsurf    # Windsurf
+uipro init --ai copilot     # GitHub Copilot
+uipro init --ai gemini      # Gemini CLI
+uipro init --ai codex       # Codex CLI
+uipro init --ai roocode     # Roo Code
+uipro init --ai continue    # Continue
+uipro init --ai all         # 所有平台
+```
+
+#### 全局安装
+
+```bash
+# 安装到全局目录（所有项目可用）
+uipro init --ai claude --global   # ~/.claude/skills/
+uipro init --ai cursor --global   # ~/.cursor/skills/
+```
+
+### 5.4 前置要求
+
+Python 3.x（搜索脚本依赖）：
+
+```bash
+# 检查 Python 版本
+python3 --version
+
+# macOS
+brew install python3
+
+# Ubuntu/Debian
+sudo apt update && sudo apt install python3
+
+# Windows
+winget install Python.Python.3.12
+```
+
+### 5.5 使用方式
+
+#### Skill 模式（自动激活）
+
+直接描述 UI/UX 任务，技能自动激活：
+
+```bash
+# 示例提示词
+Build a landing page for my SaaS product
+
+Create a dashboard for healthcare analytics
+
+Design a portfolio website with dark mode
+
+Make a mobile app UI for e-commerce
+
+Build a fintech banking app with dark theme
+```
+
+#### Workflow 模式（斜杠命令）
+
+部分平台需要使用斜杠命令：
+
+```bash
+> /ui-ux-pro-max Build a landing page for my SaaS product
+```
+
+### 5.6 支持的 UI 风格（67 种）
+
+#### 通用风格（49 种）
+
+| 风格 | 适用场景 |
+|------|----------|
+| Minimalism & Swiss Style | 企业应用、仪表盘、文档 |
+| Glassmorphism | 现代 SaaS、金融仪表盘 |
+| Neumorphism | 健康/冥想应用 |
+| Brutalism | 设计作品集、艺术项目 |
+| Claymorphism | 教育应用、儿童应用 |
+| Dark Mode (OLED) | 夜间模式应用、编程平台 |
+| Aurora UI | 现代 SaaS、创意机构 |
+| Bento Box Grid | 仪表盘、产品页、作品集 |
+| Y2K Aesthetic | 时尚品牌、音乐、Gen Z |
+| Cyberpunk UI | 游戏、科技产品、加密应用 |
+| AI-Native UI | AI 产品、聊天机器人 |
+| Spatial UI (VisionOS) | 空间计算应用、VR/AR |
+| Retro-Futurism | 游戏、娱乐、音乐平台 |
+| Organic Biophilic | 健康应用、可持续发展品牌 |
+| ... | （完整列表见官方文档） |
+
+#### Landing Page 风格（8 种）
+
+| 风格 | 适用场景 |
+|------|----------|
+| Hero-Centric Design | 强视觉识别产品 |
+| Conversion-Optimized | 销售页面、线索生成 |
+| Feature-Rich Showcase | SaaS、复杂产品 |
+| Social Proof-Focused | 服务、B2C 产品 |
+| Interactive Product Demo | 软件、工具 |
+| Storytelling-Driven | 品牌、机构、非营利 |
+
+#### BI/仪表盘风格（10 种）
+
+| 风格 | 适用场景 |
+|------|----------|
+| Data-Dense Dashboard | 复杂数据分析 |
+| Executive Dashboard | 高管摘要 |
+| Real-Time Monitoring | 运维、DevOps |
+| Financial Dashboard | 金融、会计 |
+| Sales Intelligence Dashboard | 销售团队、CRM |
+
+### 5.7 支持的行业推理规则（161 个）
+
+覆盖 8 大领域：
+
+| 领域 | 示例行业 |
+|------|----------|
+| **Tech & SaaS** | SaaS、B2B Service、AI/Chatbot、开发者工具 |
+| **Finance** | Fintech/Crypto、银行、保险、个人理财 |
+| **Healthcare** | 医疗诊所、药房、牙科、心理健康 |
+| **E-commerce** | 通用电商、奢侈品、P2P 市场、订阅盒子 |
+| **Services** | 美容/SPA、餐厅、酒店、法律、家政 |
+| **Creative** | 作品集、机构、摄影、游戏、音乐 |
+| **Lifestyle** | 习惯追踪、烹饪、冥想、天气、日记 |
+| **Emerging Tech** | Web3/NFT、空间计算、量子计算、无人机 |
+
+每个行业规则包含：
+- 推荐布局模式
+- 风格优先级
+- 配色情绪
+- 字体个性
+- 关键效果
+- 反模式警告
+
+### 5.8 支持的技术栈（15 种）
+
+| 类别 | 技术栈 |
+|------|--------|
+| **Web (HTML)** | HTML + Tailwind（默认） |
+| **React 生态** | React、Next.js、shadcn/ui |
+| **Vue 生态** | Vue、Nuxt.js、Nuxt UI |
+| **Angular** | Angular |
+| **PHP** | Laravel (Blade, Livewire, Inertia.js) |
+| **其他 Web** | Svelte、Astro |
+| **iOS** | SwiftUI |
+| **Android** | Jetpack Compose |
+| **跨平台** | React Native、Flutter |
+
+### 5.9 设计系统命令（高级用法）
+
+直接调用设计系统生成器：
+
+```bash
+# 生成设计系统（ASCII 输出）
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "beauty spa wellness" --design-system -p "Serenity Spa"
+
+# 生成设计系统（Markdown 输出）
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "fintech banking" --design-system -f markdown
+
+# 领域搜索
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "glassmorphism" --domain style
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "elegant serif" --domain typography
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "dashboard" --domain chart
+
+# 技术栈指南
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "form validation" --stack react
+```
+
+### 5.10 持久化设计系统
+
+保存设计系统到文件，跨会话使用：
+
+```bash
+# 生成并保存到 design-system/MASTER.md
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "SaaS dashboard" --design-system --persist -p "MyApp"
+
+# 创建页面级覆盖文件
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "SaaS dashboard" --design-system --persist -p "MyApp" --page "dashboard"
+```
+
+生成的目录结构：
+
+```
+design-system/
+├── MASTER.md           # 全局设计规范（颜色、字体、间距、组件）
+└── pages/
+    └── dashboard.md    # 页面特定覆盖（仅偏离 Master 的部分）
+```
+
+### 5.11 工作原理
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. USER REQUEST                                                │
+│     "Build a landing page for my beauty spa"                    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  2. MULTI-DOMAIN SEARCH (5 parallel searches)                   │
+│     • Product type matching (161 categories)                    │
+│     • Style recommendations (67 styles)                         │
+│     • Color palette selection (161 palettes)                    │
+│     • Landing page patterns (24 patterns)                       │
+│     • Typography pairing (57 font combinations)                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  3. REASONING ENGINE                                            │
+│     • Match product → UI category rules                         │
+│     • Apply style priorities (BM25 ranking)                     │
+│     • Filter anti-patterns for industry                         │
+│     • Process decision rules (JSON conditions)                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  4. COMPLETE DESIGN SYSTEM OUTPUT                               │
+│     Pattern + Style + Colors + Typography + Effects             │
+│     + Anti-patterns to avoid + Pre-delivery checklist           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 5.12 CLI 其他命令
+
+```bash
+uipro versions              # 查看可用版本
+uipro update                # 更新到最新版本
+uipro init --offline        # 离线安装（使用内置资源）
+uipro uninstall             # 移除技能（自动检测平台）
+uipro uninstall --ai claude # 移除特定平台
+uipro uninstall --global    # 移除全局安装
+```
+
+---
+
+## 6. 实战对比与选择建议
+
+### 6.1 快速对比表
+
+| 维度 | Agent Skills | Superpowers | Spec Kit | Game Studios | UI/UX Pro Max |
+|------|-------------|-------------|----------|--------------|---------------|
+| **来源** | Addy Osmani | Jesse Vincent | GitHub 官方 | Donchitos | NextLevelBuilder |
+| **技能数量** | 20+7 命令 | 7 个核心 | 3 个命令 | 72+49 代理 | 67 风格 +161 规则 |
+| **安装复杂度** | 低 | 低 | 中 | 低 | 低 |
+| **学习曲线** | 中 | 中 | 中 | 中高 | 低 |
+| **平台支持** | Claude+Gemini+Cursor | Claude Code | 20+ 平台 | Claude Code | 18+ 平台 |
+| **方法论强度** | 高（六阶段） | 高（TDD） | 高（规范驱动） | 极高（七阶段） | 高（设计系统） |
+| **代理角色** | 3 个 | 无 | 无 | 49 个 | 无 |
+| **适用领域** | 通用开发 | 通用开发 | 通用开发 | **游戏专用** | **UI/UX 专用** |
+| **独特优势** | 完整开发流程 | TDD 深度 | 规范文档 | 游戏工作室模拟 | 设计系统生成 |
+
+### 6.2 使用场景推荐
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -1029,7 +1345,7 @@ production/                  # 冲刺计划、里程碑、发布追踪
 ┌─────────────────────────────────────────────────────────┐
 │  选择 Superpowers 如果：                                │
 │  • 团队重视 TDD 测试驱动开发                             │
-│  • 需要完整的代码审查工作流                              │
+│  • 要要完整的代码审查工作流                              │
 │  • 想要系统化的开发方法论                                │
 │  • 需要多代理协作开发                                   │
 └─────────────────────────────────────────────────────────┘
@@ -1048,37 +1364,51 @@ production/                  # 冲刺计划、里程碑、发布追踪
 │  • 需要模拟真实游戏工作室的协作结构                       │
 │  • 想要专业游戏设计方法论（MDA/Flow/玩家心理学）          │
 │  • 需要 49 个专业代理覆盖游戏开发全流程                   │
-│  • 项目需要自动化钩子保证质量                            │
 │  • 使用 Godot/Unity/Unreal 引擎                         │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│  选择 UI/UX Pro Max 如果：                              │
+│  • 需要 AI 生成专业美观的界面                            │
+│  • 想要自动化的设计系统推荐                              │
+│  • 需要行业特定的 UI/UX 最佳实践                         │
+│  • 使用多种技术栈（React/Next/Flutter/SwiftUI）          │
+│  • 想避免常见 UI/UX 反模式                               │
+│  • 需要配色、字体、风格的智能推荐                        │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 5.3 组合使用建议
+### 6.3 组合使用建议
 
-四者可以组合使用：
+五个框架可以组合使用：
 
 ```bash
-# 1. 安装 Agent Skills（完整开发流程）
+# 1. UI/UX Pro Max - 前端设计智能（所有项目推荐）
+npm install -g uipro-cli
+uipro init --ai claude
+
+# 2. Agent Skills - 完整开发流程
 /plugin marketplace add addyosmani/agent-skills
 /plugin install agent-skills@addy-agent-skills
 
-# 2. 使用 Spec Kit 建立项目规范
+# 3. Spec Kit - 项目规范文档
 specify init my-project --integration claude
 
-# 3. 使用 Superpowers 进行深度 TDD 开发
+# 4. Superpowers - 深度 TDD 开发
 /plugin install superpowers@claude-plugins-official
 
-# 4. 游戏项目：使用 Claude Code Game Studios
+# 5. Game Studios - 游戏开发专用
 git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git my-game
 
-# 工作流：
-# Spec Kit（项目规划）→ Agent Skills（六阶段开发）→ Superpowers（深度 TDD）
-# 游戏开发：Game Studios（七阶段游戏专用流程）
+# 最佳组合工作流：
+# UI/UX Pro Max（设计系统）→ Spec Kit（项目规划）→ Agent Skills（开发流程）
+# → Superpowers（TDD）→ UI/UX Pro Max（UI 实现）
+# 游戏开发：Game Studios（替代 Agent Skills + Superpowers）
 ```
 
 ---
 
-## 6. 常见问题
+## 7. 常见问题
 
 ### Q1: 可以同时安装多个框架吗？
 
@@ -1087,6 +1417,7 @@ git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git my-game
 - 六阶段开发：Agent Skills
 - 深度 TDD：Superpowers
 - **游戏开发：Claude Code Game Studios**
+- **UI/UX 设计：UI/UX Pro Max（推荐所有项目安装）**
 
 ### Q2: 哪个框架对中文支持最好？
 
@@ -1107,6 +1438,9 @@ pipx upgrade specify-cli
 
 # Claude Code Game Studios
 git pull origin main
+
+# UI/UX Pro Max
+uipro update
 ```
 
 ### Q4: 游戏开发应该用哪个框架？
@@ -1118,6 +1452,28 @@ git pull origin main
 - 自动化钩子保证代码质量和资产规范
 
 非游戏项目可使用 Agent Skills + Superpowers 组合。
+
+### Q5: UI/UX 设计应该用哪个框架？
+
+如果需要生成美观的界面，强烈推荐使用 **UI/UX Pro Max**：
+- 自动生成完整设计系统（配色、字体、风格、布局）
+- 161 个行业推理规则，覆盖 Tech、Finance、Healthcare 等 8 大领域
+- 67 种 UI 风格可选（Glassmorphism、Minimalism、Bento Grid 等）
+- 支持 15+ 技术栈（React、Next.js、Flutter、SwiftUI 等）
+- 自动检测并避免 UI/UX 反模式
+
+建议所有项目都安装 UI/UX Pro Max，提升界面设计质量。
+
+### Q6: 如何选择合适的框架组合？
+
+| 项目类型 | 推荐组合 |
+|----------|----------|
+| **通用 Web 项目** | UI/UX Pro Max + Agent Skills + Superpowers |
+| **大型企业项目** | UI/UX Pro Max + Spec Kit + Agent Skills |
+| **游戏开发** | UI/UX Pro Max + Claude Code Game Studios |
+| **移动 App** | UI/UX Pro Max + Agent Skills |
+| **快速 MVP** | UI/UX Pro Max + Superpowers |
+| **团队协作** | Spec Kit + Agent Skills + Superpowers |
 
 ---
 
@@ -1131,3 +1487,5 @@ git pull origin main
 - [Spec Kit 中文版](https://github.com/Linfee/spec-kit-cn)
 - [Spec Kit vs Superpowers 对比](https://dev.to/truongpx396/spec-kit-vs-superpowers-a-comprehensive-comparison-practical-guide-to-combining-both-52jj)
 - [Claude Code Game Studios 官方仓库](https://github.com/Donchitos/Claude-Code-Game-Studios)
+- [UI/UX Pro Max 官方仓库](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
+- [UI/UX Pro Max 官方网站](https://uupm.cc)
