@@ -7,19 +7,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #e8e0d5;
-            --bg-light: #f5f0eb;
-            --bg-dark: #d4ccc0;
+            --bg: #fff8f0;
+            --bg-light: #fffbf5;
+            --bg-dark: #f0e8e0;
             --primary: #5c5c5c;
             --primary-dark: #3a3a3a;
-            --highlight: #8b7355;
-            --success: #6b8e23;
-            --warning: #c9a227;
-            --text-primary: #2d2d2d;
-            --text-secondary: #5a5a5a;
-            --text-muted: #8a8a8a;
-            --shadow-light: #f8f4ef;
-            --shadow-dark: #c5bdb0;
+            --highlight: #6b5a4a;
+            --success: #5a7a20;
+            --warning: #b89020;
+            --text-primary: #1a1a1a;
+            --text-secondary: #3a3a3a;
+            --text-muted: #6a6a6a;
+            --shadow-light: #fffaf5;
+            --shadow-dark: #d8d0c8;
+            --code-bg: #fffcf8;
             --shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
             --shadow-inset: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
             --shadow-sm: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
@@ -210,16 +211,17 @@
         }
 
         h4 {
-            font-size: 1.15rem;
-            font-weight: 600;
+            font-size: 1.2rem;
+            font-weight: 700;
             color: var(--text-primary);
-            margin: 1.25rem 0 0.75rem;
+            margin: 1.5rem 0 1rem;
         }
 
         p {
             color: var(--text-secondary);
             margin-bottom: 1rem;
             font-size: 1rem;
+            font-weight: 500;
         }
 
         /* Tables */
@@ -254,8 +256,8 @@
             padding: 0.85rem 1.25rem;
             text-align: left;
             color: var(--highlight);
-            font-weight: 600;
-            font-size: 0.95rem;
+            font-weight: 700;
+            font-size: 1rem;
             letter-spacing: 0.02em;
             border-bottom: none;
         }
@@ -268,7 +270,8 @@
             padding: 0.75rem 1.25rem;
             color: var(--text-secondary);
             border-top: 1px solid var(--bg-dark);
-            font-size: 0.95rem;
+            font-size: 1rem;
+            font-weight: 500;
         }
 
         tbody tr:last-child td:first-child {
@@ -289,78 +292,38 @@
 
         /* Table cell code */
         td code {
-            font-size: 0.9em;
-        }
-            border-top-right-radius: 16px;
-        }
-
-        th {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            color: var(--highlight);
-            font-weight: 600;
-            font-size: 0.8rem;
-            letter-spacing: 0.02em;
-            border-bottom: none;
-        }
-
-        tbody tr {
-            transition: all 0.15s;
-        }
-
-        td {
-            padding: 0.6rem 1rem;
-            color: var(--text-secondary);
-            border-top: 1px solid var(--bg-dark);
-        }
-
-        tbody tr:last-child td:first-child {
-            border-bottom-left-radius: 16px;
-        }
-
-        tbody tr:last-child td:last-child {
-            border-bottom-right-radius: 16px;
-        }
-
-        tbody tr:hover {
-            background: var(--bg);
-        }
-
-        tbody tr:hover td {
-            color: var(--text-primary);
-        }
-
-        /* Table cell code */
-        td code {
-            font-size: 0.8em;
+            font-size: 0.95em;
         }
 
         /* Code Blocks */
         pre {
-            background: var(--bg);
+            background: var(--code-bg);
             border-radius: 16px;
-            padding: 1.25rem;
+            padding: 1.5rem;
             overflow-x: auto;
             margin: 1rem 0;
-            font-size: 0.85rem;
-            line-height: 1.5;
+            font-size: 1rem;
+            line-height: 1.6;
             box-shadow: var(--shadow-inset);
+            border: 1px solid var(--bg-dark);
         }
 
         code {
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            background: var(--bg);
-            padding: 0.2rem 0.5rem;
+            background: var(--code-bg);
+            padding: 0.25rem 0.6rem;
             border-radius: 8px;
-            font-size: 0.85em;
-            color: var(--highlight);
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--text-primary);
             box-shadow: var(--shadow-inset-sm);
         }
 
         pre code {
             background: none;
             padding: 0;
-            color: var(--text-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
             box-shadow: none;
         }
 
@@ -373,6 +336,7 @@
 
         li {
             margin-bottom: 0.35rem;
+            font-weight: 500;
         }
 
         li::marker {
@@ -441,15 +405,17 @@
 
         /* Flow Diagram */
         .flow-diagram {
-            background: var(--bg);
+            background: var(--code-bg);
             border-radius: 16px;
-            padding: 1rem;
+            padding: 1.25rem;
             margin: 1rem 0;
-            font-size: 0.75rem;
+            font-size: 0.9rem;
             overflow-x: auto;
             white-space: pre;
-            color: var(--text-secondary);
+            color: var(--text-primary);
+            font-weight: 600;
             box-shadow: var(--shadow-inset);
+            border: 1px solid var(--bg-dark);
         }
 
         /* References */
@@ -559,9 +525,13 @@
             }
 
             pre {
-                padding: 1rem;
-                font-size: 0.9rem;
+                padding: 1.25rem;
+                font-size: 0.95rem;
                 border-radius: 16px;
+            }
+
+            code {
+                font-size: 0.9em;
             }
 
             .toc-list a {
@@ -575,7 +545,7 @@
             }
 
             table {
-                font-size: 0.9rem;
+                font-size: 0.95rem;
                 border-radius: 16px;
             }
 
