@@ -221,37 +221,72 @@
         }
 
         /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
         table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin: 1rem 0;
             font-size: 0.85rem;
             background: var(--bg);
             border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow-inset);
+            box-shadow: var(--shadow);
         }
 
-        thead tr {
+        thead {
             background: var(--bg);
         }
 
+        thead tr:first-child th:first-child {
+            border-top-left-radius: 16px;
+        }
+
+        thead tr:first-child th:last-child {
+            border-top-right-radius: 16px;
+        }
+
         th {
-            padding: 0.7rem 1rem;
+            padding: 0.75rem 1rem;
             text-align: left;
             color: var(--primary);
             font-weight: 600;
             font-size: 0.8rem;
+            letter-spacing: 0.02em;
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: all 0.15s;
         }
 
         td {
             padding: 0.6rem 1rem;
             color: var(--text-secondary);
+            border-top: 1px solid var(--bg-dark);
+        }
+
+        tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 16px;
+        }
+
+        tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 16px;
+        }
+
+        tbody tr:hover {
+            background: var(--bg);
         }
 
         tbody tr:hover td {
-            background: var(--bg-dark);
+            color: var(--text-primary);
+        }
+
+        /* Table cell code */
+        td code {
+            font-size: 0.8em;
         }
 
         /* Code Blocks */
@@ -480,15 +515,6 @@
                 padding: 0.75rem;
                 font-size: 0.8rem;
                 border-radius: 12px;
-            }
-
-            table {
-                font-size: 0.8rem;
-                border-radius: 12px;
-            }
-
-            th, td {
-                padding: 0.4rem 0.6rem;
             }
 
             .toc-list a {
