@@ -53,6 +53,7 @@
             padding: 2rem 1rem;
             min-height: 100vh;
             font-size: 17px;
+            transition: background-image 1s ease-in-out;
         }
 
         [data-theme="dark"] body {
@@ -1981,6 +1982,36 @@ uipro update</code></pre>
                 }
             });
         });
+
+        // Background image rotation
+        const backgrounds = ['bg.jpg', 'bg2.jpg', 'bg3.jpg'];
+        let currentBgIndex = 0;
+        const bgTransitionTime = 15000; // 15 seconds
+
+        function rotateBackground() {
+            currentBgIndex = (currentBgIndex + 1) % backgrounds.length;
+            const nextBg = backgrounds[currentBgIndex];
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+            // Preload next image
+            const img = new Image();
+            img.onload = function() {
+                if (isDark) {
+                    document.body.style.backgroundImage = `
+                        url('${nextBg}'),
+                        linear-gradient(135deg, rgba(10, 25, 18, 0.85) 0%, rgba(20, 40, 28, 0.85) 50%, rgba(10, 30, 18, 0.85) 100%)
+                    `;
+                } else {
+                    document.body.style.backgroundImage = `
+                        url('${nextBg}'),
+                        linear-gradient(135deg, rgba(26, 58, 42, 0.7) 0%, rgba(45, 90, 61, 0.7) 50%, rgba(26, 74, 42, 0.7) 100%)
+                    `;
+                }
+            };
+            img.src = nextBg;
+        }
+
+        setInterval(rotateBackground, bgTransitionTime);
     </script>
 </body>
 </html>
