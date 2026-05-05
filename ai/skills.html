@@ -94,6 +94,12 @@
                 inset 0 -1px 1px rgba(0, 0, 0, 0.05);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid var(--glass-border);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            display: none;
         }
 
         [data-theme="dark"] .sidebar-nav {
@@ -121,15 +127,6 @@
                 0 12px 48px rgba(0, 0, 0, 0.5),
                 inset 0 2px 2px rgba(255, 255, 255, 0.15),
                 inset 0 -1px 1px rgba(0, 0, 0, 0.25);
-        }
-
-        .sidebar-nav .sidebar-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            letter-spacing: 0.06em;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
         }
 
         .sidebar-nav ul {
@@ -1085,7 +1082,6 @@
 
     <!-- Left Sidebar Navigation -->
     <nav class="sidebar-nav" id="sidebarNav">
-        <div class="sidebar-title">导航</div>
         <ul>
             <li><a href="#section1" data-target="section1">Agent Skills</a></li>
             <li><a href="#section2" data-target="section2">Superpowers</a></li>
