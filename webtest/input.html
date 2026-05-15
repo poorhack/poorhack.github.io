@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>事件上报系统 - 含鼠标按键Down/Up</title>
+    <style>
+        /* 零美化，绝对简洁，只保证基本布局和可读性，没有任何装饰性样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: white;
+            font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+            padding: 16px;
+            color: #000;
+            line-height: 1.4;
+        }
+
+        /* 容器仅用于结构化，无任何特效 */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            border: 1px solid #aaa;
+            padding: 16px;
+            background: #fff;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: normal;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #888;
+            background: white;
+            border-radius: 0;
+        }
+
+        button {
+            background: #eee;
+            border: 1px solid #888;
+            padding: 8px 16px;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 8px;
+            border-radius: 0;
+        }
+
+        button:active {
+            background: #ccc;
+        }
+
+        /* 日志区域：最简单的白底黑字边框 */
+        .log-area {
+            margin-top: 24px;
+            border-top: 2px solid #000;
+            padding-top: 12px;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 1px solid #aaa;
+            padding-bottom: 4px;
+        }
+
+        .clear-btn {
+            background: #ddd;
+            border: 1px solid #666;
+            padding: 4px 12px;
+            font-size: 12px;
+            margin: 0;
+            font-family: monospace;
+            cursor: pointer;
+        }
+
+        .event-list {
+            height: 420px;
+            overflow-y: auto;
+            background: #fefefe;
+            border: 1px solid #aaa;
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        /* 日志条目：只有简单下划线分隔，无任何颜色、圆角、阴影 */
+        .log-item {
+            padding: 8px 4px;
+            border-bottom: 1px solid #ddd;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            display: inline-block;
+            color: #333;
+            font-weight: normal;
+            margin-right: 12px;
+        }
+
+        .log-type {
+            display: inline-block;
+            background: transparent;
+            margin-right: 12px;
+            font-weight: bold;
+        }
+
+        .log-detail {
+            color: #111;
+        }
+
+        .empty-logs {
+            padding: 20px;
+            text-align: center;
+            color: #555;
+            font-style: normal;
+        }
+
+        .info-note {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #333;
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 输入框区域 -->
+    <div class="input-group">
+        <label>输入框 (支持点击/触摸/hover及鼠标按键事件)</label>
+        <input type="text" id="mainInput" placeholder="任意输入或点击..." autocomplete="off">
+    </div>
+    
+    <!-- 按钮区域 -->
+    <button id="actionButton">主要操作按钮</button>
+    
+    <!-- 纯日志上报区域，无任何美化修饰，包含 down/up 上报 -->
+    <div class="log-area">
+        <div class="log-header">
+            <span>事件上报日志 (click / hover / touch / mousedown / mouseup)</span>
+            <button id="clearLogsBtn" class="clear-btn">清除日志</button>
+        </div>
+        <div id="eventListContainer" class="event-list">
+            <div class="empty-logs">等待事件触发...</div>
+        </div>
+    </div>
+    <div class="info-note">
+        上报类型: 鼠标点击(click) | 鼠标按下(mousedown) | 鼠标抬起(mouseup) | 悬停(mouseenter) | 触摸(touchstart)
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM 元素
+        const actionButton = document.getElementById('actionButton');
+        const mainInput = document.getElementById('mainInput');
+        const clearBtn = document.getElementById('clearLogsBtn');
+        const eventContainer = document.getElementById('eventListContainer');
+        
+        // 存储日志 (最新在上方)
+        let eventLogs = [];
+        const MAX_LOGS = 80;   // 适当增加条数以包含更多down/up事件
+        
+        // 辅助: 获取当前时间 HH:MM:SS.ms
+        function getFormattedTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const ms = now.getMilliseconds().toString().padStart(3, '0');
+            return `${hours}:${minutes}:${seconds}.${ms}`;
+        }
+        
+        // 获取元素的简单描述 (仅用于区分触发源，没有任何装饰)
+        function getElementDescription(element) {
+            if (!element) return '未知元素';
+            if (element.id === 'actionButton') return '主按钮';
+            if (element.id === 'mainInput') return '输入框';
+            if (element.id === 'clearLogsBtn') return '清除按钮';
+            if (element === document.body) return 'body背景';
+            if (element.tagName === 'BODY') return 'body';
+            if (element.tagName === 'HTML') return 'html';
+            let desc = element.tagName.toLowerCase();
+            if (element.id) desc += `#${element.id}`;
+            else if (element.className && typeof element.className === 'string') {
+                let cls = element.className.split(' ')[0];
+                if (cls && cls !== 'container') desc += `.${cls}`;
+            }
+            return desc;
+        }
+        
+        // 获取鼠标按键名称 (辅助显示具体按键)
+        function getMouseButtonName(button) {
+            // 标准 MouseEvent.button: 0左键, 1中键, 2右键
+            if (button === 0) return '左键';
+            if (button === 1) return '中键';
+            if (button === 2) return '右键';
+            return `按键(${button})`;
+        }
+        
+        // 核心上报函数 (无任何美化，纯文本记录)
+        // eventType: 'click', 'hover', 'touch', 'mousedown', 'mouseup'
+        function reportEvent(eventType, eventLabel, targetElement, originalEvent = null, extraMeta = null) {
+            let typeTag = '';
+            if (eventType === 'click') typeTag = '[CLICK]';
+            else if (eventType === 'hover') typeTag = '[HOVER]';
+            else if (eventType === 'touch') typeTag = '[TOUCH]';
+            else if (eventType === 'mousedown') typeTag = '[MOUSEDOWN]';
+            else if (eventType === 'mouseup') typeTag = '[MOUSEUP]';
+            else typeTag = '[EVENT]';
+            
+            const timestamp = getFormattedTime();
+            const elementDesc = getElementDescription(targetElement);
+            
+            // 提取坐标信息（如果有）
+            let coordInfo = '';
+            if (originalEvent && (originalEvent.clientX !== undefined || originalEvent.touches)) {
+                let clientX = null, clientY = null;
+                if (eventType === 'click' || eventType === 'mousedown' || eventType === 'mouseup') {
+                    if (originalEvent.clientX !== undefined) {
+                        clientX = Math.round(originalEvent.clientX);
+                        clientY = Math.round(originalEvent.clientY);
+                    }
+                } else if (eventType === 'touch' && originalEvent.touches && originalEvent.touches.length > 0) {
+                    const touch = originalEvent.touches[0];
+                    clientX = Math.round(touch.clientX);
+                    clientY = Math.round(touch.clientY);
+                } else if (eventType === 'touch' && originalEvent.changedTouches && originalEvent.changedTouches.length > 0) {
+                    const touch = originalEvent.changedTouches[0];
+                    clientX = Math.round(touch.clientX);
+                    clientY = Math.round(touch.clientY);
+                } else if (eventType === 'hover' && originalEvent.clientX !== undefined) {
+                    clientX = Math.round(originalEvent.clientX);
+                    clientY = Math.round(originalEvent.clientY);
+                }
+                if (clientX !== null && clientY !== null) {
+                    coordInfo = ` (坐标:${clientX},${clientY})`;
+                }
+            }
+            
+            // 构建详细信息
+            let detailMsg = eventLabel || `触发于 ${elementDesc}`;
+            // 附加额外的按键信息 (如果是 mousedown / mouseup)
+            let buttonInfo = '';
+            if ((eventType === 'mousedown' || eventType === 'mouseup') && originalEvent && originalEvent.button !== undefined) {
+                const btnName = getMouseButtonName(originalEvent.button);
+                buttonInfo = ` [${btnName}]`;
+            }
+            // 附加 extraMeta (如需要额外标记)
+            let metaInfo = extraMeta ? ` ${extraMeta}` : '';
+            let fullText = `${detailMsg}${buttonInfo}${coordInfo}${metaInfo}`;
+            
+            const logEntry = {
+                id: Date.now() + Math.random() * 10000,
+                time: timestamp,
+                type: typeTag,
+                detail: fullText,
+                rawTime: Date.now()
+            };
+            
+            // 添加到数组头部 (最新在上)
+            eventLogs.unshift(logEntry);
+            if (eventLogs.length > MAX_LOGS) {
+                eventLogs.pop();
+            }
+            
+            renderLogs();
+        }
+        
+        // 渲染日志：纯文本无任何花哨样式，只保证看到时间、类型、详情
+        function renderLogs() {
+            if (!eventContainer) return;
+            if (eventLogs.length === 0) {
+                eventContainer.innerHTML = '<div class="empty-logs">(无事件上报) 点击、悬浮、触摸或按下/释放鼠标按键</div>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < eventLogs.length; i++) {
+                const log = eventLogs[i];
+                html += `<div class="log-item">
+                    <span class="log-time">${escapeHtml(log.time)}</span>
+                    <span class="log-type">${escapeHtml(log.type)}</span>
+                    <span class="log-detail">${escapeHtml(log.detail)}</span>
+                </div>`;
+            }
+            eventContainer.innerHTML = html;
+            // 滚动到顶部，显示最新事件 (方便查看最新 down/up)
+            if (eventContainer.scrollTo) {
+                eventContainer.scrollTo({ top: 0, behavior: 'auto' });
+            }
+        }
+        
+        // 防XSS
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function clearLogs() {
+            eventLogs = [];
+            renderLogs();
+        }
+        
+        // ---------- 1. 全局点击事件上报 (click) ----------
+        function onGlobalClick(e) {
+            let target = e.target;
+            let detailInfo = '';
+            if (target === actionButton || target.closest?.('#actionButton')) {
+                detailInfo = `点击主按钮`;
+            } else if (target === mainInput) {
+                let valPreview = mainInput.value;
+                if (valPreview.length > 35) valPreview = valPreview.substring(0, 35) + '…';
+                detailInfo = `点击输入框 (当前值: "${valPreview || '空'}")`;
+            } else if (target.id === 'clearLogsBtn') {
+                detailInfo = `点击清除按钮`;
+            } else {
+                let extra = '';
+                if (target.innerText && target.innerText.trim().length > 0 && target.innerText.trim().length < 40) {
+                    let txt = target.innerText.trim().replace(/\s+/g, ' ');
+                    extra = ` 文本:"${txt}"`;
+                } else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+                    extra = ` 输入元素`;
+                }
+                detailInfo = `点击 ${getElementDescription(target)}${extra}`;
+            }
+            reportEvent('click', detailInfo, target, e);
+        }
+        
+        // ---------- 2. 鼠标按下事件 (mousedown) 全局监听，上报按键信息 ----------
+        function onGlobalMouseDown(e) {
+            let target = e.target;
+            // 避免太过冗余但需要上报所有鼠标按下
+            let detailInfo = '';
+            const btnDesc = getMouseButtonName(e.button);
+            if (target === actionButton || target.closest?.('#actionButton')) {
+                detailInfo = `主按钮 按下${btnDesc}`;
+            } else if (target === mainInput) {
+                detailInfo = `输入框 按下${btnDesc}`;
+            } else if (target.id === 'clearLogsBtn') {
+                detailInfo = `清除按钮 按下${btnDesc}`;
+            } else {
+                detailInfo = `${getElementDescription(target)} 按下${btnDesc}`;
+            }
+            // 上报 mousedown 事件，坐标信息会自动包含
+            reportEvent('mousedown', detailInfo, target, e);
+        }
+        
+        // ---------- 3. 鼠标抬起事件 (mouseup) 全局监听，上报按键信息 ----------
+        function onGlobalMouseUp(e) {
+            let target = e.target;
+            const btnDesc = getMouseButtonName(e.button);
+            let detailInfo = '';
+            if (target === actionButton || target.closest?.('#actionButton')) {
+                detailInfo = `主按钮 抬起${btnDesc}`;
+            } else if (target === mainInput) {
+                detailInfo = `输入框 抬起${btnDesc}`;
+            } else if (target.id === 'clearLogsBtn') {
+                detailInfo = `清除按钮 抬起${btnDesc}`;
+            } else {
+                detailInfo = `${getElementDescription(target)} 抬起${btnDesc}`;
+            }
+            reportEvent('mouseup', detailInfo, target, e);
+        }
+        
+        // ---------- 4. hover 事件 (mouseenter) 针对主要交互元素：按钮、输入框、容器主体 ----------
+        function onMouseEnter(e) {
+            const target = e.currentTarget; // 监听的实际元素
+            let detailInfo = '';
+            if (target === actionButton) {
+                detailInfo = `鼠标悬停于主按钮`;
+            } else if (target === mainInput) {
+                detailInfo = `鼠标悬停于输入框`;
+            } else if (target.classList && target.classList.contains('container')) {
+                detailInfo = `鼠标悬停于主容器`;
+            } else {
+                detailInfo = `鼠标悬停于 ${getElementDescription(target)}`;
+            }
+            reportEvent('hover', detailInfo, target, e);
+        }
+        
+        // ---------- 5. 触摸事件 (移动端 touchstart) 全局上报，带触摸点信息 ----------
+        function onTouchStart(e) {
+            const target = e.target;
+            let detailInfo = '';
+            if (target === actionButton || target.closest?.('#actionButton')) {
+                detailInfo = `触摸主按钮`;
+            } else if (target === mainInput) {
+                detailInfo = `触摸输入框`;
+            } else if (target.id === 'clearLogsBtn') {
+                detailInfo = `触摸清除按钮`;
+            } else {
+                detailInfo = `触摸 ${getElementDescription(target)}`;
+            }
+            reportEvent('touch', detailInfo, target, e);
+            
+            // 微小的触摸反馈（无美化只给用户触感视觉，非装饰性样式）
+            if (target === actionButton || target.closest?.('#actionButton')) {
+                const btn = actionButton;
+                const originalBg = btn.style.background;
+                btn.style.background = '#ccc';
+                setTimeout(() => {
+                    btn.style.background = originalBg || '';
+                }, 100);
+            }
+        }
+        
+        // 添加全局鼠标事件 (click, mousedown, mouseup) 注意重复/顺序问题，但无碍，分别上报清晰
+        document.addEventListener('click', onGlobalClick);
+        document.addEventListener('mousedown', onGlobalMouseDown);
+        document.addEventListener('mouseup', onGlobalMouseUp);
+        
+        // hover (mouseenter) 监听: 按钮 + 输入框 + 外层容器 + body背景增加完整覆盖
+        if (actionButton) {
+            actionButton.addEventListener('mouseenter', onMouseEnter);
+        }
+        if (mainInput) {
+            mainInput.addEventListener('mouseenter', onMouseEnter);
+        }
+        const containerDiv = document.querySelector('.container');
+        if (containerDiv) {
+            containerDiv.addEventListener('mouseenter', onMouseEnter);
+        }
+        // body背景悬浮上报，方便看到全局hover
+        document.body.addEventListener('mouseenter', function(e) {
+            if (e.target === document.body || e.currentTarget === document.body) {
+                reportEvent('hover', `鼠标悬停于页面背景(body)`, document.body, e);
+            }
+        });
+        
+        // 触摸事件监听 (移动端)
+        document.addEventListener('touchstart', onTouchStart);
+        
+        // 清除日志按钮事件
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function(e) {
+                clearLogs();
+                e.stopPropagation();
+            });
+        }
+        
+        // 小优化: 避免在输入框内由于mousedown/mouseup导致日志太多时仍然清楚可见
+        console.log('[事件上报] 系统已启动 | 支持 click / mousedown / mouseup / mouseenter / touchstart');
+        
+        // 可选展示启动后的提示，不在日志区域加任何无关美化，保持干净
+    })();
+</script>
+</body>
+</html>
