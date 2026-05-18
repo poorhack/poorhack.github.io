@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>浏览器接口检测</title>
+</head>
+<body>
+    <h3>浏览器接口检测</h3>
+    <div>
+        <p>window.chrome: <span id="chromeResult">检测中...</span></p>
+        <p>window.Notification: <span id="notifyResult">检测中...</span></p>
+    </div>
+
+    <script>
+        // 检测 window.chrome
+        var chromeSpan = document.getElementById('chromeResult');
+        if (typeof window.chrome !== 'undefined') {
+            chromeSpan.textContent = '支持';
+            chromeSpan.style.color = 'green';
+        } else {
+            chromeSpan.textContent = '不支持';
+            chromeSpan.style.color = 'red';
+        }
+
+        // 检测 window.Notification
+        var notifySpan = document.getElementById('notifyResult');
+        if (typeof window.Notification !== 'undefined') {
+            notifySpan.textContent = '支持';
+            notifySpan.style.color = 'green';
+        } else {
+            notifySpan.textContent = '不支持';
+            notifySpan.style.color = 'red';
+        }
+    </script>
+</body>
+</html>
