@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>事件上报系统 - 纯文本顶行显示</title>
+    <title>事件上报系统 - 含键盘事件 | 纯文本顶行</title>
     <style>
         /* 彻底移除所有格式：无margin、无padding、无边框、无背景色、无任何装饰 */
         * {
@@ -20,14 +20,14 @@
             line-height: 1.4;
         }
 
-        /* 容器：只用于结构排列，无边框无内边距 */
+        /* 容器：无任何外边距内边距 */
         .container {
             max-width: 1200px;
             margin: 0;
             padding: 0;
         }
 
-        /* 输入框和按钮区域：无额外样式，只留基本功能性边框 */
+        /* 输入框和按钮区域：仅功能性边框，无额外间距 */
         .input-group {
             margin-bottom: 8px;
         }
@@ -39,7 +39,7 @@
         }
 
         input {
-            width: 300px;
+            width: 320px;
             padding: 4px;
             font-family: monospace;
             font-size: 13px;
@@ -57,7 +57,7 @@
             margin-top: 6px;
         }
 
-        /* 日志区域：无任何边框、背景、间距，完全顶行 */
+        /* 日志区域：完全顶格，无任何边框背景 */
         .log-area {
             margin-top: 16px;
             padding: 0;
@@ -80,16 +80,16 @@
             font-family: monospace;
         }
 
-        /* 日志列表容器：无内边距无边框无外边距，顶格 */
+        /* 日志列表容器：无内边距无边框 */
         .event-list {
             margin: 0;
             padding: 0;
-            height: 500px;
+            height: 480px;
             overflow-y: auto;
             background: white;
         }
 
-        /* 日志条目：完全顶行，无任何缩进、无下划线、无背景、无边框 */
+        /* 日志条目：完全顶行，无任何缩进、下划线、背景 */
         .log-item {
             margin: 0;
             padding: 0;
@@ -98,25 +98,6 @@
             font-family: 'Courier New', monospace;
             font-size: 13px;
             line-height: 1.4;
-        }
-
-        /* 时间、类型、详情全部内联，无任何多余空格或缩进 */
-        .log-time {
-            display: inline;
-            margin: 0;
-            padding: 0;
-        }
-
-        .log-type {
-            display: inline;
-            margin: 0;
-            padding: 0;
-        }
-
-        .log-detail {
-            display: inline;
-            margin: 0;
-            padding: 0;
         }
 
         .empty-logs {
@@ -135,14 +116,14 @@
 <body>
 <div class="container">
     <div class="input-group">
-        <label>输入框</label>
-        <input type="text" id="mainInput" placeholder="任意输入或点击..." autocomplete="off">
+        <label>输入框 (键盘事件会全局上报)</label>
+        <input type="text" id="mainInput" placeholder="任意输入，按键将被记录..." autocomplete="off">
     </div>
     <button id="actionButton">主要操作按钮</button>
     
     <div class="log-area">
         <div class="log-header">
-            <span>事件上报日志 (click / hover / touch / mousedown / mouseup)</span>
+            <span>事件上报日志 (click / hover / touch / mousedown/up / keydown)</span>
             <button id="clearLogsBtn" class="clear-btn">清除日志</button>
         </div>
         <div id="eventListContainer" class="event-list">
@@ -150,7 +131,7 @@
         </div>
     </div>
     <div class="info-note">
-        上报: 点击 | 鼠标按下 | 鼠标抬起 | 悬停 | 触摸
+        上报: 点击 | 鼠标按下/抬起 | 悬停 | 触摸 | 键盘(keydown) — 显示 key 和 code
     </div>
 </div>
 
@@ -162,7 +143,7 @@
         const eventContainer = document.getElementById('eventListContainer');
         
         let eventLogs = [];
-        const MAX_LOGS = 100;
+        const MAX_LOGS = 120;
         
         function getFormattedTime() {
             const now = new Date();
@@ -197,7 +178,7 @@
             return '键' + button;
         }
         
-        // 日志上报：构建纯文本行，不加任何多余空格
+        // 核心上报函数 - 生成纯文本行，完全顶格
         function reportEvent(eventType, eventLabel, targetElement, originalEvent = null) {
             let typeTag = '';
             if (eventType === 'click') typeTag = '[CLICK]';
@@ -205,14 +186,15 @@
             else if (eventType === 'touch') typeTag = '[TOUCH]';
             else if (eventType === 'mousedown') typeTag = '[MOUSEDOWN]';
             else if (eventType === 'mouseup') typeTag = '[MOUSEUP]';
+            else if (eventType === 'keydown') typeTag = '[KEYDOWN]';
             else typeTag = '[EVENT]';
             
             const timestamp = getFormattedTime();
             const elementDesc = getElementDescription(targetElement);
             
-            // 坐标信息
+            // 坐标信息 (仅鼠标/触摸事件)
             let coordInfo = '';
-            if (originalEvent) {
+            if (originalEvent && (eventType !== 'keydown')) {
                 let clientX = null, clientY = null;
                 if ((eventType === 'click' || eventType === 'mousedown' || eventType === 'mouseup') && originalEvent.clientX !== undefined) {
                     clientX = Math.round(originalEvent.clientX);
@@ -238,9 +220,18 @@
                 buttonInfo = ` ${getMouseButtonName(originalEvent.button)}`;
             }
             
-            // 最终日志行: 完全无多余空格，时间后直接跟标签和内容
-            // 格式: 时间 [TYPE] 详细信息
-            let logLine = `${timestamp} ${typeTag} ${detailMsg}${buttonInfo}${coordInfo}`;
+            // 键盘事件特殊处理: 显示 key 和 code
+            let keyboardInfo = '';
+            if (eventType === 'keydown' && originalEvent) {
+                const key = originalEvent.key !== undefined ? originalEvent.key : 'Unknown';
+                const code = originalEvent.code !== undefined ? originalEvent.code : 'Unknown';
+                // 对特殊字符做转义显示，但保留可读性
+                let displayKey = key.length === 1 ? key : key;
+                keyboardInfo = ` key="${displayKey}" code="${code}"`;
+            }
+            
+            // 最终日志行: 无任何多余空格缩进，完全顶行
+            let logLine = `${timestamp} ${typeTag} ${detailMsg}${buttonInfo}${coordInfo}${keyboardInfo}`;
             
             const logEntry = {
                 id: Date.now() + Math.random(),
@@ -261,10 +252,11 @@
             }
             let html = '';
             for (let i = 0; i < eventLogs.length; i++) {
-                // 纯文本行，没有任何额外标签内边距，直接显示
+                // 纯文本行，无任何额外标签内边距
                 html += `<div class="log-item">${escapeHtml(eventLogs[i].line)}</div>`;
             }
             eventContainer.innerHTML = html;
+            // 滚动到顶部显示最新事件
             if (eventContainer.scrollTo) {
                 eventContainer.scrollTo({ top: 0, behavior: 'auto' });
             }
@@ -285,7 +277,29 @@
             renderLogs();
         }
         
-        // ----- 事件监听 -----
+        // ----- 键盘事件 (全局 keydown，上报所有按键) -----
+        function onGlobalKeyDown(e) {
+            // 避免在输入框内重复上报过于频繁，但依然上报所有按键，这是需求
+            const target = e.target;
+            let detail = '';
+            // 获取按键描述
+            const keyName = e.key || 'Unknown';
+            const codeName = e.code || 'Unknown';
+            if (target === mainInput) {
+                detail = `输入框内按键`;
+            } else if (target === actionButton) {
+                detail = `主按钮上按键`;
+            } else if (target.id === 'clearLogsBtn') {
+                detail = `清除按钮上按键`;
+            } else {
+                detail = `全局按键 (焦点:${getElementDescription(target)})`;
+            }
+            // 上报键盘事件，originalEvent 包含 key/code 信息，reportEvent 内部会提取 keyboardInfo
+            reportEvent('keydown', detail, target, e);
+            // 注意：不 preventDefault，保证输入框正常输入
+        }
+        
+        // ----- 鼠标事件 -----
         function onGlobalClick(e) {
             let target = e.target;
             let detail = '';
@@ -340,6 +354,7 @@
             reportEvent('mouseup', detail, target, e);
         }
         
+        // ----- Hover 事件 -----
         function onMouseEnter(e) {
             const target = e.currentTarget;
             let detail = '';
@@ -350,6 +365,7 @@
             reportEvent('hover', detail, target, e);
         }
         
+        // ----- 触摸事件 (移动端) -----
         function onTouchStart(e) {
             const target = e.target;
             let detail = '';
@@ -367,10 +383,16 @@
             }
         }
         
+        // ---------- 注册所有事件监听 ----------
+        // 键盘事件 (全局捕获，确保所有按键都能上报，包括功能键)
+        document.addEventListener('keydown', onGlobalKeyDown);
+        
+        // 鼠标事件
         document.addEventListener('click', onGlobalClick);
         document.addEventListener('mousedown', onGlobalMouseDown);
         document.addEventListener('mouseup', onGlobalMouseUp);
         
+        // Hover 监听
         if (actionButton) actionButton.addEventListener('mouseenter', onMouseEnter);
         if (mainInput) mainInput.addEventListener('mouseenter', onMouseEnter);
         const containerDiv = document.querySelector('.container');
@@ -381,8 +403,10 @@
             }
         });
         
+        // 触摸事件
         document.addEventListener('touchstart', onTouchStart);
         
+        // 清除日志按钮
         if (clearBtn) {
             clearBtn.addEventListener('click', function(e) {
                 clearLogs();
@@ -390,7 +414,7 @@
             });
         }
         
-        console.log('事件上报已启动 | 完全顶行无格式');
+        console.log('事件上报已启动 | 支持键盘(keydown)完整上报 key+code | 完全顶行无格式');
     })();
 </script>
 </body>
