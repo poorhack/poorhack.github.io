@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>事件上报系统 - 含键盘事件 | 纯文本顶行</title>
+    <title>事件上报系统 - 键盘keyCode十进制 | 纯文本顶行</title>
     <style>
         /* 彻底移除所有格式：无margin、无padding、无边框、无背景色、无任何装饰 */
         * {
@@ -39,7 +39,7 @@
         }
 
         input {
-            width: 320px;
+            width: 360px;
             padding: 4px;
             font-family: monospace;
             font-size: 13px;
@@ -116,14 +116,14 @@
 <body>
 <div class="container">
     <div class="input-group">
-        <label>输入框 (键盘事件会全局上报)</label>
+        <label>输入框 (键盘事件全局上报，显示十进制keyCode)</label>
         <input type="text" id="mainInput" placeholder="任意输入，按键将被记录..." autocomplete="off">
     </div>
     <button id="actionButton">主要操作按钮</button>
     
     <div class="log-area">
         <div class="log-header">
-            <span>事件上报日志 (click / hover / touch / mousedown/up / keydown)</span>
+            <span>事件上报日志 (click / hover / touch / mousedown/up / keydown含十进制)</span>
             <button id="clearLogsBtn" class="clear-btn">清除日志</button>
         </div>
         <div id="eventListContainer" class="event-list">
@@ -131,7 +131,7 @@
         </div>
     </div>
     <div class="info-note">
-        上报: 点击 | 鼠标按下/抬起 | 悬停 | 触摸 | 键盘(keydown) — 显示 key 和 code
+        上报: 点击 | 鼠标按下/抬起 | 悬停 | 触摸 | 键盘(keydown) — 显示 key / code / keyCode(十进制)
     </div>
 </div>
 
@@ -220,14 +220,17 @@
                 buttonInfo = ` ${getMouseButtonName(originalEvent.button)}`;
             }
             
-            // 键盘事件特殊处理: 显示 key 和 code
+            // 键盘事件特殊处理: 显示 key / code / keyCode(十进制)
             let keyboardInfo = '';
             if (eventType === 'keydown' && originalEvent) {
                 const key = originalEvent.key !== undefined ? originalEvent.key : 'Unknown';
                 const code = originalEvent.code !== undefined ? originalEvent.code : 'Unknown';
-                // 对特殊字符做转义显示，但保留可读性
-                let displayKey = key.length === 1 ? key : key;
-                keyboardInfo = ` key="${displayKey}" code="${code}"`;
+                const keyCode = originalEvent.keyCode !== undefined ? originalEvent.keyCode : 0;
+                // 对空格等特殊处理显示
+                let displayKey = key;
+                if (displayKey === ' ') displayKey = 'Space';
+                else if (displayKey.length === 1 && displayKey.charCodeAt(0) < 32) displayKey = 'Ctrl?';
+                keyboardInfo = ` key="${displayKey}" code="${code}" keyCode=${keyCode}`;
             }
             
             // 最终日志行: 无任何多余空格缩进，完全顶行
@@ -277,14 +280,11 @@
             renderLogs();
         }
         
-        // ----- 键盘事件 (全局 keydown，上报所有按键) -----
+        // ----- 键盘事件 (全局 keydown，上报所有按键，显示十进制 keyCode) -----
         function onGlobalKeyDown(e) {
-            // 避免在输入框内重复上报过于频繁，但依然上报所有按键，这是需求
             const target = e.target;
             let detail = '';
             // 获取按键描述
-            const keyName = e.key || 'Unknown';
-            const codeName = e.code || 'Unknown';
             if (target === mainInput) {
                 detail = `输入框内按键`;
             } else if (target === actionButton) {
@@ -294,7 +294,7 @@
             } else {
                 detail = `全局按键 (焦点:${getElementDescription(target)})`;
             }
-            // 上报键盘事件，originalEvent 包含 key/code 信息，reportEvent 内部会提取 keyboardInfo
+            // 上报键盘事件，reportEvent 内部会提取 keyboardInfo 并包含十进制 keyCode
             reportEvent('keydown', detail, target, e);
             // 注意：不 preventDefault，保证输入框正常输入
         }
@@ -384,7 +384,7 @@
         }
         
         // ---------- 注册所有事件监听 ----------
-        // 键盘事件 (全局捕获，确保所有按键都能上报，包括功能键)
+        // 键盘事件 (全局，上报十进制keyCode)
         document.addEventListener('keydown', onGlobalKeyDown);
         
         // 鼠标事件
@@ -414,7 +414,7 @@
             });
         }
         
-        console.log('事件上报已启动 | 支持键盘(keydown)完整上报 key+code | 完全顶行无格式');
+        console.log('事件上报已启动 | 键盘keyDown显示十进制keyCode | 完全顶行无格式');
     })();
 </script>
 </body>
