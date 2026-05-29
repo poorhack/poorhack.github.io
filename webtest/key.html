@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Key Event Listener</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f7f9;
+      color: #151922;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      width: min(880px, calc(100vw - 32px));
+      display: grid;
+      gap: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .panel {
+      border: 1px solid #d9dee8;
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .status {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-bottom: 1px solid #d9dee8;
+    }
+
+    .field {
+      padding: 16px;
+    }
+
+    .field + .field {
+      border-left: 1px solid #d9dee8;
+    }
+
+    .label {
+      margin: 0 0 8px;
+      color: #586174;
+      font-size: 13px;
+    }
+
+    .value {
+      min-height: 40px;
+      margin: 0;
+      font: 700 28px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      overflow-wrap: anywhere;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 12px 16px;
+      border-bottom: 1px solid #d9dee8;
+      background: #fafbfc;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      height: 38px;
+      border: 1px solid #bcc5d4;
+      border-radius: 6px;
+      padding: 0 12px;
+      font: 16px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: inherit;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: #276ef1;
+      outline: 2px solid rgba(39, 110, 241, 0.2);
+      outline-offset: 1px;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid #bcc5d4;
+      border-radius: 6px;
+      background: #fff;
+      color: inherit;
+      padding: 0 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #eef2f7;
+    }
+
+    #log {
+      height: 360px;
+      margin: 0;
+      padding: 16px;
+      overflow: auto;
+      background: #10141f;
+      color: #eef3ff;
+      font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 640px) {
+      .status {
+        grid-template-columns: 1fr;
+      }
+
+      .field + .field {
+        border-left: 0;
+        border-top: 1px solid #d9dee8;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Keydown / Keyup event.key</h1>
+    <section class="panel">
+      <div class="status">
+        <div class="field">
+          <p class="label">最近一次 keydown</p>
+          <p class="value" id="keydownValue">-</p>
+        </div>
+        <div class="field">
+          <p class="label">最近一次 keyup</p>
+          <p class="value" id="keyupValue">-</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <input id="testInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="点这里弹出移动端键盘">
+        <button type="button" id="clearButton">清空日志</button>
+      </div>
+      <pre id="log" aria-live="polite"></pre>
+    </section>
+  </main>
+
+  <script>
+    const keydownValue = document.querySelector("#keydownValue");
+    const keyupValue = document.querySelector("#keyupValue");
+    const log = document.querySelector("#log");
+    const clearButton = document.querySelector("#clearButton");
+
+    function writeEvent(type, event) {
+      const line = `${new Date().toLocaleTimeString()}  ${type.padEnd(7)}  key="${event.key}"  keyCode=${event.keyCode}`;
+      log.textContent += `${line}\n`;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    window.addEventListener("keydown", (event) => {
+      keydownValue.textContent = `${event.key} / ${event.keyCode}`;
+      writeEvent("keydown", event);
+    });
+
+    window.addEventListener("keyup", (event) => {
+      keyupValue.textContent = `${event.key} / ${event.keyCode}`;
+      writeEvent("keyup", event);
+    });
+
+    clearButton.addEventListener("click", () => {
+      keydownValue.textContent = "-";
+      keyupValue.textContent = "-";
+      log.textContent = "";
+    });
+  </script>
+</body>
+</html>
