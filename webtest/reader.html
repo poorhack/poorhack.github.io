@@ -860,18 +860,17 @@ function initTTS(){
   // 初始化工具栏按钮状态
   var toolbarBtn=document.getElementById("toolbarTtsBtn");
   if(toolbarBtn)toolbarBtn.style.display="";
-  // 绑定段落点击朗读
+  // 绑定段落点击：仅用于朗读中暂停/继续当前段落，不自动开始新朗读
   document.getElementById("contentText").addEventListener("click",function(e){
     var para=e.target.closest(".para");
     if(!para)return;
     var idx=parseInt(para.dataset.para);
     if(isNaN(idx))return;
-    // 如果点击的是当前朗读段落，则暂停/播放；否则从该段落开始
-    if(ttsCurrentParaIndex===idx&&ttsIsPlaying){
-      pauseTts();
-    }else{
-      startTtsFrom(idx);
+    // 只有在朗读中，点击当前段落才暂停/继续
+    if(ttsIsPlaying&&ttsCurrentParaIndex===idx){
+      if(ttsIsPaused) resumeTts(); else pauseTts();
     }
+    // 停止状态下点击段落不自动开始朗读
   });
 }
 
@@ -1051,6 +1050,8 @@ function showTtsBar(show){
 
 function toolbarTtsToggle(){
   if(!fileName||totalPages===0){showToast("请先打开一本书");return;}
+  // 如果已经在朗读，点击工具栏按钮停止朗读
+  if(ttsIsPlaying){stopTts();return;}
   ttsParagraphs=getTtsParagraphs();
   if(ttsParagraphs.length===0){showToast("当前页面无内容");return;}
   startTtsFrom(0);
