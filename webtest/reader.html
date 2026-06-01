@@ -18,24 +18,71 @@
   color-scheme:dark;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background:var(--bg);transition:background .3s}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);transition:background .3s,color .3s;overflow-x:hidden;min-height:100vh;overscroll-behavior-y:none}
-.toolbar{position:fixed;top:0;left:0;right:0;height:50px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:1000;box-shadow:var(--shadow);transition:transform .3s,background .3s;will-change:transform}
+html{background-color:var(--bg)}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background-color:var(--bg);color:var(--text);
+  overflow-x:hidden;min-height:100vh;overscroll-behavior-y:none;
+  -webkit-touch-callout:none;-webkit-user-select:text;user-select:text;
+}
+.btn,.nav-btn,.upload-btn,.theme-option,.toc-item,.history-item,.add-note-btn,.selection-popup{
+  -webkit-user-select:none;user-select:none;
+}
+.selection-popup{
+  position:absolute;background:var(--accent);color:white;
+  padding:8px 16px;border-radius:20px;font-size:14px;
+  cursor:pointer;z-index:500;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  display:none;white-space:nowrap;font-weight:500;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+.selection-popup.show{display:block}
+.selection-popup:active{opacity:.9}
+.toolbar{
+  position:fixed;top:0;left:0;right:0;height:50px;
+  background:var(--panel);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;z-index:1000;box-shadow:var(--shadow);
+  transition:transform .3s;will-change:transform;
+}
 .toolbar.hidden{transform:translateY(-100%)}
 .toolbar-left,.toolbar-right{display:flex;gap:12px;align-items:center}
-.btn{background:none;border:none;color:var(--accent);font-size:20px;cursor:pointer;padding:8px;border-radius:8px;transition:background .2s;display:flex;align-items:center;justify-content:center;min-width:36px;min-height:36px}
+.btn{
+  background:none;border:none;color:var(--accent);font-size:20px;
+  cursor:pointer;padding:8px;border-radius:8px;transition:background .2s;
+  display:flex;align-items:center;justify-content:center;
+  min-width:36px;min-height:36px;
+}
 .btn:active{background:rgba(139,115,85,0.15)}
 .file-name{font-size:15px;font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .main-container{padding-top:50px;padding-bottom:60px;min-height:100vh}
 .content-wrapper{max-width:800px;margin:0 auto;padding:20px 16px}
 .chapter-title{font-size:22px;font-weight:600;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--accent);color:var(--accent)}
 .content-text{font-size:var(--fs);line-height:1.8;text-align:justify;word-wrap:break-word;overflow-wrap:break-word}
-.para{margin-bottom:1.2em;text-indent:2em;position:relative;transition:background .2s;border-radius:4px;padding:2px 4px;margin-left:-4px;margin-right:-4px}
+.para{
+  margin-bottom:1.2em;text-indent:2em;position:relative;
+  transition:background .2s;border-radius:4px;
+  padding:2px 4px;margin-left:-4px;margin-right:-4px;
+}
 .para:first-child{text-indent:0}
-.para.has-note{text-decoration:underline;text-decoration-style:wavy;text-decoration-color:var(--wave);text-decoration-thickness:1.5px;text-underline-offset:4px}
-.note-badge{display:inline-block;font-size:10px;color:var(--nt);background:var(--nbg);padding:1px 5px;border-radius:8px;margin-left:6px;vertical-align:super;line-height:1;font-weight:500;opacity:.7;transition:opacity .2s;cursor:pointer}
+.para.has-note{
+  text-decoration:underline;text-decoration-style:wavy;
+  text-decoration-color:var(--wave);text-decoration-thickness:1.5px;
+  text-underline-offset:4px;
+}
+.note-badge{
+  display:inline-block;font-size:10px;color:var(--nt);
+  background:var(--nbg);padding:1px 5px;border-radius:8px;
+  margin-left:6px;vertical-align:super;line-height:1;
+  font-weight:500;opacity:.7;transition:opacity .2s;cursor:pointer;
+}
 .para.has-note:hover .note-badge{opacity:1}
-.note-preview{position:absolute;left:0;right:0;top:100%;margin-top:8px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow);z-index:100;display:none;font-size:14px;line-height:1.6;max-width:100%}
+.note-preview{
+  position:absolute;left:0;right:0;top:100%;margin-top:8px;
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;box-shadow:var(--shadow);
+  z-index:100;display:none;font-size:14px;line-height:1.6;max-width:100%;
+}
 .note-preview.show{display:block}
 .note-preview-item{padding:8px 0;border-bottom:1px solid var(--border)}
 .note-preview-item:last-child{border-bottom:none}
@@ -51,23 +98,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .file-input{display:none}
 .upload-btn{background:var(--accent);color:white;border:none;padding:12px 32px;border-radius:24px;font-size:16px;cursor:pointer;transition:opacity .2s;font-weight:500}
 .upload-btn:active{opacity:.8}
-.bottom-bar{position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--panel);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:1000;box-shadow:var(--shadow);transition:transform .3s,background .3s;will-change:transform}
+.bottom-bar{
+  position:fixed;bottom:0;left:0;right:0;height:60px;
+  background:var(--panel);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;z-index:1000;box-shadow:var(--shadow);
+  transition:transform .3s;will-change:transform;
+}
 .bottom-bar.hidden{transform:translateY(100%)}
 .progress-info{font-size:13px;color:var(--sec);flex:1}
 .progress-bar{position:absolute;top:0;left:0;right:0;height:2px;background:var(--border)}
 .progress-fill{height:100%;background:var(--accent);transition:width .3s}
 .nav-btns{display:flex;gap:8px}
-.nav-btn{padding:8px 16px;border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:6px;font-size:14px;cursor:pointer;transition:all .2s}
+.nav-btn{
+  padding:8px 16px;border:1px solid var(--border);background:var(--panel);
+  color:var(--text);border-radius:6px;font-size:14px;cursor:pointer;transition:all .2s;
+}
 .nav-btn:disabled{opacity:.4;cursor:not-allowed}
 .nav-btn:active:not(:disabled){background:var(--accent);color:white;border-color:var(--accent)}
-.settings-panel,.notes-panel,.toc-panel{position:fixed;top:0;width:100%;max-width:360px;height:100vh;background:var(--panel);z-index:2000;overflow-y:auto;box-shadow:0 0 20px rgba(0,0,0,0.15);transition:transform .3s,background .3s;will-change:transform}
+.settings-panel,.notes-panel,.toc-panel{
+  position:fixed;top:0;width:100%;max-width:360px;height:100vh;
+  background:var(--panel);z-index:2000;overflow-y:auto;
+  box-shadow:0 0 20px rgba(0,0,0,0.15);transition:transform .3s;will-change:transform;
+}
 .settings-panel{right:0;transform:translateX(100%)}
 .notes-panel{left:0;transform:translateX(-100%);display:flex;flex-direction:column}
 .toc-panel{left:0;transform:translateX(-100%);max-width:320px}
 .settings-panel.open{transform:translateX(0)}
 .notes-panel.open{transform:translateX(0)}
 .toc-panel.open{transform:translateX(0)}
-.settings-header{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--panel);z-index:10;transition:background .3s}
+.settings-header{
+  padding:16px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:0;background:var(--panel);z-index:10;
+}
 .settings-title{font-size:18px;font-weight:600}
 .settings-body{padding:20px 16px}
 .setting-item{margin-bottom:24px}
@@ -75,32 +139,49 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .font-size-control{display:flex;align-items:center;gap:16px}
 .font-size-value{font-size:18px;font-weight:600;min-width:40px;text-align:center}
 .theme-options{display:flex;gap:12px}
-.theme-option{flex:1;padding:16px;border:2px solid var(--border);border-radius:12px;text-align:center;cursor:pointer;transition:all .2s}
+.theme-option{
+  flex:1;padding:16px;border:2px solid var(--border);border-radius:12px;
+  text-align:center;cursor:pointer;transition:all .2s;
+}
 .theme-option.active{border-color:var(--accent);background:rgba(139,115,85,0.1)}
 .theme-preview{width:40px;height:40px;border-radius:50%;margin:0 auto 8px;border:2px solid var(--border)}
 .theme-preview.light{background:#faf6f1}
 .theme-preview.dark{background:#1c1814}
 .theme-name{font-size:13px}
-.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1500;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.5);z-index:1500;
+  opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;
+}
 .overlay.show{opacity:1;visibility:visible}
 .notes-list{padding:16px;flex:1;overflow-y:auto}
-.note-item{background:rgba(139,115,85,0.08);border-radius:12px;padding:16px;margin-bottom:12px;border-left:3px solid var(--accent);transition:background .3s}
+.note-item{
+  background:rgba(139,115,85,0.08);border-radius:12px;padding:16px;
+  margin-bottom:12px;border-left:3px solid var(--accent);
+}
 .note-text{font-size:15px;line-height:1.6;margin-bottom:8px;word-wrap:break-word}
 .note-meta{font-size:12px;color:var(--sec);display:flex;justify-content:space-between;align-items:center}
 .note-delete{color:#e74c3c;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:4px}
 .note-delete:active{background:rgba(231,76,60,0.1)}
-.add-note{padding:16px;border-top:1px solid var(--border);background:var(--panel);transition:background .3s}
-.note-textarea{width:100%;min-height:80px;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:15px;resize:vertical;background:var(--bg);color:var(--text);font-family:inherit;transition:background .3s,color .3s}
+.add-note{padding:16px;border-top:1px solid var(--border);background:var(--panel)}
+.note-textarea{
+  width:100%;min-height:80px;border:1px solid var(--border);border-radius:8px;
+  padding:12px;font-size:15px;resize:vertical;background:var(--bg);color:var(--text);
+  font-family:inherit;
+}
 .add-note-btn{width:100%;margin-top:12px;padding:12px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:500}
 .empty-notes{text-align:center;padding:40px 20px;color:var(--sec)}
 .toc-list{padding:16px}
 .toc-item{padding:12px 16px;border-radius:8px;cursor:pointer;transition:background .2s;font-size:15px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .toc-item:active{background:rgba(139,115,85,0.15)}
 .toc-item.current{background:rgba(139,115,85,0.15);color:var(--accent);font-weight:500}
-.selection-popup{position:absolute;background:var(--accent);color:white;padding:8px 16px;border-radius:20px;font-size:14px;cursor:pointer;z-index:500;box-shadow:0 4px 12px rgba(0,0,0,0.3);display:none;white-space:nowrap;font-weight:500;transition:opacity .2s}
-.selection-popup.show{display:block}
-.selection-popup:active{opacity:.9}
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:rgba(0,0,0,0.8);color:white;padding:10px 20px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .3s,transform .3s;z-index:3000;pointer-events:none}
+.toast{
+  position:fixed;top:60px;left:50%;
+  transform:translateX(-50%) translateY(-20px);
+  background:rgba(0,0,0,0.8);color:white;
+  padding:10px 20px;border-radius:20px;font-size:14px;
+  opacity:0;transition:opacity .3s,transform .3s;z-index:3000;pointer-events:none;
+}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .history-list{padding:16px}
 .history-item{padding:16px;border-radius:12px;background:rgba(139,115,85,0.08);margin-bottom:12px;cursor:pointer;transition:background .2s}
@@ -205,6 +286,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 <div class="toast" id="toast"></div>
 <script>
 const CHUNK_SIZE=100*1024;
+const DB_NAME='ReaderDB';
+const DB_VERSION=1;
+const STORE_NAME='files';
+let db=null;
 let currentFile=null,fileContent="",totalSize=0,currentPage=0,totalPages=0,pages=[],fileName="";
 let isLoading=false,autoHideTimer=null,currentSelection="",selectionRange=null,notePreviewTimer=null;
 let settings={fontSize:18,theme:"light"};
@@ -212,12 +297,91 @@ let notes=[];
 let readingRecords={};
 let pageNoteMap=new Map();
 
-document.addEventListener("DOMContentLoaded",function(){
+// 立即执行：设置主题
+(function(){
   var savedTheme=localStorage.getItem("reader_theme");
-  if(savedTheme){document.documentElement.setAttribute("data-theme",savedTheme);}
-  loadSettings();loadNotes();loadReadingRecords();buildNoteIndex();renderHistory();
-  setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
+  if(savedTheme)document.documentElement.setAttribute("data-theme",savedTheme);
+})();
+
+document.addEventListener("DOMContentLoaded",function(){
+  initDB().then(function(){
+    loadSettings();loadNotes();loadReadingRecords();buildNoteIndex();renderHistory();
+    setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
+    setupContextMenuBlock();
+    // 检查是否有上次阅读的文件，自动恢复
+    checkAndRestoreLastReading();
+  });
 });
+
+// IndexedDB 初始化
+function initDB(){
+  return new Promise(function(resolve,reject){
+    var request=indexedDB.open(DB_NAME,DB_VERSION);
+    request.onerror=function(){reject(request.error);};
+    request.onsuccess=function(){db=request.result;resolve();};
+    request.onupgradeneeded=function(event){
+      var database=event.target.result;
+      if(!database.objectStoreNames.contains(STORE_NAME)){
+        database.createObjectStore(STORE_NAME,{keyPath:"name"});
+      }
+    };
+  });
+}
+
+// 保存文件内容到 IndexedDB
+function saveFileToDB(name,content,size){
+  return new Promise(function(resolve,reject){
+    if(!db){resolve();return;}
+    var transaction=db.transaction([STORE_NAME],"readwrite");
+    var store=transaction.objectStore(STORE_NAME);
+    var data={name:name,content:content,size:size,timestamp:new Date().toISOString()};
+    var request=store.put(data);
+    request.onsuccess=function(){resolve();};
+    request.onerror=function(){reject(request.error);};
+  });
+}
+
+// 从 IndexedDB 读取文件内容
+function getFileFromDB(name){
+  return new Promise(function(resolve,reject){
+    if(!db){resolve(null);return;}
+    var transaction=db.transaction([STORE_NAME],"readonly");
+    var store=transaction.objectStore(STORE_NAME);
+    var request=store.get(name);
+    request.onsuccess=function(){resolve(request.result);};
+    request.onerror=function(){reject(request.error);};
+  });
+}
+
+// 检查并恢复上次阅读
+function checkAndRestoreLastReading(){
+  var records=Object.entries(readingRecords).sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});
+  if(records.length===0)return;
+  var lastRecord=records[0];
+  var name=lastRecord[0];
+  var record=lastRecord[1];
+  // 尝试从 IndexedDB 恢复文件内容
+  getFileFromDB(name).then(function(data){
+    if(data&&data.content){
+      // 文件内容存在，直接恢复
+      fileName=name;
+      fileContent=data.content;
+      totalSize=data.size||record.fileSize||fileContent.length;
+      currentPage=record.page;
+      totalPages=record.totalPages;
+      document.getElementById("fileName").textContent=fileName;
+      document.getElementById("emptyState").style.display="none";
+      document.getElementById("contentArea").style.display="block";
+      processContent();
+      renderPage();
+      updateProgress();
+      updateNavButtons();
+      saveReadingRecord();
+      showToast("已恢复上次阅读：第 "+(currentPage+1)+" 页");
+    }
+    // 如果文件内容不存在，显示历史记录让用户点击恢复
+  });
+}
 
 function buildNoteIndex(){
   pageNoteMap.clear();
@@ -259,10 +423,31 @@ function restoreHistory(encodedName){
   var name=decodeURIComponent(encodedName);
   var record=readingRecords[name];
   if(!record){showToast("记录已失效");return;}
-  fileName=name;currentPage=record.page;totalPages=record.totalPages;
-  showToast("请重新选择该文件以恢复阅读");
-  document.getElementById("fileInput").click();
-  window._targetPage=record.page;window._targetFileName=name;
+  // 先尝试从 IndexedDB 恢复
+  getFileFromDB(name).then(function(data){
+    if(data&&data.content){
+      fileName=name;
+      fileContent=data.content;
+      totalSize=data.size||record.fileSize||fileContent.length;
+      currentPage=record.page;
+      totalPages=record.totalPages;
+      document.getElementById("fileName").textContent=fileName;
+      document.getElementById("emptyState").style.display="none";
+      document.getElementById("contentArea").style.display="block";
+      processContent();
+      renderPage();
+      updateProgress();
+      updateNavButtons();
+      saveReadingRecord();
+      showToast("已恢复阅读：第 "+(currentPage+1)+" 页");
+    }else{
+      // 文件内容不存在，需要重新选择
+      fileName=name;currentPage=record.page;totalPages=record.totalPages;
+      showToast("请重新选择该文件以恢复阅读");
+      document.getElementById("fileInput").click();
+      window._targetPage=record.page;window._targetFileName=name;
+    }
+  });
 }
 
 function handleFileSelect(event){
@@ -279,13 +464,17 @@ function handleFileSelect(event){
   showToast("正在读取文件...");
   var reader=new FileReader();
   reader.onload=function(e){
-    fileContent=e.target.result;processContent();
-    if(window._targetPage!==undefined&&window._targetFileName===fileName){
-      currentPage=Math.min(window._targetPage,totalPages-1);
-      window._targetPage=undefined;window._targetFileName=undefined;
-      showToast("已恢复至第 "+(currentPage+1)+" 页");
-    }
-    renderPage();updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast("文件读取完成");
+    fileContent=e.target.result;
+    // 保存到 IndexedDB
+    saveFileToDB(fileName,fileContent,totalSize).then(function(){
+      processContent();
+      if(window._targetPage!==undefined&&window._targetFileName===fileName){
+        currentPage=Math.min(window._targetPage,totalPages-1);
+        window._targetPage=undefined;window._targetFileName=undefined;
+        showToast("已恢复至第 "+(currentPage+1)+" 页");
+      }
+      renderPage();updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast("文件读取完成");
+    });
   };
   reader.onerror=function(){showToast("文件读取失败");};
   reader.readAsText(file);
@@ -416,6 +605,17 @@ function addSelectionNote(){
   document.getElementById("selectionPopup").classList.remove("show");
 }
 
+function setupContextMenuBlock(){
+  document.addEventListener("contextmenu",function(e){
+    var popup=document.getElementById("selectionPopup");
+    if(popup.classList.contains("show")){
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  },true);
+}
+
 function toggleSettings(){document.getElementById("settingsPanel").classList.toggle("open");document.getElementById("overlay").classList.toggle("show");}
 function toggleNotes(){document.getElementById("notesPanel").classList.toggle("open");document.getElementById("overlay").classList.toggle("show");if(document.getElementById("notesPanel").classList.contains("open"))setTimeout(function(){document.getElementById("noteInput").focus();},300);}
 function toggleToc(){document.getElementById("tocPanel").classList.toggle("open");document.getElementById("overlay").classList.toggle("show");}
@@ -474,7 +674,7 @@ function loadNotes(){var saved=localStorage.getItem("reader_notes");if(saved)not
 function saveReadingRecord(){if(!fileName||totalPages===0)return;readingRecords[fileName]={page:currentPage,totalPages:totalPages,fileSize:totalSize,lastRead:new Date().toISOString()};var entries=Object.entries(readingRecords);if(entries.length>20){entries.sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});readingRecords=Object.fromEntries(entries.slice(0,20));}localStorage.setItem("reader_records",JSON.stringify(readingRecords));}
 function loadReadingRecords(){var saved=localStorage.getItem("reader_records");if(saved)readingRecords=JSON.parse(saved);}
 function exportData(){var data={settings:settings,notes:notes,readingRecords:readingRecords,exportTime:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="阅读器数据_"+new Date().toLocaleDateString("zh-CN")+".json";a.click();URL.revokeObjectURL(url);showToast("数据已导出");}
-function clearAllData(){if(!confirm("确定要清除所有阅读数据吗？此操作不可恢复。"))return;localStorage.removeItem("reader_settings");localStorage.removeItem("reader_theme");localStorage.removeItem("reader_notes");localStorage.removeItem("reader_records");settings={fontSize:18,theme:"light"};notes=[];readingRecords={};location.reload();}
+function clearAllData(){if(!confirm("确定要清除所有阅读数据吗？此操作不可恢复。"))return;localStorage.removeItem("reader_settings");localStorage.removeItem("reader_theme");localStorage.removeItem("reader_notes");localStorage.removeItem("reader_records");if(db){var transaction=db.transaction([STORE_NAME],"readwrite");var store=transaction.objectStore(STORE_NAME);store.clear();}settings={fontSize:18,theme:"light"};notes=[];readingRecords={};location.reload();}
 function showToast(msg){var toast=document.getElementById("toast");toast.textContent=msg;toast.classList.add("show");setTimeout(function(){toast.classList.remove("show");},2000);}
 function escapeHtml(text){var div=document.createElement("div");div.textContent=text;return div.innerHTML;}
 function formatBytes(bytes){if(bytes===0)return"0 B";var k=1024;var sizes=["B","KB","MB","GB"];var i=Math.floor(Math.log(bytes)/Math.log(k));return parseFloat((bytes/Math.pow(k,i)).toFixed(2))+" "+sizes[i];}
