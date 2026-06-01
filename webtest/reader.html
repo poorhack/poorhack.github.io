@@ -279,7 +279,7 @@ body{
 </div>
 <div class="setting-item">
 <label class="setting-label">关于</label>
-<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.5<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
+<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.6<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
 </div>
 </div>
 </div>
@@ -297,6 +297,7 @@ let settings={fontSize:18,theme:"light"};
 let notes=[];
 let readingRecords={};
 let pageNoteMap=new Map();
+let scrollSaveTimer=null; // 滚动保存防抖定时器
 
 // 立即执行：设置主题，防止闪屏
 (function(){
@@ -309,7 +310,7 @@ document.addEventListener("DOMContentLoaded",function(){
     loadSettings();loadNotes();loadReadingRecords();buildNoteIndex();
     setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
     setupContextMenuBlock();
-    // 自动恢复上次阅读
+    setupScrollSave(); // 设置滚动位置自动保存
     autoRestoreLastReading();
   });
 });
@@ -356,7 +357,6 @@ function getFileFromDB(name){
 function autoRestoreLastReading(){
   var records=Object.entries(readingRecords).sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});
   if(records.length===0){
-    // 没有历史记录，显示空状态
     renderHistory();
     return;
   }
@@ -365,7 +365,6 @@ function autoRestoreLastReading(){
   var record=lastRecord[1];
   getFileFromDB(name).then(function(data){
     if(data&&data.content){
-      // 有缓存内容，自动恢复
       fileName=name;
       fileContent=data.content;
       totalSize=data.size||record.fileSize||fileContent.length;
@@ -375,21 +374,16 @@ function autoRestoreLastReading(){
       document.getElementById("emptyState").style.display="none";
       document.getElementById("contentArea").style.display="block";
       processContent();
-      // 先渲染页面（不滚动）
       renderPage(false);
       updateProgress();
       updateNavButtons();
       saveReadingRecord();
       renderHistory();
-      // 再恢复滚动位置（关键：在渲染完成后）
       if(record.scrollY!==undefined){
-        setTimeout(function(){
-          window.scrollTo({top:record.scrollY,behavior:"auto"});
-        },200);
+        setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
       }
       showToast("已恢复上次阅读：第 "+(currentPage+1)+" 页");
     }else{
-      // 没有缓存内容，显示历史记录让用户点击
       renderHistory();
     }
   });
@@ -397,11 +391,9 @@ function autoRestoreLastReading(){
 
 // 打开新书 - 清空当前状态，显示文件选择
 function openNewBook(){
-  // 先保存当前阅读记录
   if(fileName&&totalPages>0){
     saveReadingRecord();
   }
-  // 清空当前状态
   fileName="";fileContent="";totalSize=0;currentPage=0;totalPages=0;pages=[];
   document.getElementById("fileName").textContent="未选择文件";
   document.getElementById("emptyState").style.display="flex";
@@ -410,9 +402,7 @@ function openNewBook(){
   document.getElementById("progressInfo").textContent="0% · 0/0页";
   document.getElementById("prevBtn").disabled=true;
   document.getElementById("nextBtn").disabled=true;
-  // 显示历史记录
   renderHistory();
-  // 触发文件选择
   document.getElementById("fileInput").click();
 }
 
@@ -539,7 +529,6 @@ function extractChapters(){
   tocList.innerHTML=html||'<div class="empty-notes">暂无目录</div>';
 }
 
-// renderPage: shouldScroll=true 时滚动到顶部（翻页），false 时不滚动（恢复阅读）
 function renderPage(shouldScroll){
   var start=pages[currentPage];var end=Math.min(start+CHUNK_SIZE,fileContent.length);
   var rawText=fileContent.substring(start,end);var paragraphs=rawText.split("\n").filter(function(p){return p.trim();});
@@ -756,12 +745,24 @@ function setupAutoHide(){
   document.addEventListener("click",function(e){var x=e.clientX,y=e.clientY,w=window.innerWidth,h=window.innerHeight;if(x>w*0.3&&x<w*0.7&&y>h*0.3&&y<h*0.7){toolbar.classList.toggle("hidden");bottomBar.classList.toggle("hidden");}});
 }
 
+// 滑动翻页 - 增加阈值和方向判断，避免误触
 function setupScrollHandler(){
-  document.addEventListener("keydown",function(e){if(e.key==="ArrowLeft"||e.key==="PageUp")prevPage();else if(e.key==="ArrowRight"||e.key==="PageDown"||e.key===" ")nextPage();});
-  var touchStartX=0,touchEndX=0;
-  document.addEventListener("touchstart",function(e){touchStartX=e.changedTouches[0].screenX;},{passive:true});
-  document.addEventListener("touchend",function(e){touchEndX=e.changedTouches[0].screenX;handleSwipe();},{passive:true});
-  function handleSwipe(){var diff=touchStartX-touchEndX;if(Math.abs(diff)>50){if(diff>0)nextPage();else prevPage();}}
+  // 仅键盘导航，无触摸滑动翻页
+  document.addEventListener("keydown",function(e){
+    if(e.key==="ArrowLeft"||e.key==="PageUp")prevPage();
+    else if(e.key==="ArrowRight"||e.key==="PageDown"||e.key===" ")nextPage();
+  });
+}
+
+function setupScrollSave(){
+  window.addEventListener("scroll",function(){
+    clearTimeout(scrollSaveTimer);
+    scrollSaveTimer=setTimeout(function(){
+      if(fileName&&totalPages>0){
+        saveReadingRecord();
+      }
+    },500); // 500ms防抖
+  },{passive:true});
 }
 </script>
 </body>
