@@ -49,19 +49,19 @@ body{
 .toolbar-left,.toolbar-right{display:flex;gap:12px;align-items:center}
 .btn{
   background-color:transparent;border:none;color:var(--accent);font-size:20px;
-  cursor:pointer;padding:8px;border-radius:8px;transition:background .2s;
+  cursor:pointer;padding:8px;border-radius:8px;transition:background-color .2s;
   display:flex;align-items:center;justify-content:center;
   min-width:36px;min-height:36px;
 }
 .btn:active{background-color:rgba(139,115,85,0.15)}
-.file-name{font-size:15px;font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-name{font-size:15px;font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .main-container{padding-top:50px;padding-bottom:60px;min-height:100vh}
 .content-wrapper{max-width:800px;margin:0 auto;padding:20px 16px}
 .chapter-title{font-size:22px;font-weight:600;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid var(--accent);color:var(--accent)}
 .content-text{font-size:var(--fs);line-height:1.8;text-align:justify;word-wrap:break-word;overflow-wrap:break-word}
 .para{
   margin-bottom:1.2em;text-indent:2em;position:relative;
-  transition:background .2s;border-radius:4px;
+  transition:background-color .2s;border-radius:4px;
   padding:2px 4px;margin-left:-4px;margin-right:-4px;
 }
 .para:first-child{text-indent:0}
@@ -89,7 +89,7 @@ body{
 .note-preview-text{color:var(--text);margin-bottom:4px}
 .note-preview-time{font-size:11px;color:var(--sec)}
 .loading{text-align:center;padding:40px;color:var(--sec)}
-.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);background-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;background-color:transparent}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:20px;text-align:center}
 .empty-icon{font-size:64px;margin-bottom:20px;opacity:.5;background-color:transparent}
@@ -141,7 +141,7 @@ body{
 .theme-options{display:flex;gap:12px}
 .theme-option{
   flex:1;padding:16px;border:2px solid var(--border);border-radius:12px;
-  text-align:center;cursor:pointer;transition:all .2s;
+  text-align:center;cursor:pointer;transition:all .2s;background-color:var(--panel);
 }
 .theme-option.active{border-color:var(--accent);background-color:rgba(139,115,85,0.1)}
 .theme-preview{width:40px;height:40px;border-radius:50%;margin:0 auto 8px;border:2px solid var(--border)}
@@ -172,7 +172,7 @@ body{
 .add-note-btn{width:100%;margin-top:12px;padding:12px;background-color:var(--accent);color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:500}
 .empty-notes{text-align:center;padding:40px 20px;color:var(--sec)}
 .toc-list{padding:16px}
-.toc-item{padding:12px 16px;border-radius:8px;cursor:pointer;transition:background .2s;font-size:15px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toc-item{padding:12px 16px;border-radius:8px;cursor:pointer;transition:background-color .2s;font-size:15px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .toc-item:active{background-color:rgba(139,115,85,0.15)}
 .toc-item.current{background-color:rgba(139,115,85,0.15);color:var(--accent);font-weight:500}
 .toast{
@@ -184,14 +184,14 @@ body{
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .history-list{padding:16px}
-.history-item{padding:16px;border-radius:12px;background-color:rgba(139,115,85,0.08);margin-bottom:12px;cursor:pointer;transition:background .2s}
+.history-item{padding:16px;border-radius:12px;background-color:rgba(139,115,85,0.08);margin-bottom:12px;cursor:pointer;transition:background-color .2s}
 .history-item:active{background-color:rgba(139,115,85,0.15)}
 .history-name{font-weight:600;font-size:15px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .history-meta{font-size:12px;color:var(--sec);display:flex;justify-content:space-between}
 .history-progress{margin-top:8px;height:4px;background-color:var(--border);border-radius:2px;overflow:hidden}
 .history-progress-fill{height:100%;background-color:var(--accent);border-radius:2px}
 ::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background-color:transparent}
+::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background-color:var(--border);border-radius:3px}
 ::selection{background-color:var(--sel);color:inherit}
 @media(min-width:768px){.content-wrapper{padding:40px 32px}.toolbar{padding:0 24px}.bottom-bar{padding:0 24px}}
@@ -206,8 +206,9 @@ body{
 <span class="file-name" id="fileName">未选择文件</span>
 </div>
 <div class="toolbar-right">
-<button class="btn" onclick="toggleNotes()">✎</button>
-<button class="btn" onclick="toggleSettings()">⚙</button>
+<button class="btn" onclick="openNewBook()" title="打开新书">📖</button>
+<button class="btn" onclick="toggleNotes()" title="书评">✎</button>
+<button class="btn" onclick="toggleSettings()" title="设置">⚙</button>
 </div>
 </div>
 <div class="main-container" id="mainContainer">
@@ -278,7 +279,7 @@ body{
 </div>
 <div class="setting-item">
 <label class="setting-label">关于</label>
-<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.3<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
+<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.5<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
 </div>
 </div>
 </div>
@@ -297,7 +298,7 @@ let notes=[];
 let readingRecords={};
 let pageNoteMap=new Map();
 
-// 立即执行：设置主题
+// 立即执行：设置主题，防止闪屏
 (function(){
   var savedTheme=localStorage.getItem("reader_theme");
   if(savedTheme)document.documentElement.setAttribute("data-theme",savedTheme);
@@ -305,10 +306,11 @@ let pageNoteMap=new Map();
 
 document.addEventListener("DOMContentLoaded",function(){
   initDB().then(function(){
-    loadSettings();loadNotes();loadReadingRecords();buildNoteIndex();renderHistory();
+    loadSettings();loadNotes();loadReadingRecords();buildNoteIndex();
     setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
     setupContextMenuBlock();
-    checkAndRestoreLastReading();
+    // 自动恢复上次阅读
+    autoRestoreLastReading();
   });
 });
 
@@ -350,15 +352,20 @@ function getFileFromDB(name){
   });
 }
 
-// 检查并恢复上次阅读 - 自动恢复，无需用户点击
-function checkAndRestoreLastReading(){
+// 自动恢复上次阅读 - 刷新后直接跳转，无需用户点击
+function autoRestoreLastReading(){
   var records=Object.entries(readingRecords).sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});
-  if(records.length===0)return;
+  if(records.length===0){
+    // 没有历史记录，显示空状态
+    renderHistory();
+    return;
+  }
   var lastRecord=records[0];
   var name=lastRecord[0];
   var record=lastRecord[1];
   getFileFromDB(name).then(function(data){
     if(data&&data.content){
+      // 有缓存内容，自动恢复
       fileName=name;
       fileContent=data.content;
       totalSize=data.size||record.fileSize||fileContent.length;
@@ -368,18 +375,45 @@ function checkAndRestoreLastReading(){
       document.getElementById("emptyState").style.display="none";
       document.getElementById("contentArea").style.display="block";
       processContent();
-      // 恢复时不滚动到顶部，保持阅读位置
+      // 先渲染页面（不滚动）
       renderPage(false);
       updateProgress();
       updateNavButtons();
       saveReadingRecord();
-      // 恢复滚动位置
+      renderHistory();
+      // 再恢复滚动位置（关键：在渲染完成后）
       if(record.scrollY!==undefined){
-        setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},100);
+        setTimeout(function(){
+          window.scrollTo({top:record.scrollY,behavior:"auto"});
+        },200);
       }
       showToast("已恢复上次阅读：第 "+(currentPage+1)+" 页");
+    }else{
+      // 没有缓存内容，显示历史记录让用户点击
+      renderHistory();
     }
   });
+}
+
+// 打开新书 - 清空当前状态，显示文件选择
+function openNewBook(){
+  // 先保存当前阅读记录
+  if(fileName&&totalPages>0){
+    saveReadingRecord();
+  }
+  // 清空当前状态
+  fileName="";fileContent="";totalSize=0;currentPage=0;totalPages=0;pages=[];
+  document.getElementById("fileName").textContent="未选择文件";
+  document.getElementById("emptyState").style.display="flex";
+  document.getElementById("contentArea").style.display="none";
+  document.getElementById("progressFill").style.width="0%";
+  document.getElementById("progressInfo").textContent="0% · 0/0页";
+  document.getElementById("prevBtn").disabled=true;
+  document.getElementById("nextBtn").disabled=true;
+  // 显示历史记录
+  renderHistory();
+  // 触发文件选择
+  document.getElementById("fileInput").click();
 }
 
 function buildNoteIndex(){
@@ -438,12 +472,12 @@ function restoreHistory(encodedName){
       updateNavButtons();
       saveReadingRecord();
       if(record.scrollY!==undefined){
-        setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},100);
+        setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
       }
       showToast("已恢复阅读：第 "+(currentPage+1)+" 页");
     }else{
       fileName=name;currentPage=record.page;totalPages=record.totalPages;
-      showToast("请重新选择该文件以恢复阅读");
+      showToast("缓存已清除，请重新选择文件");
       document.getElementById("fileInput").click();
       window._targetPage=record.page;window._targetFileName=name;
     }
@@ -524,7 +558,6 @@ function renderPage(shouldScroll){
   });
   document.getElementById("chapterTitle").textContent=title;
   document.getElementById("contentText").innerHTML=html;
-  // 只有翻页时才滚动到顶部，恢复阅读时不滚动
   if(shouldScroll){
     window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -642,14 +675,12 @@ function setTheme(theme){
   });
 }
 
-// 临时禁用 CSS 过渡，防止主题切换时闪烁
 function withoutTransition(action){
   var style=document.createElement("style");
   var css=document.createTextNode("*{-webkit-transition:none !important;-moz-transition:none !important;-o-transition:none !important;-ms-transition:none !important;transition:none !important;}");
   style.appendChild(css);
   document.head.appendChild(style);
   action();
-  // 强制浏览器重绘以应用禁用过渡的样式
   if(typeof window.getComputedStyle!=="undefined"){
     window.getComputedStyle(style).opacity;
   }
@@ -676,7 +707,7 @@ function renderNotes(){
   if(currentFileNotes.length===0){container.innerHTML="<div class=\"empty-notes\">暂无书评，选中文字即可添加段落书评</div>";return;}
   container.innerHTML=currentFileNotes.map(function(note){
     var html="<div class=\"note-item\">";
-    if(note.isSelection)html+="<div style=\"font-size:13px;color:var(--accent);margin-bottom:8px;padding:8px;background-color:rgba(139,115,85,0.1);border-radius:6px;font-style:italic\">「"+escapeHtml(note.text)+"」</div>";
+    if(note.isSelection)html+="<div style=\"font-size:13px;color:var(--accent);margin-bottom:8px;padding:8px;background:rgba(139,115,85,0.1);border-radius:6px;font-style:italic\">「"+escapeHtml(note.text)+"」</div>";
     html+="<div class=\"note-text\">"+escapeHtml(note.noteText||note.text)+"</div>";
     html+="<div class=\"note-meta\"><span>第"+(note.page+1)+"页"+(note.paraIndex!==undefined?" · 段落"+(note.paraIndex+1):"")+" · "+note.timestamp+"</span><span class=\"note-delete\" onclick=\"deleteNote("+note.id+")\">删除</span></div></div>";
     return html;
