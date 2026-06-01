@@ -195,6 +195,50 @@ body{
 ::-webkit-scrollbar-thumb{background-color:var(--border);border-radius:3px}
 ::selection{background-color:var(--sel);color:inherit}
 @media(min-width:768px){.content-wrapper{padding:40px 32px}.toolbar{padding:0 24px}.bottom-bar{padding:0 24px}}
+
+/* TTS 朗读功能样式 */
+.tts-bar{
+  position:fixed;bottom:60px;left:0;right:0;height:52px;
+  background-color:var(--panel);border-top:1px solid var(--border);
+  display:none;align-items:center;justify-content:space-between;
+  padding:0 16px;z-index:999;box-shadow:var(--shadow);
+  transition:transform .3s;will-change:transform;
+}
+.tts-bar.active{display:flex}
+.tts-bar.hidden{transform:translateY(100%)}
+.tts-bar.hidden + .bottom-bar{bottom:0}
+.tts-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.tts-status{font-size:13px;color:var(--sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tts-status .tts-highlight{color:var(--accent);font-weight:500}
+.tts-controls{display:flex;gap:8px;align-items:center}
+.tts-btn{
+  background-color:transparent;border:none;color:var(--accent);font-size:18px;
+  cursor:pointer;padding:6px;border-radius:50%;transition:background-color .2s;
+  display:flex;align-items:center;justify-content:center;width:36px;height:36px;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+.tts-btn:active{background-color:rgba(139,115,85,0.15)}
+.tts-btn.playing{background-color:rgba(139,115,85,0.15)}
+.tts-progress-mini{
+  position:absolute;top:0;left:0;right:0;height:2px;background-color:var(--border);
+}
+.tts-progress-mini-fill{height:100%;background-color:var(--accent);transition:width .1s linear}
+.tts-speed-select{
+  background-color:var(--bg);color:var(--text);border:1px solid var(--border);
+  border-radius:6px;padding:4px 8px;font-size:13px;outline:none;
+  -webkit-appearance:none;appearance:none;
+}
+.para.tts-active{
+  background-color:var(--sel);border-radius:4px;
+}
+.para.tts-active::before{
+  content:"▶";position:absolute;left:-20px;top:2px;
+  color:var(--accent);font-size:12px;
+}
+@media(max-width:480px){
+  .tts-status{max-width:120px}
+  .tts-speed-select{padding:4px 6px;font-size:12px}
+}
 </style>
 <base target="_blank">
 </head>
@@ -206,6 +250,7 @@ body{
 <span class="file-name" id="fileName">未选择文件</span>
 </div>
 <div class="toolbar-right">
+<button class="btn" id="toolbarTtsBtn" onclick="toolbarTtsToggle()" title="语音朗读" style="display:none">🔊</button>
 <button class="btn" onclick="openNewBook()" title="打开新书">📖</button>
 <button class="btn" onclick="toggleNotes()" title="书评">✎</button>
 <button class="btn" onclick="toggleSettings()" title="设置">⚙</button>
@@ -233,6 +278,28 @@ body{
 </div>
 </div>
 </div>
+</div>
+
+<div class="tts-bar" id="ttsBar" style="display:none">
+  <div class="tts-progress-mini"><div class="tts-progress-mini-fill" id="ttsProgressMini" style="width:0%"></div></div>
+  <div class="tts-left">
+    <span class="tts-status" id="ttsStatus">点击段落开始朗读</span>
+  </div>
+  <div class="tts-controls">
+    <select class="tts-speed-select" id="ttsSpeed" onchange="changeTtsSpeed()" title="语速">
+      <option value="0.7">0.7x</option>
+      <option value="0.85">0.85x</option>
+      <option value="1" selected>1.0x</option>
+      <option value="1.15">1.15x</option>
+      <option value="1.3">1.3x</option>
+      <option value="1.5">1.5x</option>
+      <option value="2">2.0x</option>
+    </select>
+    <button class="tts-btn" id="ttsPlayBtn" onclick="toggleTtsPlay()" title="播放/暂停">▶</button>
+    <button class="tts-btn" onclick="stopTts()" title="停止">■</button>
+    <button class="tts-btn" onclick="prevTtsPara()" title="上一段">⏮</button>
+    <button class="tts-btn" onclick="nextTtsPara()" title="下一段">⏭</button>
+  </div>
 </div>
 <div class="bottom-bar" id="bottomBar">
 <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -279,7 +346,7 @@ body{
 </div>
 <div class="setting-item">
 <label class="setting-label">关于</label>
-<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.6<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
+<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.7<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
 </div>
 </div>
 </div>
@@ -311,6 +378,7 @@ document.addEventListener("DOMContentLoaded",function(){
     setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
     setupContextMenuBlock();
     setupScrollSave(); // 设置滚动位置自动保存
+    initTTS();
     autoRestoreLastReading();
   });
 });
@@ -383,6 +451,8 @@ function autoRestoreLastReading(){
         setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
       }
       showToast("已恢复上次阅读：第 "+(currentPage+1)+" 页");
+      var toolbarBtn=document.getElementById("toolbarTtsBtn");
+      if(toolbarBtn)toolbarBtn.style.display="";
     }else{
       renderHistory();
     }
@@ -465,6 +535,8 @@ function restoreHistory(encodedName){
         setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
       }
       showToast("已恢复阅读：第 "+(currentPage+1)+" 页");
+      var toolbarBtn=document.getElementById("toolbarTtsBtn");
+      if(toolbarBtn)toolbarBtn.style.display="";
     }else{
       fileName=name;currentPage=record.page;totalPages=record.totalPages;
       showToast("缓存已清除，请重新选择文件");
@@ -496,7 +568,7 @@ function handleFileSelect(event){
         window._targetPage=undefined;window._targetFileName=undefined;
         showToast("已恢复至第 "+(currentPage+1)+" 页");
       }
-      renderPage(true);updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast("文件读取完成");
+      renderPage(true);updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast("文件读取完成");var toolbarBtn=document.getElementById("toolbarTtsBtn");if(toolbarBtn)toolbarBtn.style.display="";
     });
   };
   reader.onerror=function(){showToast("文件读取失败");};
@@ -764,6 +836,252 @@ function setupScrollSave(){
     },500); // 500ms防抖
   },{passive:true});
 }
+
+
+/* ========== TTS 语音朗读功能 ========== */
+let ttsUtterance=null;
+let ttsIsPlaying=false;
+let ttsIsPaused=false;
+let ttsCurrentParaIndex=-1;
+let ttsParagraphs=[];
+let ttsVoices=[];
+let ttsSelectedVoice=null;
+let ttsSpeed=1.0;
+let ttsResumePending=false;
+
+// 初始化TTS
+function initTTS(){
+  if(!('speechSynthesis' in window)){return;}
+  // 加载语音列表
+  loadTtsVoices();
+  if(speechSynthesis.onvoiceschanged!==undefined){
+    speechSynthesis.onvoiceschanged=loadTtsVoices;
+  }
+  // 初始化工具栏按钮状态
+  var toolbarBtn=document.getElementById("toolbarTtsBtn");
+  if(toolbarBtn)toolbarBtn.style.display="";
+  // 绑定段落点击朗读
+  document.getElementById("contentText").addEventListener("click",function(e){
+    var para=e.target.closest(".para");
+    if(!para)return;
+    var idx=parseInt(para.dataset.para);
+    if(isNaN(idx))return;
+    // 如果点击的是当前朗读段落，则暂停/播放；否则从该段落开始
+    if(ttsCurrentParaIndex===idx&&ttsIsPlaying){
+      pauseTts();
+    }else{
+      startTtsFrom(idx);
+    }
+  });
+}
+
+function loadTtsVoices(){
+  ttsVoices=window.speechSynthesis.getVoices().filter(function(v){
+    return v.lang.startsWith("zh")||v.lang.startsWith("cmn")||v.lang.startsWith("yue");
+  });
+  // 优先选择中文女声
+  var preferred=ttsVoices.find(function(v){return v.name.includes("Female")||v.name.includes("女")||v.name.includes("Xiaoxiao")||v.name.includes("Xiaoyi");});
+  if(!preferred&&ttsVoices.length>0)preferred=ttsVoices[0];
+  ttsSelectedVoice=preferred||null;
+}
+
+function getTtsParagraphs(){
+  return Array.from(document.querySelectorAll(".para"));
+}
+
+function startTtsFrom(paraIndex){
+  if(!('speechSynthesis' in window)){showToast("您的浏览器不支持语音朗读");return;}
+  stopTts();
+  ttsParagraphs=getTtsParagraphs();
+  if(ttsParagraphs.length===0)return;
+  ttsCurrentParaIndex=Math.max(0,Math.min(paraIndex,ttsParagraphs.length-1));
+  ttsIsPlaying=true;
+  ttsIsPaused=false;
+  showTtsBar(true);
+  updateTtsUI();
+  speakCurrentPara();
+}
+
+function speakCurrentPara(){
+  if(ttsCurrentParaIndex<0||ttsCurrentParaIndex>=ttsParagraphs.length){stopTts();return;}
+  var para=ttsParagraphs[ttsCurrentParaIndex];
+  var text=para.textContent.replace(/\d+/g,function(m){return m.split("").join(" ");});
+  if(!text.trim()){advanceTts();return;}
+
+  // 高亮当前段落
+  ttsParagraphs.forEach(function(p){p.classList.remove("tts-active");});
+  para.classList.add("tts-active");
+  para.scrollIntoView({behavior:"smooth",block:"center"});
+
+  ttsUtterance=new SpeechSynthesisUtterance(text);
+  ttsUtterance.lang="zh-CN";
+  ttsUtterance.rate=ttsSpeed;
+  ttsUtterance.pitch=1;
+  if(ttsSelectedVoice)ttsUtterance.voice=ttsSelectedVoice;
+
+  ttsUtterance.onend=function(){
+    if(!ttsIsPaused&&!ttsResumePending)advanceTts();
+  };
+  ttsUtterance.onerror=function(e){
+    if(e.error==="canceled"||e.error==="interrupted")return;
+    console.error("TTS error:",e);
+    advanceTts();
+  };
+
+  window.speechSynthesis.speak(ttsUtterance);
+  updateTtsUI();
+}
+
+function advanceTts(){
+  ttsCurrentParaIndex++;
+  var total=ttsParagraphs.length;
+  document.getElementById("ttsProgressMini").style.width=total>0?Math.round((ttsCurrentParaIndex/total)*100)+"%":"0%";
+  if(ttsCurrentParaIndex>=total){
+    stopTts();
+    showToast("朗读完成");
+    return;
+  }
+  speakCurrentPara();
+}
+
+function toggleTtsPlay(){
+  if(!('speechSynthesis' in window)){showToast("您的浏览器不支持语音朗读");return;}
+  if(ttsIsPlaying){
+    if(ttsIsPaused){
+      resumeTts();
+    }else{
+      pauseTts();
+    }
+  }else{
+    // 未在播放，从当前页第一段开始
+    ttsParagraphs=getTtsParagraphs();
+    if(ttsParagraphs.length===0){showToast("当前页面无内容");return;}
+    startTtsFrom(0);
+  }
+}
+
+function pauseTts(){
+  if(!ttsIsPlaying)return;
+  ttsIsPaused=true;
+  ttsResumePending=true;
+  window.speechSynthesis.pause();
+  updateTtsUI();
+}
+
+function resumeTts(){
+  if(!ttsIsPaused)return;
+  ttsIsPaused=false;
+  ttsResumePending=false;
+  window.speechSynthesis.resume();
+  updateTtsUI();
+  // 某些浏览器resume后不会继续触发onend，需要轮询检查
+  ttsMonitorResume();
+}
+
+function ttsMonitorResume(){
+  if(!ttsIsPlaying||ttsIsPaused)return;
+  var checkInterval=setInterval(function(){
+    if(!ttsIsPlaying||ttsIsPaused){clearInterval(checkInterval);return;}
+    if(!window.speechSynthesis.speaking&&!window.speechSynthesis.pending){
+      clearInterval(checkInterval);
+      if(!ttsResumePending)advanceTts();
+    }
+  },500);
+}
+
+function stopTts(){
+  ttsIsPlaying=false;
+  ttsIsPaused=false;
+  ttsResumePending=false;
+  ttsCurrentParaIndex=-1;
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
+  ttsParagraphs.forEach(function(p){p.classList.remove("tts-active");});
+  document.getElementById("ttsProgressMini").style.width="0%";
+  showTtsBar(false);
+  updateTtsUI();
+}
+
+function prevTtsPara(){
+  if(!ttsIsPlaying){showToast("请先开始朗读");return;}
+  var target=Math.max(0,ttsCurrentParaIndex-1);
+  if(target===ttsCurrentParaIndex&&ttsIsPaused){resumeTts();return;}
+  window.speechSynthesis.cancel();
+  ttsCurrentParaIndex=target-1;
+  ttsIsPaused=false;
+  ttsResumePending=false;
+  advanceTts();
+}
+
+function nextTtsPara(){
+  if(!ttsIsPlaying){showToast("请先开始朗读");return;}
+  var target=Math.min(ttsParagraphs.length-1,ttsCurrentParaIndex+1);
+  if(target===ttsCurrentParaIndex&&ttsIsPaused){resumeTts();return;}
+  window.speechSynthesis.cancel();
+  ttsCurrentParaIndex=target-1;
+  ttsIsPaused=false;
+  ttsResumePending=false;
+  advanceTts();
+}
+
+function changeTtsSpeed(){
+  ttsSpeed=parseFloat(document.getElementById("ttsSpeed").value);
+  if(ttsIsPlaying&&!ttsIsPaused){
+    // 改变语速需要重新开始当前段落
+    var wasIndex=ttsCurrentParaIndex;
+    window.speechSynthesis.cancel();
+    ttsCurrentParaIndex=wasIndex-1;
+    ttsResumePending=false;
+    advanceTts();
+  }
+}
+
+function showTtsBar(show){
+  var bar=document.getElementById("ttsBar");
+  var toolbarBtn=document.getElementById("toolbarTtsBtn");
+  if(show){
+    bar.style.display="flex";
+    bar.classList.add("active");
+    if(toolbarBtn)toolbarBtn.style.display="none";
+  }else{
+    bar.style.display="none";
+    bar.classList.remove("active");
+    if(toolbarBtn)toolbarBtn.style.display="";
+  }
+}
+
+function toolbarTtsToggle(){
+  if(!fileName||totalPages===0){showToast("请先打开一本书");return;}
+  ttsParagraphs=getTtsParagraphs();
+  if(ttsParagraphs.length===0){showToast("当前页面无内容");return;}
+  startTtsFrom(0);
+}
+
+function updateTtsUI(){
+  var btn=document.getElementById("ttsPlayBtn");
+  var status=document.getElementById("ttsStatus");
+  if(!ttsIsPlaying){
+    btn.textContent="▶";btn.classList.remove("playing");
+    status.textContent="点击段落开始朗读";
+  }else if(ttsIsPaused){
+    btn.textContent="▶";btn.classList.remove("playing");
+    status.innerHTML='已暂停 <span class="tts-highlight">第'+(ttsCurrentParaIndex+1)+"段</span>";
+  }else{
+    btn.textContent="⏸";btn.classList.add("playing");
+    status.innerHTML='朗读中 <span class="tts-highlight">第'+(ttsCurrentParaIndex+1)+"段</span>";
+  }
+}
+
+// 翻页时自动停止TTS
+var _origRenderPage=renderPage;
+renderPage=function(shouldScroll){
+  stopTts();
+  _origRenderPage(shouldScroll);
+};
+
+// 在DOMContentLoaded中初始化TTS
+var _origDOMReady=document.addEventListener;
+// 实际上我们已经有了DOMContentLoaded的监听器，在initDB之后添加initTTS
+// 修改现有的DOMContentLoaded回调
 </script>
 </body>
 </html>
