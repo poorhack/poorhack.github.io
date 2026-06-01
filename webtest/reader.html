@@ -16,16 +16,19 @@
             --line-height: 1.8;
             --font-size: 18px;
             --content-width: 100%;
+            --selection-bg: rgba(139, 115, 85, 0.3);
         }
 
+        /* 夜间模式 - 暖色调护眼配色，完全禁止蓝色 */
         [data-theme="dark"] {
-            --bg-color: #1a1a2e;
-            --text-color: #e0e0e0;
-            --text-secondary: #999;
-            --border-color: #333;
-            --accent-color: #c9a96e;
-            --panel-bg: #16213e;
-            --shadow: 0 2px 12px rgba(0,0,0,0.3);
+            --bg-color: #1c1814;           /* 深暖棕黑，非纯黑 */
+            --text-color: #d4c5b0;          /* 暖米色文字，降低对比度 */
+            --text-secondary: #9a8b7a;      /* 暖灰棕 */
+            --border-color: #3d3329;        /* 深棕边框 */
+            --accent-color: #c9a96e;        /* 琥珀金 */
+            --panel-bg: #252019;            /* 深棕面板 */
+            --shadow: 0 2px 12px rgba(0,0,0,0.4);
+            --selection-bg: rgba(201, 169, 110, 0.4);
         }
 
         * {
@@ -42,6 +45,7 @@
             transition: background 0.3s, color 0.3s;
             overflow-x: hidden;
             min-height: 100vh;
+            overscroll-behavior-y: none;
         }
 
         /* 顶部工具栏 */
@@ -59,7 +63,7 @@
             padding: 0 16px;
             z-index: 1000;
             box-shadow: var(--shadow);
-            transition: transform 0.3s;
+            transition: transform 0.3s, background 0.3s;
         }
 
         .toolbar.hidden {
@@ -231,7 +235,7 @@
             padding: 0 16px;
             z-index: 1000;
             box-shadow: var(--shadow);
-            transition: transform 0.3s;
+            transition: transform 0.3s, background 0.3s;
         }
 
         .bottom-bar.hidden {
@@ -296,7 +300,7 @@
             height: 100vh;
             background: var(--panel-bg);
             z-index: 2000;
-            transition: right 0.3s ease;
+            transition: right 0.3s ease, background 0.3s;
             overflow-y: auto;
             box-shadow: -4px 0 20px rgba(0,0,0,0.15);
         }
@@ -379,7 +383,7 @@
         }
 
         .theme-preview.dark {
-            background: #1a1a2e;
+            background: #1c1814;
         }
 
         .theme-name {
@@ -414,9 +418,11 @@
             height: 100vh;
             background: var(--panel-bg);
             z-index: 2000;
-            transition: left 0.3s ease;
+            transition: left 0.3s ease, background 0.3s;
             overflow-y: auto;
             box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
         }
 
         .notes-panel.open {
@@ -425,6 +431,8 @@
 
         .notes-list {
             padding: 16px;
+            flex: 1;
+            overflow-y: auto;
         }
 
         .note-item {
@@ -447,17 +455,25 @@
             color: var(--text-secondary);
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
 
         .note-delete {
             color: #e74c3c;
             cursor: pointer;
             font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .note-delete:active {
+            background: rgba(231, 76, 60, 0.1);
         }
 
         .add-note {
             padding: 16px;
             border-top: 1px solid var(--border-color);
+            background: var(--panel-bg);
         }
 
         .note-textarea {
@@ -502,7 +518,7 @@
             height: 100vh;
             background: var(--panel-bg);
             z-index: 2000;
-            transition: left 0.3s ease;
+            transition: left 0.3s ease, background 0.3s;
             overflow-y: auto;
             box-shadow: 4px 0 20px rgba(0,0,0,0.15);
         }
@@ -580,7 +596,7 @@
 
         /* 选中文字样式 */
         ::selection {
-            background: rgba(139, 115, 85, 0.3);
+            background: var(--selection-bg);
             color: inherit;
         }
 
@@ -599,18 +615,83 @@
             }
         }
 
-        /* 护眼模式额外的暖色调 */
-        [data-theme="light"] {
-            --bg-color: #f5f0e8;
+        /* 选中段落书评按钮 */
+        .selection-popup {
+            position: absolute;
+            background: var(--accent-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+            white-space: nowrap;
+            font-weight: 500;
         }
 
-        /* 防止iOS橡皮筋效果 */
-        body {
-            overscroll-behavior-y: none;
+        .selection-popup.show {
+            display: block;
+        }
+
+        .selection-popup:active {
+            opacity: 0.9;
+        }
+
+        /* 历史记录列表 */
+        .history-list {
+            padding: 16px;
+        }
+
+        .history-item {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(139, 115, 85, 0.08);
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .history-item:active {
+            background: rgba(139, 115, 85, 0.15);
+        }
+
+        .history-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .history-progress {
+            margin-top: 8px;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .history-progress-fill {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 2px;
         }
     </style>
 </head>
 <body>
+    <!-- 选中文字弹出按钮 -->
+    <div class="selection-popup" id="selectionPopup" onclick="addSelectionNote()">✎ 写书评</div>
+
     <!-- 顶部工具栏 -->
     <div class="toolbar" id="toolbar">
         <div class="toolbar-left">
@@ -635,8 +716,15 @@
                     自动保存阅读进度、支持书评、夜间模式<br>
                     适配移动端，对眼睛友好
                 </div>
+                
+                <!-- 历史记录 -->
+                <div id="historySection" style="width: 100%; max-width: 400px; margin-top: 20px; display: none;">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; text-align: left;">继续阅读</div>
+                    <div class="history-list" id="historyList"></div>
+                </div>
+
                 <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.log,.csv,.json,.js,.html,.css,.py,.java,.cpp,.c" onchange="handleFileSelect(event)">
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择本地文件</button>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()" style="margin-top: 20px;">选择本地文件</button>
             </div>
 
             <!-- 内容区域 -->
@@ -728,9 +816,10 @@
             <div class="setting-item">
                 <label class="setting-label">关于</label>
                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                    本地文本阅读器 v1.0<br>
+                    本地文本阅读器 v2.0<br>
                     所有数据保存在本地，不会上传服务器<br>
-                    支持 .txt .md .log 等纯文本格式
+                    支持 .txt .md .log 等纯文本格式<br>
+                    选中文字即可添加段落书评
                 </div>
             </div>
         </div>
@@ -750,10 +839,12 @@
         let totalSize = 0;
         let currentPage = 0;
         let totalPages = 0;
-        let pages = []; // 存储每页的起始位置
+        let pages = [];
         let fileName = '';
         let isLoading = false;
         let autoHideTimer = null;
+        let currentSelection = ''; // 当前选中的文字
+        let selectionRange = null; // 选中范围
 
         // 阅读设置
         let settings = {
@@ -772,9 +863,66 @@
             loadSettings();
             loadNotes();
             loadReadingRecords();
+            renderHistory();
             setupAutoHide();
             setupScrollHandler();
+            setupSelectionHandler();
         });
+
+        // ========== 历史记录渲染 ==========
+        function renderHistory() {
+            const records = Object.entries(readingRecords)
+                .sort((a, b) => new Date(b[1].lastRead) - new Date(a[1].lastRead))
+                .slice(0, 5); // 最近5本
+
+            const section = document.getElementById('historySection');
+            const list = document.getElementById('historyList');
+
+            if (records.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            list.innerHTML = records.map(([name, record]) => {
+                const percent = record.totalPages > 0 ? Math.round(((record.page + 1) / record.totalPages) * 100) : 0;
+                const date = new Date(record.lastRead).toLocaleDateString('zh-CN');
+                return `
+                    <div class="history-item" onclick="restoreReading('${encodeURIComponent(name)}')">
+                        <div class="history-name">${escapeHtml(name)}</div>
+                        <div class="history-meta">
+                            <span>第${record.page + 1}页 / 共${record.totalPages}页</span>
+                            <span>${date}</span>
+                        </div>
+                        <div class="history-progress">
+                            <div class="history-progress-fill" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function restoreReading(encodedName) {
+            const name = decodeURIComponent(encodedName);
+            const record = readingRecords[name];
+            if (!record) {
+                showToast('记录已失效');
+                return;
+            }
+
+            // 创建虚拟文件对象用于恢复
+            fileName = name;
+            currentPage = record.page;
+            totalPages = record.totalPages;
+            
+            // 由于文件内容无法持久化存储，需要用户重新选择文件
+            showToast('请重新选择该文件以恢复阅读');
+            document.getElementById('fileInput').click();
+            
+            // 保存目标页码，在文件加载后跳转
+            window._targetPage = record.page;
+            window._targetFileName = name;
+        }
 
         // ========== 文件处理 ==========
         function handleFileSelect(event) {
@@ -782,9 +930,16 @@
             if (!file) return;
 
             // 检查文件大小
-            if (file.size > 500 * 1024 * 1024) { // 500MB 限制
+            if (file.size > 500 * 1024 * 1024) {
                 showToast('文件过大，请选择小于 500MB 的文件');
                 return;
+            }
+
+            // 如果是恢复阅读，验证文件名
+            if (window._targetFileName && file.name !== window._targetFileName) {
+                if (!confirm(`您选择的是 "${file.name}"，但记录中的文件是 "${window._targetFileName}"。是否继续？`)) {
+                    return;
+                }
             }
 
             currentFile = file;
@@ -801,6 +956,20 @@
             reader.onload = (e) => {
                 fileContent = e.target.result;
                 processContent();
+                
+                // 恢复阅读位置
+                if (window._targetPage !== undefined && window._targetFileName === fileName) {
+                    currentPage = Math.min(window._targetPage, totalPages - 1);
+                    window._targetPage = undefined;
+                    window._targetFileName = undefined;
+                    showToast(`已恢复至第 ${currentPage + 1} 页`);
+                }
+                
+                renderPage();
+                updateProgress();
+                updateNavButtons();
+                saveReadingRecord();
+                renderHistory();
                 showToast('文件读取完成');
             };
             reader.onerror = () => {
@@ -810,7 +979,6 @@
         }
 
         function processContent() {
-            // 分段处理
             pages = [];
             let position = 0;
             
@@ -822,42 +990,19 @@
             if (pages.length === 0) pages.push(0);
             totalPages = pages.length;
 
-            // 尝试提取章节标题
             extractChapters();
-
-            // 检查是否有阅读记录
-            const record = readingRecords[fileName];
-            if (record && record.page < totalPages) {
-                currentPage = record.page;
-                showToast(`继续上回阅读：第 ${currentPage + 1} 页`);
-            } else {
-                currentPage = 0;
-            }
-
-            renderPage();
-            updateProgress();
-            updateNavButtons();
-            saveReadingRecord();
         }
 
         function extractChapters() {
-            // 简单章节识别：查找"第X章"、"Chapter"等模式
-            const chapterRegex = /^(第[一二三四五六七八九十百零\d]+章|Chapter\s+\d+|【.+?】|#.+\n)/gim;
             const tocList = document.getElementById('tocList');
             let html = '';
-            let match;
             let chapterCount = 0;
 
-            // 重置正则
-            chapterRegex.lastIndex = 0;
-            
-            // 简单分段显示
             for (let i = 0; i < totalPages; i++) {
                 const start = pages[i];
                 const end = Math.min(start + CHUNK_SIZE, fileContent.length);
                 const chunk = fileContent.substring(start, end);
                 
-                // 查找章节标题
                 const lines = chunk.split('\n');
                 for (let line of lines) {
                     if (line.match(/^第[一二三四五六七八九十百零\d]+章/) || 
@@ -865,14 +1010,13 @@
                         line.match(/^【.+】/) ||
                         line.match(/^#+\s/)) {
                         chapterCount++;
-                        html += `<div class="toc-item" onclick="jumpToPage(${i})" data-page="${i}">${line.replace(/^#+\s*/, '').substring(0, 30)}</div>`;
+                        html += `<div class="toc-item" onclick="jumpToPage(${i})" data-page="${i}">${escapeHtml(line.replace(/^#+\s*/, '').substring(0, 30))}</div>`;
                         break;
                     }
                 }
             }
 
             if (chapterCount === 0) {
-                // 如果没有识别到章节，按页显示
                 for (let i = 0; i < Math.min(totalPages, 100); i++) {
                     html += `<div class="toc-item" onclick="jumpToPage(${i})" data-page="${i}">第 ${i + 1} 页</div>`;
                 }
@@ -898,7 +1042,6 @@
                 .replace(/\n/g, '</p><p>')
                 .replace(/\s{2,}/g, ' ');
 
-            // 查找当前页的章节标题
             const lines = fileContent.substring(start, end).split('\n');
             let title = `第 ${currentPage + 1} 页 / 共 ${totalPages} 页`;
             for (let line of lines) {
@@ -913,10 +1056,8 @@
             document.getElementById('chapterTitle').textContent = title;
             document.getElementById('contentText').innerHTML = `<p>${text}</p>`;
             
-            // 滚动到顶部
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
-            // 更新目录高亮
             document.querySelectorAll('.toc-item').forEach(item => {
                 item.classList.remove('current');
                 if (parseInt(item.dataset.page) === currentPage) {
@@ -967,6 +1108,64 @@
             }
         }
 
+        // ========== 选中文字书评 ==========
+        function setupSelectionHandler() {
+            const popup = document.getElementById('selectionPopup');
+            const contentText = document.getElementById('contentText');
+
+            // 鼠标/触摸选中
+            document.addEventListener('selectionchange', () => {
+                const selection = window.getSelection();
+                const text = selection.toString().trim();
+                
+                if (text.length > 0 && text.length < 500) {
+                    currentSelection = text;
+                    selectionRange = selection.getRangeAt(0);
+                    
+                    // 计算弹出位置
+                    const rect = selectionRange.getBoundingClientRect();
+                    popup.style.left = rect.left + rect.width / 2 - popup.offsetWidth / 2 + 'px';
+                    popup.style.top = rect.top - 40 + 'px';
+                    popup.classList.add('show');
+                } else {
+                    popup.classList.remove('show');
+                }
+            });
+
+            // 点击其他地方隐藏
+            document.addEventListener('click', (e) => {
+                if (!popup.contains(e.target) && !contentText.contains(e.target)) {
+                    popup.classList.remove('show');
+                }
+            });
+        }
+
+        function addSelectionNote() {
+            if (!currentSelection) return;
+            
+            const note = {
+                id: Date.now(),
+                text: currentSelection,
+                noteText: '',
+                fileName: fileName,
+                page: currentPage,
+                timestamp: new Date().toLocaleString('zh-CN'),
+                isSelection: true
+            };
+
+            // 打开书评面板并预填充
+            toggleNotes();
+            document.getElementById('noteInput').value = `「${currentSelection}」\n\n`;
+            document.getElementById('noteInput').focus();
+            
+            // 保存临时引用
+            window._pendingNote = note;
+            
+            // 清除选中
+            window.getSelection().removeAllRanges();
+            document.getElementById('selectionPopup').classList.remove('show');
+        }
+
         // ========== 设置功能 ==========
         function toggleSettings() {
             const panel = document.getElementById('settingsPanel');
@@ -981,7 +1180,7 @@
             panel.classList.toggle('open');
             overlay.classList.toggle('show');
             if (panel.classList.contains('open')) {
-                document.getElementById('noteInput').focus();
+                setTimeout(() => document.getElementById('noteInput').focus(), 300);
             }
         }
 
@@ -1025,18 +1224,25 @@
                 return;
             }
 
-            const note = {
+            const note = window._pendingNote || {
                 id: Date.now(),
-                text: text,
+                text: '',
                 fileName: fileName,
                 page: currentPage,
-                timestamp: new Date().toLocaleString('zh-CN')
+                timestamp: new Date().toLocaleString('zh-CN'),
+                isSelection: false
             };
 
+            note.noteText = text;
+            note.id = Date.now(); // 确保新ID
+            
             notes.unshift(note);
+            window._pendingNote = null;
+            
             saveNotes();
             renderNotes();
             input.value = '';
+            closeAllPanels();
             showToast('书评已保存');
         }
 
@@ -1052,13 +1258,14 @@
             const currentFileNotes = notes.filter(n => n.fileName === fileName);
             
             if (currentFileNotes.length === 0) {
-                container.innerHTML = '<div class="empty-notes">暂无书评，阅读时随时记录想法</div>';
+                container.innerHTML = '<div class="empty-notes">暂无书评，选中文字即可添加段落书评</div>';
                 return;
             }
 
             container.innerHTML = currentFileNotes.map(note => `
                 <div class="note-item">
-                    <div class="note-text">${escapeHtml(note.text)}</div>
+                    ${note.isSelection ? `<div style="font-size: 13px; color: var(--accent-color); margin-bottom: 8px; padding: 8px; background: rgba(139,115,85,0.1); border-radius: 6px; font-style: italic;">「${escapeHtml(note.text)}」</div>` : ''}
+                    <div class="note-text">${escapeHtml(note.noteText || note.text)}</div>
                     <div class="note-meta">
                         <span>第${note.page + 1}页 · ${note.timestamp}</span>
                         <span class="note-delete" onclick="deleteNote(${note.id})">删除</span>
@@ -1095,12 +1302,22 @@
         }
 
         function saveReadingRecord() {
-            if (!fileName) return;
+            if (!fileName || totalPages === 0) return;
+            
             readingRecords[fileName] = {
                 page: currentPage,
                 totalPages: totalPages,
+                fileSize: totalSize,
                 lastRead: new Date().toISOString()
             };
+            
+            // 限制记录数量，保留最近20本
+            const entries = Object.entries(readingRecords);
+            if (entries.length > 20) {
+                entries.sort((a, b) => new Date(b[1].lastRead) - new Date(a[1].lastRead));
+                readingRecords = Object.fromEntries(entries.slice(0, 20));
+            }
+            
             localStorage.setItem('reader_records', JSON.stringify(readingRecords));
         }
 
@@ -1171,20 +1388,16 @@
                 const currentScrollY = window.scrollY;
                 
                 if (currentScrollY > lastScrollY && currentScrollY > 100) {
-                    // 向下滚动，隐藏
                     toolbar.classList.add('hidden');
                     bottomBar.classList.add('hidden');
                 } else {
-                    // 向上滚动，显示
                     toolbar.classList.remove('hidden');
                     bottomBar.classList.remove('hidden');
                 }
                 
                 lastScrollY = currentScrollY;
                 
-                // 清除之前的定时器
                 clearTimeout(autoHideTimer);
-                // 3秒后自动隐藏
                 autoHideTimer = setTimeout(() => {
                     if (window.scrollY > 100) {
                         toolbar.classList.add('hidden');
@@ -1193,14 +1406,12 @@
                 }, 3000);
             });
 
-            // 点击屏幕中央显示工具栏
             document.addEventListener('click', (e) => {
                 const x = e.clientX;
                 const y = e.clientY;
                 const width = window.innerWidth;
                 const height = window.innerHeight;
                 
-                // 点击中央区域
                 if (x > width * 0.3 && x < width * 0.7 && y > height * 0.3 && y < height * 0.7) {
                     toolbar.classList.toggle('hidden');
                     bottomBar.classList.toggle('hidden');
@@ -1209,7 +1420,6 @@
         }
 
         function setupScrollHandler() {
-            // 键盘导航
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
                     prevPage();
@@ -1218,7 +1428,6 @@
                 }
             });
 
-            // 触摸滑动
             let touchStartX = 0;
             let touchEndX = 0;
 
@@ -1235,9 +1444,9 @@
                 const diff = touchStartX - touchEndX;
                 if (Math.abs(diff) > 50) {
                     if (diff > 0) {
-                        nextPage(); // 左滑下一页
+                        nextPage();
                     } else {
-                        prevPage(); // 右滑上一页
+                        prevPage();
                     }
                 }
             }
