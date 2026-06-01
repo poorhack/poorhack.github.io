@@ -205,169 +205,175 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 <div class="toast" id="toast"></div>
 <script>
 const CHUNK_SIZE=100*1024;
-let currentFile=null,fileContent='',totalSize=0,currentPage=0,totalPages=0,pages=[],fileName='';
-let isLoading=false,autoHideTimer=null,currentSelection='',selectionRange=null,notePreviewTimer=null;
-let settings={fontSize:18,theme:'light'};
+let currentFile=null,fileContent="",totalSize=0,currentPage=0,totalPages=0,pages=[],fileName="";
+let isLoading=false,autoHideTimer=null,currentSelection="",selectionRange=null,notePreviewTimer=null;
+let settings={fontSize:18,theme:"light"};
 let notes=[];
 let readingRecords={};
 let pageNoteMap=new Map();
 
-document.addEventListener('DOMContentLoaded',()=>{
-  const savedTheme=localStorage.getItem('reader_theme');
-  if(savedTheme){document.documentElement.setAttribute('data-theme',savedTheme);}
+document.addEventListener("DOMContentLoaded",function(){
+  var savedTheme=localStorage.getItem("reader_theme");
+  if(savedTheme){document.documentElement.setAttribute("data-theme",savedTheme);}
   loadSettings();loadNotes();loadReadingRecords();buildNoteIndex();renderHistory();
   setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
 });
 
 function buildNoteIndex(){
   pageNoteMap.clear();
-  notes.forEach(note=>{
+  notes.forEach(function(note){
     if(!note.fileName||note.paraIndex===undefined)return;
-    const key=note.fileName+'#'+note.page;
+    var key=note.fileName+"#"+note.page;
     if(!pageNoteMap.has(key))pageNoteMap.set(key,new Map());
-    const paraMap=pageNoteMap.get(key);
-    const paraIdx=note.paraIndex||0;
+    var paraMap=pageNoteMap.get(key);
+    var paraIdx=note.paraIndex||0;
     paraMap.set(paraIdx,(paraMap.get(paraIdx)||0)+1);
   });
 }
 
 function getNoteCountForPara(fileName,page,paraIndex){
-  const key=fileName+'#'+page;
-  const paraMap=pageNoteMap.get(key);
+  var key=fileName+"#"+page;
+  var paraMap=pageNoteMap.get(key);
   if(!paraMap)return 0;
   return paraMap.get(paraIndex)||0;
 }
 
 function renderHistory(){
-  const records=Object.entries(readingRecords).sort((a,b)=>new Date(b[1].lastRead)-new Date(a[1].lastRead)).slice(0,5);
-  const section=document.getElementById('historySection');
-  const list=document.getElementById('historyList');
-  if(records.length===0){section.style.display='none';return;}
-  section.style.display='block';
-  list.innerHTML=records.map(([name,record])=>{
-    const percent=record.totalPages>0?Math.round(((record.page+1)/record.totalPages)*100):0;
-    const date=new Date(record.lastRead).toLocaleDateString('zh-CN');
-    return '<div class="history-item" onclick="restoreReading(''+encodeURIComponent(name)+'')">'+
+  var records=Object.entries(readingRecords).sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);}).slice(0,5);
+  var section=document.getElementById("historySection");
+  var list=document.getElementById("historyList");
+  if(records.length===0){section.style.display="none";return;}
+  section.style.display="block";
+  list.innerHTML=records.map(function(item){
+    var name=item[0],record=item[1];
+    var percent=record.totalPages>0?Math.round(((record.page+1)/record.totalPages)*100):0;
+    var date=new Date(record.lastRead).toLocaleDateString("zh-CN");
+    return '<div class="history-item" onclick="restoreHistory(\''+encodeURIComponent(name)+'\')">'+
       '<div class="history-name">'+escapeHtml(name)+'</div>'+
       '<div class="history-meta"><span>第'+(record.page+1)+'页 / 共'+record.totalPages+'页</span><span>'+date+'</span></div>'+
       '<div class="history-progress"><div class="history-progress-fill" style="width:'+percent+'%"></div></div></div>';
-  }).join('');
+  }).join("");
 }
 
-function restoreReading(encodedName){
-  const name=decodeURIComponent(encodedName);
-  const record=readingRecords[name];
-  if(!record){showToast('记录已失效');return;}
+function restoreHistory(encodedName){
+  var name=decodeURIComponent(encodedName);
+  var record=readingRecords[name];
+  if(!record){showToast("记录已失效");return;}
   fileName=name;currentPage=record.page;totalPages=record.totalPages;
-  showToast('请重新选择该文件以恢复阅读');
-  document.getElementById('fileInput').click();
+  showToast("请重新选择该文件以恢复阅读");
+  document.getElementById("fileInput").click();
   window._targetPage=record.page;window._targetFileName=name;
 }
 
 function handleFileSelect(event){
-  const file=event.target.files[0];
+  var file=event.target.files[0];
   if(!file)return;
-  if(file.size>500*1024*1024){showToast('文件过大，请选择小于 500MB 的文件');return;}
+  if(file.size>500*1024*1024){showToast("文件过大，请选择小于 500MB 的文件");return;}
   if(window._targetFileName&&file.name!==window._targetFileName){
     if(!confirm('您选择的是 "'+file.name+'"，但记录中的文件是 "'+window._targetFileName+'"。是否继续？'))return;
   }
   currentFile=file;fileName=file.name;totalSize=file.size;
-  document.getElementById('fileName').textContent=fileName;
-  document.getElementById('emptyState').style.display='none';
-  document.getElementById('contentArea').style.display='block';
-  showToast('正在读取文件...');
-  const reader=new FileReader();
-  reader.onload=(e)=>{
+  document.getElementById("fileName").textContent=fileName;
+  document.getElementById("emptyState").style.display="none";
+  document.getElementById("contentArea").style.display="block";
+  showToast("正在读取文件...");
+  var reader=new FileReader();
+  reader.onload=function(e){
     fileContent=e.target.result;processContent();
     if(window._targetPage!==undefined&&window._targetFileName===fileName){
       currentPage=Math.min(window._targetPage,totalPages-1);
       window._targetPage=undefined;window._targetFileName=undefined;
-      showToast('已恢复至第 '+(currentPage+1)+' 页');
+      showToast("已恢复至第 "+(currentPage+1)+" 页");
     }
-    renderPage();updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast('文件读取完成');
+    renderPage();updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast("文件读取完成");
   };
-  reader.onerror=()=>showToast('文件读取失败');
+  reader.onerror=function(){showToast("文件读取失败");};
   reader.readAsText(file);
 }
 
 function processContent(){
-  pages=[];let position=0;
+  pages=[];var position=0;
   while(position<fileContent.length){pages.push(position);position+=CHUNK_SIZE;}
   if(pages.length===0)pages.push(0);totalPages=pages.length;
   extractChapters();
 }
 
 function extractChapters(){
-  const tocList=document.getElementById('tocList');let html='';let chapterCount=0;
-  for(let i=0;i<totalPages;i++){
-    const start=pages[i];const end=Math.min(start+CHUNK_SIZE,fileContent.length);
-    const chunk=fileContent.substring(start,end);const lines=chunk.split('\n');
-    for(let line of lines){
+  var tocList=document.getElementById("tocList");var html="";var chapterCount=0;
+  for(var i=0;i<totalPages;i++){
+    var start=pages[i];var end=Math.min(start+CHUNK_SIZE,fileContent.length);
+    var chunk=fileContent.substring(start,end);var lines=chunk.split("\n");
+    for(var j=0;j<lines.length;j++){
+      var line=lines[j];
       if(line.match(/^第[一二三四五六七八九十百零\d]+章/)||line.match(/^Chapter\s+\d+/i)||line.match(/^【.+】/)||line.match(/^#+\s/)){
-        chapterCount++;html+='<div class="toc-item" onclick="jumpToPage('+i+')" data-page="'+i+'">'+escapeHtml(line.replace(/^#+\s*/,'').substring(0,30))+'</div>';break;
+        chapterCount++;html+='<div class="toc-item" onclick="jumpToPage('+i+')" data-page="'+i+'">'+escapeHtml(line.replace(/^#+\s*/,"").substring(0,30))+'</div>';break;
       }
     }
   }
   if(chapterCount===0){
-    for(let i=0;i<Math.min(totalPages,100);i++)html+='<div class="toc-item" onclick="jumpToPage('+i+')" data-page="'+i+'">第 '+(i+1)+' 页</div>';
+    for(var i=0;i<Math.min(totalPages,100);i++)html+='<div class="toc-item" onclick="jumpToPage('+i+')" data-page="'+i+'">第 '+(i+1)+' 页</div>';
     if(totalPages>100)html+='<div class="toc-item" style="color:var(--sec)">... 共 '+totalPages+' 页</div>';
   }
   tocList.innerHTML=html||'<div class="empty-notes">暂无目录</div>';
 }
 
 function renderPage(){
-  const start=pages[currentPage];const end=Math.min(start+CHUNK_SIZE,fileContent.length);
-  const rawText=fileContent.substring(start,end);const paragraphs=rawText.split('\n').filter(p=>p.trim());
-  const lines=rawText.split('\n');let title='第 '+(currentPage+1)+' 页 / 共 '+totalPages+' 页';
-  for(let line of lines){
-    if(line.match(/^第[一二三四五六七八九十百零\d]+章/)||line.match(/^Chapter\s+\d+/i)||line.match(/^【.+】/)){title=line;break;}
+  var start=pages[currentPage];var end=Math.min(start+CHUNK_SIZE,fileContent.length);
+  var rawText=fileContent.substring(start,end);var paragraphs=rawText.split("\n").filter(function(p){return p.trim();});
+  var lines=rawText.split("\n");var title="第 "+(currentPage+1)+" 页 / 共 "+totalPages+" 页";
+  for(var i=0;i<lines.length;i++){
+    if(lines[i].match(/^第[一二三四五六七八九十百零\d]+章/)||lines[i].match(/^Chapter\s+\d+/i)||lines[i].match(/^【.+】/)){title=lines[i];break;}
   }
-  let html='';
-  paragraphs.forEach((para,idx)=>{
+  var html="";
+  paragraphs.forEach(function(para,idx){
     if(!para.trim())return;
-    const noteCount=getNoteCountForPara(fileName,currentPage,idx);
-    const hasNoteClass=noteCount>0?'has-note':'';
-    const badge=noteCount>0?'<span class="note-badge" data-para="'+idx+'">'+noteCount+'</span>':'';
-    const safeText=escapeHtml(para).replace(/\s{2,}/g,' ');
+    var noteCount=getNoteCountForPara(fileName,currentPage,idx);
+    var hasNoteClass=noteCount>0?"has-note":"";
+    var badge=noteCount>0?'<span class="note-badge" data-para="'+idx+'">'+noteCount+'</span>':"";
+    var safeText=escapeHtml(para).replace(/\s{2,}/g," ");
     html+='<p class="para '+hasNoteClass+'" data-para="'+idx+'">'+safeText+badge+'</p>';
   });
-  document.getElementById('chapterTitle').textContent=title;
-  document.getElementById('contentText').innerHTML=html;
-  window.scrollTo({top:0,behavior:'smooth'});
-  document.querySelectorAll('.toc-item').forEach(item=>{
-    item.classList.remove('current');
-    if(parseInt(item.dataset.page)===currentPage)item.classList.add('current');
-  });
+  document.getElementById("chapterTitle").textContent=title;
+  document.getElementById("contentText").innerHTML=html;
+  window.scrollTo({top:0,behavior:"smooth"});
+  var tocItems=document.querySelectorAll(".toc-item");
+  for(var i=0;i<tocItems.length;i++){
+    tocItems[i].classList.remove("current");
+    if(parseInt(tocItems[i].dataset.page)===currentPage)tocItems[i].classList.add("current");
+  }
   saveReadingRecord();
 }
 
 function setupNotePreview(){
-  const contentText=document.getElementById('contentText');
-  contentText.addEventListener('click',(e)=>{
-    const para=e.target.closest('.para');
+  var contentText=document.getElementById("contentText");
+  contentText.addEventListener("click",function(e){
+    var para=e.target.closest(".para");
     if(!para)return;
-    const paraIndex=parseInt(para.dataset.para);
+    var paraIndex=parseInt(para.dataset.para);
     if(isNaN(paraIndex))return;
-    document.querySelectorAll('.note-preview').forEach(p=>p.remove());
-    const paraNotes=notes.filter(n=>n.fileName===fileName&&n.page===currentPage&&n.paraIndex===paraIndex);
+    var previews=document.querySelectorAll(".note-preview");
+    for(var i=0;i<previews.length;i++)previews[i].remove();
+    var paraNotes=notes.filter(function(n){return n.fileName===fileName&&n.page===currentPage&&n.paraIndex===paraIndex;});
     if(paraNotes.length===0)return;
-    const preview=document.createElement('div');preview.className='note-preview';
-    preview.innerHTML=paraNotes.map(n=>'<div class="note-preview-item"><div class="note-preview-text">'+escapeHtml(n.noteText||n.text)+'</div><div class="note-preview-time">'+n.timestamp+'</div></div>').join('');
+    var preview=document.createElement("div");preview.className="note-preview";
+    preview.innerHTML=paraNotes.map(function(n){
+      return '<div class="note-preview-item"><div class="note-preview-text">'+escapeHtml(n.noteText||n.text)+'</div><div class="note-preview-time">'+n.timestamp+'</div></div>';
+    }).join("");
     para.appendChild(preview);
-    requestAnimationFrame(()=>preview.classList.add('show'));
-    clearTimeout(notePreviewTimer);notePreviewTimer=setTimeout(()=>preview.remove(),3000);
+    requestAnimationFrame(function(){preview.classList.add("show");});
+    clearTimeout(notePreviewTimer);notePreviewTimer=setTimeout(function(){preview.remove();},3000);
   });
 }
 
 function updateProgress(){
-  const percent=totalPages>0?Math.round(((currentPage+1)/totalPages)*100):0;
-  document.getElementById('progressFill').style.width=percent+'%';
-  document.getElementById('progressInfo').textContent=percent+'% · '+(currentPage+1)+'/'+totalPages+'页 · '+formatBytes(totalSize);
+  var percent=totalPages>0?Math.round(((currentPage+1)/totalPages)*100):0;
+  document.getElementById("progressFill").style.width=percent+"%";
+  document.getElementById("progressInfo").textContent=percent+"% · "+(currentPage+1)+"/"+totalPages+"页 · "+formatBytes(totalSize);
 }
 
 function updateNavButtons(){
-  document.getElementById('prevBtn').disabled=currentPage<=0;
-  document.getElementById('nextBtn').disabled=currentPage>=totalPages-1;
+  document.getElementById("prevBtn").disabled=currentPage<=0;
+  document.getElementById("nextBtn").disabled=currentPage>=totalPages-1;
 }
 
 function prevPage(){if(currentPage>0){currentPage--;renderPage();updateProgress();updateNavButtons();}}
@@ -375,121 +381,121 @@ function nextPage(){if(currentPage<totalPages-1){currentPage++;renderPage();upda
 function jumpToPage(page){if(page>=0&&page<totalPages){currentPage=page;renderPage();updateProgress();updateNavButtons();closeAllPanels();}}
 
 function setupSelectionHandler(){
-  const popup=document.getElementById('selectionPopup');let selectionTimer=null;
-  document.addEventListener('selectionchange',()=>{
+  var popup=document.getElementById("selectionPopup");var selectionTimer=null;
+  document.addEventListener("selectionchange",function(){
     clearTimeout(selectionTimer);
-    selectionTimer=setTimeout(()=>{
-      const selection=window.getSelection();const text=selection.toString().trim();
+    selectionTimer=setTimeout(function(){
+      var selection=window.getSelection();var text=selection.toString().trim();
       if(text.length>0&&text.length<500){
         currentSelection=text;selectionRange=selection.getRangeAt(0);
-        const rect=selectionRange.getBoundingClientRect();
-        const scrollTop=window.scrollY||document.documentElement.scrollTop;
-        popup.style.left=rect.left+rect.width/2-popup.offsetWidth/2+'px';
-        popup.style.top=rect.top+scrollTop-45+'px';
-        popup.classList.add('show');
-      }else{popup.classList.remove('show');}
+        var rect=selectionRange.getBoundingClientRect();
+        var scrollTop=window.scrollY||document.documentElement.scrollTop;
+        popup.style.left=rect.left+rect.width/2-popup.offsetWidth/2+"px";
+        popup.style.top=rect.top+scrollTop-45+"px";
+        popup.classList.add("show");
+      }else{popup.classList.remove("show");}
     },100);
   });
-  document.addEventListener('click',(e)=>{if(!popup.contains(e.target))popup.classList.remove('show');});
+  document.addEventListener("click",function(e){if(!popup.contains(e.target))popup.classList.remove("show");});
 }
 
 function addSelectionNote(){
   if(!currentSelection)return;
-  let paraIndex=0;
-  const selection=window.getSelection();
+  var paraIndex=0;
+  var selection=window.getSelection();
   if(selection.rangeCount>0){
-    const range=selection.getRangeAt(0);
-    let node=range.startContainer;
+    var range=selection.getRangeAt(0);var node=range.startContainer;
     while(node&&node.nodeType!==1)node=node.parentNode;
-    const para=node.closest?node.closest('.para'):null;
+    var para=node.closest?node.closest(".para"):null;
     if(para)paraIndex=parseInt(para.dataset.para)||0;
   }
-  const note={id:Date.now(),text:currentSelection,noteText:'',fileName:fileName,page:currentPage,paraIndex:paraIndex,timestamp:new Date().toLocaleString('zh-CN'),isSelection:true};
-  toggleNotes();document.getElementById('noteInput').value='「'+currentSelection+'」\n\n';
-  document.getElementById('noteInput').focus();window._pendingNote=note;
+  var note={id:Date.now(),text:currentSelection,noteText:"",fileName:fileName,page:currentPage,paraIndex:paraIndex,timestamp:new Date().toLocaleString("zh-CN"),isSelection:true};
+  toggleNotes();document.getElementById("noteInput").value="「"+currentSelection+"」\n\n";
+  document.getElementById("noteInput").focus();window._pendingNote=note;
   window.getSelection().removeAllRanges();
-  document.getElementById('selectionPopup').classList.remove('show');
+  document.getElementById("selectionPopup").classList.remove("show");
 }
 
-function toggleSettings(){document.getElementById('settingsPanel').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
-function toggleNotes(){document.getElementById('notesPanel').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');if(document.getElementById('notesPanel').classList.contains('open'))setTimeout(()=>document.getElementById('noteInput').focus(),300);}
-function toggleToc(){document.getElementById('tocPanel').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
-function closeAllPanels(){document.getElementById('settingsPanel').classList.remove('open');document.getElementById('notesPanel').classList.remove('open');document.getElementById('tocPanel').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+function toggleSettings(){document.getElementById("settingsPanel").classList.toggle("open");document.getElementById("overlay").classList.toggle("show");}
+function toggleNotes(){document.getElementById("notesPanel").classList.toggle("open");document.getElementById("overlay").classList.toggle("show");if(document.getElementById("notesPanel").classList.contains("open"))setTimeout(function(){document.getElementById("noteInput").focus();},300);}
+function toggleToc(){document.getElementById("tocPanel").classList.toggle("open");document.getElementById("overlay").classList.toggle("show");}
+function closeAllPanels(){document.getElementById("settingsPanel").classList.remove("open");document.getElementById("notesPanel").classList.remove("open");document.getElementById("tocPanel").classList.remove("open");document.getElementById("overlay").classList.remove("show");}
 
 function changeFontSize(delta){
   settings.fontSize=Math.max(12,Math.min(32,settings.fontSize+delta));
-  document.documentElement.style.setProperty('--fs',settings.fontSize+'px');
-  document.getElementById('fontSizeValue').textContent=settings.fontSize;
+  document.documentElement.style.setProperty("--fs",settings.fontSize+"px");
+  document.getElementById("fontSizeValue").textContent=settings.fontSize;
   saveSettings();
 }
 
 function setTheme(theme){
   settings.theme=theme;
-  document.documentElement.setAttribute('data-theme',theme);
-  localStorage.setItem('reader_theme',theme);
-  document.getElementById('themeLight').classList.toggle('active',theme==='light');
-  document.getElementById('themeDark').classList.toggle('active',theme==='dark');
+  document.documentElement.setAttribute("data-theme",theme);
+  localStorage.setItem("reader_theme",theme);
+  document.getElementById("themeLight").classList.toggle("active",theme==="light");
+  document.getElementById("themeDark").classList.toggle("active",theme==="dark");
   saveSettings();
 }
 
 function addNote(){
-  const input=document.getElementById('noteInput');const text=input.value.trim();
-  if(!text){showToast('请输入书评内容');return;}
-  const note=window._pendingNote||{id:Date.now(),text:'',fileName:fileName,page:currentPage,paraIndex:0,timestamp:new Date().toLocaleString('zh-CN'),isSelection:false};
+  var input=document.getElementById("noteInput");var text=input.value.trim();
+  if(!text){showToast("请输入书评内容");return;}
+  var note=window._pendingNote||{id:Date.now(),text:"",fileName:fileName,page:currentPage,paraIndex:0,timestamp:new Date().toLocaleString("zh-CN"),isSelection:false};
   note.noteText=text;note.id=Date.now();notes.unshift(note);window._pendingNote=null;
-  buildNoteIndex();saveNotes();renderNotes();input.value='';closeAllPanels();showToast('书评已保存');
+  buildNoteIndex();saveNotes();renderNotes();input.value="";closeAllPanels();showToast("书评已保存");
   if(fileName===note.fileName&&currentPage===note.page)renderPage();
 }
 
 function deleteNote(id){
-  notes=notes.filter(n=>n.id!==id);buildNoteIndex();saveNotes();renderNotes();showToast('书评已删除');renderPage();
+  notes=notes.filter(function(n){return n.id!==id;});
+  buildNoteIndex();saveNotes();renderNotes();showToast("书评已删除");renderPage();
 }
 
 function renderNotes(){
-  const container=document.getElementById('notesList');
-  const currentFileNotes=notes.filter(n=>n.fileName===fileName);
-  if(currentFileNotes.length===0){container.innerHTML='<div class="empty-notes">暂无书评，选中文字即可添加段落书评</div>';return;}
-  container.innerHTML=currentFileNotes.map(note=>{
-    let html='<div class="note-item">';
-    if(note.isSelection)html+='<div style="font-size:13px;color:var(--accent);margin-bottom:8px;padding:8px;background:rgba(139,115,85,0.1);border-radius:6px;font-style:italic">「'+escapeHtml(note.text)+'」</div>';
-    html+='<div class="note-text">'+escapeHtml(note.noteText||note.text)+'</div>';
-    html+='<div class="note-meta"><span>第'+(note.page+1)+'页'+(note.paraIndex!==undefined?' · 段落'+(note.paraIndex+1):'')+' · '+note.timestamp+'</span><span class="note-delete" onclick="deleteNote('+note.id+')">删除</span></div></div>';
+  var container=document.getElementById("notesList");
+  var currentFileNotes=notes.filter(function(n){return n.fileName===fileName;});
+  if(currentFileNotes.length===0){container.innerHTML="<div class=\"empty-notes\">暂无书评，选中文字即可添加段落书评</div>";return;}
+  container.innerHTML=currentFileNotes.map(function(note){
+    var html="<div class=\"note-item\">";
+    if(note.isSelection)html+="<div style=\"font-size:13px;color:var(--accent);margin-bottom:8px;padding:8px;background:rgba(139,115,85,0.1);border-radius:6px;font-style:italic\">「"+escapeHtml(note.text)+"」</div>";
+    html+="<div class=\"note-text\">"+escapeHtml(note.noteText||note.text)+"</div>";
+    html+="<div class=\"note-meta\"><span>第"+(note.page+1)+"页"+(note.paraIndex!==undefined?" · 段落"+(note.paraIndex+1):"")+" · "+note.timestamp+"</span><span class=\"note-delete\" onclick=\"deleteNote("+note.id+")\">删除</span></div></div>";
     return html;
-  }).join('');
+  }).join("");
 }
 
-function saveSettings(){localStorage.setItem('reader_settings',JSON.stringify(settings));}
+function saveSettings(){localStorage.setItem("reader_settings",JSON.stringify(settings));}
 function loadSettings(){
-  const saved=localStorage.getItem('reader_settings');
-  if(saved){settings=JSON.parse(saved);document.documentElement.style.setProperty('--fs',settings.fontSize+'px');document.getElementById('fontSizeValue').textContent=settings.fontSize;document.getElementById('themeLight').classList.toggle('active',settings.theme==='light');document.getElementById('themeDark').classList.toggle('active',settings.theme==='dark');}
+  var saved=localStorage.getItem("reader_settings");
+  if(saved){settings=JSON.parse(saved);document.documentElement.style.setProperty("--fs",settings.fontSize+"px");document.getElementById("fontSizeValue").textContent=settings.fontSize;document.getElementById("themeLight").classList.toggle("active",settings.theme==="light");document.getElementById("themeDark").classList.toggle("active",settings.theme==="dark");}
 }
-function saveNotes(){localStorage.setItem('reader_notes',JSON.stringify(notes));}
-function loadNotes(){const saved=localStorage.getItem('reader_notes');if(saved)notes=JSON.parse(saved);renderNotes();}
-function saveReadingRecord(){if(!fileName||totalPages===0)return;readingRecords[fileName]={page:currentPage,totalPages:totalPages,fileSize:totalSize,lastRead:new Date().toISOString()};const entries=Object.entries(readingRecords);if(entries.length>20){entries.sort((a,b)=>new Date(b[1].lastRead)-new Date(a[1].lastRead));readingRecords=Object.fromEntries(entries.slice(0,20));}localStorage.setItem('reader_records',JSON.stringify(readingRecords));}
-function loadReadingRecords(){const saved=localStorage.getItem('reader_records');if(saved)readingRecords=JSON.parse(saved);}
-function exportData(){const data={settings,notes,readingRecords,exportTime:new Date().toISOString()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='阅读器数据_'+new Date().toLocaleDateString('zh-CN')+'.json';a.click();URL.revokeObjectURL(url);showToast('数据已导出');}
-function clearAllData(){if(!confirm('确定要清除所有阅读数据吗？此操作不可恢复。'))return;localStorage.removeItem('reader_settings');localStorage.removeItem('reader_theme');localStorage.removeItem('reader_notes');localStorage.removeItem('reader_records');settings={fontSize:18,theme:'light'};notes=[];readingRecords={};location.reload();}
-function showToast(msg){const toast=document.getElementById('toast');toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2000);}
-function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
-function formatBytes(bytes){if(bytes===0)return'0 B';const k=1024;const sizes=['B','KB','MB','GB'];const i=Math.floor(Math.log(bytes)/Math.log(k));return parseFloat((bytes/Math.pow(k,i)).toFixed(2))+' '+sizes[i];}
+function saveNotes(){localStorage.setItem("reader_notes",JSON.stringify(notes));}
+function loadNotes(){var saved=localStorage.getItem("reader_notes");if(saved)notes=JSON.parse(saved);renderNotes();}
+function saveReadingRecord(){if(!fileName||totalPages===0)return;readingRecords[fileName]={page:currentPage,totalPages:totalPages,fileSize:totalSize,lastRead:new Date().toISOString()};var entries=Object.entries(readingRecords);if(entries.length>20){entries.sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});readingRecords=Object.fromEntries(entries.slice(0,20));}localStorage.setItem("reader_records",JSON.stringify(readingRecords));}
+function loadReadingRecords(){var saved=localStorage.getItem("reader_records");if(saved)readingRecords=JSON.parse(saved);}
+function exportData(){var data={settings:settings,notes:notes,readingRecords:readingRecords,exportTime:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="阅读器数据_"+new Date().toLocaleDateString("zh-CN")+".json";a.click();URL.revokeObjectURL(url);showToast("数据已导出");}
+function clearAllData(){if(!confirm("确定要清除所有阅读数据吗？此操作不可恢复。"))return;localStorage.removeItem("reader_settings");localStorage.removeItem("reader_theme");localStorage.removeItem("reader_notes");localStorage.removeItem("reader_records");settings={fontSize:18,theme:"light"};notes=[];readingRecords={};location.reload();}
+function showToast(msg){var toast=document.getElementById("toast");toast.textContent=msg;toast.classList.add("show");setTimeout(function(){toast.classList.remove("show");},2000);}
+function escapeHtml(text){var div=document.createElement("div");div.textContent=text;return div.innerHTML;}
+function formatBytes(bytes){if(bytes===0)return"0 B";var k=1024;var sizes=["B","KB","MB","GB"];var i=Math.floor(Math.log(bytes)/Math.log(k));return parseFloat((bytes/Math.pow(k,i)).toFixed(2))+" "+sizes[i];}
 
 function setupAutoHide(){
-  let lastScrollY=window.scrollY;const toolbar=document.getElementById('toolbar');const bottomBar=document.getElementById('bottomBar');
-  window.addEventListener('scroll',()=>{
-    const currentScrollY=window.scrollY;
-    if(currentScrollY>lastScrollY&&currentScrollY>100){toolbar.classList.add('hidden');bottomBar.classList.add('hidden');}
-    else{toolbar.classList.remove('hidden');bottomBar.classList.remove('hidden');}
-    lastScrollY=currentScrollY;clearTimeout(autoHideTimer);autoHideTimer=setTimeout(()=>{if(window.scrollY>100){toolbar.classList.add('hidden');bottomBar.classList.add('hidden');}},3000);
+  var lastScrollY=window.scrollY;var toolbar=document.getElementById("toolbar");var bottomBar=document.getElementById("bottomBar");
+  window.addEventListener("scroll",function(){
+    var currentScrollY=window.scrollY;
+    if(currentScrollY>lastScrollY&&currentScrollY>100){toolbar.classList.add("hidden");bottomBar.classList.add("hidden");}
+    else{toolbar.classList.remove("hidden");bottomBar.classList.remove("hidden");}
+    lastScrollY=currentScrollY;clearTimeout(autoHideTimer);autoHideTimer=setTimeout(function(){if(window.scrollY>100){toolbar.classList.add("hidden");bottomBar.classList.add("hidden");}},3000);
   },{passive:true});
-  document.addEventListener('click',(e)=>{const x=e.clientX,y=e.clientY,w=window.innerWidth,h=window.innerHeight;if(x>w*0.3&&x<w*0.7&&y>h*0.3&&y<h*0.7){toolbar.classList.toggle('hidden');bottomBar.classList.toggle('hidden');}});
+  document.addEventListener("click",function(e){var x=e.clientX,y=e.clientY,w=window.innerWidth,h=window.innerHeight;if(x>w*0.3&&x<w*0.7&&y>h*0.3&&y<h*0.7){toolbar.classList.toggle("hidden");bottomBar.classList.toggle("hidden");}});
 }
 
 function setupScrollHandler(){
-  document.addEventListener('keydown',(e)=>{if(e.key==='ArrowLeft'||e.key==='PageUp')prevPage();else if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')nextPage();});
-  let touchStartX=0,touchEndX=0;
-  document.addEventListener('touchstart',(e)=>{touchStartX=e.changedTouches[0].screenX;},{passive:true});
-  document.addEventListener('touchend',(e)=>{touchEndX=e.changedTouches[0].screenX;handleSwipe();},{passive:true});
-  function handleSwipe(){const diff=touchStartX-touchEndX;if(Math.abs(diff)>50){if(diff>0)nextPage();else prevPage();}}
+  document.addEventListener("keydown",function(e){if(e.key==="ArrowLeft"||e.key==="PageUp")prevPage();else if(e.key==="ArrowRight"||e.key==="PageDown"||e.key===" ")nextPage();});
+  var touchStartX=0,touchEndX=0;
+  document.addEventListener("touchstart",function(e){touchStartX=e.changedTouches[0].screenX;},{passive:true});
+  document.addEventListener("touchend",function(e){touchEndX=e.changedTouches[0].screenX;handleSwipe();},{passive:true});
+  function handleSwipe(){var diff=touchStartX-touchEndX;if(Math.abs(diff)>50){if(diff>0)nextPage();else prevPage();}}
 }
 </script>
 </body>
