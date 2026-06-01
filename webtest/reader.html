@@ -29,7 +29,7 @@ body{
   -webkit-user-select:none;user-select:none;
 }
 .selection-popup{
-  position:absolute;background:var(--accent);color:white;
+  position:absolute;background-color:var(--accent);color:white;
   padding:8px 16px;border-radius:20px;font-size:14px;
   cursor:pointer;z-index:500;
   box-shadow:0 4px 12px rgba(0,0,0,0.3);
@@ -37,10 +37,10 @@ body{
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
 }
 .selection-popup.show{display:block}
-.selection-popup:active{opacity:.9}
+.selection-popup:active{opacity:.9;background-color:var(--accent)}
 .toolbar{
   position:fixed;top:0;left:0;right:0;height:50px;
-  background:var(--panel);border-bottom:1px solid var(--border);
+  background-color:var(--panel);border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;z-index:1000;box-shadow:var(--shadow);
   transition:transform .3s;will-change:transform;
@@ -48,12 +48,12 @@ body{
 .toolbar.hidden{transform:translateY(-100%)}
 .toolbar-left,.toolbar-right{display:flex;gap:12px;align-items:center}
 .btn{
-  background:none;border:none;color:var(--accent);font-size:20px;
+  background-color:transparent;border:none;color:var(--accent);font-size:20px;
   cursor:pointer;padding:8px;border-radius:8px;transition:background .2s;
   display:flex;align-items:center;justify-content:center;
   min-width:36px;min-height:36px;
 }
-.btn:active{background:rgba(139,115,85,0.15)}
+.btn:active{background-color:rgba(139,115,85,0.15)}
 .file-name{font-size:15px;font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .main-container{padding-top:50px;padding-bottom:60px;min-height:100vh}
 .content-wrapper{max-width:800px;margin:0 auto;padding:20px 16px}
@@ -72,14 +72,14 @@ body{
 }
 .note-badge{
   display:inline-block;font-size:10px;color:var(--nt);
-  background:var(--nbg);padding:1px 5px;border-radius:8px;
+  background-color:var(--nbg);padding:1px 5px;border-radius:8px;
   margin-left:6px;vertical-align:super;line-height:1;
   font-weight:500;opacity:.7;transition:opacity .2s;cursor:pointer;
 }
 .para.has-note:hover .note-badge{opacity:1}
 .note-preview{
   position:absolute;left:0;right:0;top:100%;margin-top:8px;
-  background:var(--panel);border:1px solid var(--border);
+  background-color:var(--panel);border:1px solid var(--border);
   border-radius:12px;padding:12px 16px;box-shadow:var(--shadow);
   z-index:100;display:none;font-size:14px;line-height:1.6;max-width:100%;
 }
@@ -89,36 +89,36 @@ body{
 .note-preview-text{color:var(--text);margin-bottom:4px}
 .note-preview-time{font-size:11px;color:var(--sec)}
 .loading{text-align:center;padding:40px;color:var(--sec)}
-.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);background-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:20px;text-align:center}
-.empty-icon{font-size:64px;margin-bottom:20px;opacity:.5}
+.empty-icon{font-size:64px;margin-bottom:20px;opacity:.5;background-color:transparent}
 .empty-title{font-size:20px;font-weight:600;margin-bottom:12px}
 .empty-desc{color:var(--sec);margin-bottom:24px;line-height:1.6}
 .file-input{display:none}
-.upload-btn{background:var(--accent);color:white;border:none;padding:12px 32px;border-radius:24px;font-size:16px;cursor:pointer;transition:opacity .2s;font-weight:500}
-.upload-btn:active{opacity:.8}
+.upload-btn{background-color:var(--accent);color:white;border:none;padding:12px 32px;border-radius:24px;font-size:16px;cursor:pointer;transition:opacity .2s;font-weight:500}
+.upload-btn:active{opacity:.8;background-color:var(--accent)}
 .bottom-bar{
   position:fixed;bottom:0;left:0;right:0;height:60px;
-  background:var(--panel);border-top:1px solid var(--border);
+  background-color:var(--panel);border-top:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;z-index:1000;box-shadow:var(--shadow);
   transition:transform .3s;will-change:transform;
 }
 .bottom-bar.hidden{transform:translateY(100%)}
 .progress-info{font-size:13px;color:var(--sec);flex:1}
-.progress-bar{position:absolute;top:0;left:0;right:0;height:2px;background:var(--border)}
-.progress-fill{height:100%;background:var(--accent);transition:width .3s}
+.progress-bar{position:absolute;top:0;left:0;right:0;height:2px;background-color:var(--border)}
+.progress-fill{height:100%;background-color:var(--accent);transition:width .3s}
 .nav-btns{display:flex;gap:8px}
 .nav-btn{
-  padding:8px 16px;border:1px solid var(--border);background:var(--panel);
+  padding:8px 16px;border:1px solid var(--border);background-color:var(--panel);
   color:var(--text);border-radius:6px;font-size:14px;cursor:pointer;transition:all .2s;
 }
 .nav-btn:disabled{opacity:.4;cursor:not-allowed}
-.nav-btn:active:not(:disabled){background:var(--accent);color:white;border-color:var(--accent)}
+.nav-btn:active:not(:disabled){background-color:var(--accent);color:white;border-color:var(--accent)}
 .settings-panel,.notes-panel,.toc-panel{
   position:fixed;top:0;width:100%;max-width:360px;height:100vh;
-  background:var(--panel);z-index:2000;overflow-y:auto;
+  background-color:var(--panel);z-index:2000;overflow-y:auto;
   box-shadow:0 0 20px rgba(0,0,0,0.15);transition:transform .3s;will-change:transform;
 }
 .settings-panel{right:0;transform:translateX(100%)}
@@ -130,7 +130,7 @@ body{
 .settings-header{
   padding:16px;border-bottom:1px solid var(--border);
   display:flex;justify-content:space-between;align-items:center;
-  position:sticky;top:0;background:var(--panel);z-index:10;
+  position:sticky;top:0;background-color:var(--panel);z-index:10;
 }
 .settings-title{font-size:18px;font-weight:600}
 .settings-body{padding:20px 16px}
@@ -143,57 +143,57 @@ body{
   flex:1;padding:16px;border:2px solid var(--border);border-radius:12px;
   text-align:center;cursor:pointer;transition:all .2s;
 }
-.theme-option.active{border-color:var(--accent);background:rgba(139,115,85,0.1)}
+.theme-option.active{border-color:var(--accent);background-color:rgba(139,115,85,0.1)}
 .theme-preview{width:40px;height:40px;border-radius:50%;margin:0 auto 8px;border:2px solid var(--border)}
-.theme-preview.light{background:#faf6f1}
-.theme-preview.dark{background:#1c1814}
+.theme-preview.light{background-color:#faf6f1}
+.theme-preview.dark{background-color:#1c1814}
 .theme-name{font-size:13px}
 .overlay{
   position:fixed;top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,0.5);z-index:1500;
+  background-color:rgba(0,0,0,0.5);z-index:1500;
   opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;
 }
 .overlay.show{opacity:1;visibility:visible}
 .notes-list{padding:16px;flex:1;overflow-y:auto}
 .note-item{
-  background:rgba(139,115,85,0.08);border-radius:12px;padding:16px;
+  background-color:rgba(139,115,85,0.08);border-radius:12px;padding:16px;
   margin-bottom:12px;border-left:3px solid var(--accent);
 }
 .note-text{font-size:15px;line-height:1.6;margin-bottom:8px;word-wrap:break-word}
 .note-meta{font-size:12px;color:var(--sec);display:flex;justify-content:space-between;align-items:center}
 .note-delete{color:#e74c3c;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:4px}
-.note-delete:active{background:rgba(231,76,60,0.1)}
-.add-note{padding:16px;border-top:1px solid var(--border);background:var(--panel)}
+.note-delete:active{background-color:rgba(231,76,60,0.1)}
+.add-note{padding:16px;border-top:1px solid var(--border);background-color:var(--panel)}
 .note-textarea{
   width:100%;min-height:80px;border:1px solid var(--border);border-radius:8px;
-  padding:12px;font-size:15px;resize:vertical;background:var(--bg);color:var(--text);
+  padding:12px;font-size:15px;resize:vertical;background-color:var(--bg);color:var(--text);
   font-family:inherit;
 }
-.add-note-btn{width:100%;margin-top:12px;padding:12px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:500}
+.add-note-btn{width:100%;margin-top:12px;padding:12px;background-color:var(--accent);color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:500}
 .empty-notes{text-align:center;padding:40px 20px;color:var(--sec)}
 .toc-list{padding:16px}
 .toc-item{padding:12px 16px;border-radius:8px;cursor:pointer;transition:background .2s;font-size:15px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.toc-item:active{background:rgba(139,115,85,0.15)}
-.toc-item.current{background:rgba(139,115,85,0.15);color:var(--accent);font-weight:500}
+.toc-item:active{background-color:rgba(139,115,85,0.15)}
+.toc-item.current{background-color:rgba(139,115,85,0.15);color:var(--accent);font-weight:500}
 .toast{
   position:fixed;top:60px;left:50%;
   transform:translateX(-50%) translateY(-20px);
-  background:rgba(0,0,0,0.8);color:white;
+  background-color:rgba(0,0,0,0.8);color:white;
   padding:10px 20px;border-radius:20px;font-size:14px;
   opacity:0;transition:opacity .3s,transform .3s;z-index:3000;pointer-events:none;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .history-list{padding:16px}
-.history-item{padding:16px;border-radius:12px;background:rgba(139,115,85,0.08);margin-bottom:12px;cursor:pointer;transition:background .2s}
-.history-item:active{background:rgba(139,115,85,0.15)}
+.history-item{padding:16px;border-radius:12px;background-color:rgba(139,115,85,0.08);margin-bottom:12px;cursor:pointer;transition:background .2s}
+.history-item:active{background-color:rgba(139,115,85,0.15)}
 .history-name{font-weight:600;font-size:15px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .history-meta{font-size:12px;color:var(--sec);display:flex;justify-content:space-between}
-.history-progress{margin-top:8px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-.history-progress-fill{height:100%;background:var(--accent);border-radius:2px}
+.history-progress{margin-top:8px;height:4px;background-color:var(--border);border-radius:2px;overflow:hidden}
+.history-progress-fill{height:100%;background-color:var(--accent);border-radius:2px}
 ::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::selection{background:var(--sel);color:inherit}
+::-webkit-scrollbar-track{background-color:transparent}
+::-webkit-scrollbar-thumb{background-color:var(--border);border-radius:3px}
+::selection{background-color:var(--sel);color:inherit}
 @media(min-width:768px){.content-wrapper{padding:40px 32px}.toolbar{padding:0 24px}.bottom-bar{padding:0 24px}}
 </style>
 <base target="_blank">
@@ -278,7 +278,7 @@ body{
 </div>
 <div class="setting-item">
 <label class="setting-label">关于</label>
-<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.0<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
+<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.3<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
 </div>
 </div>
 </div>
@@ -308,7 +308,6 @@ document.addEventListener("DOMContentLoaded",function(){
     loadSettings();loadNotes();loadReadingRecords();buildNoteIndex();renderHistory();
     setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
     setupContextMenuBlock();
-    // 检查是否有上次阅读的文件，自动恢复
     checkAndRestoreLastReading();
   });
 });
@@ -328,7 +327,6 @@ function initDB(){
   });
 }
 
-// 保存文件内容到 IndexedDB
 function saveFileToDB(name,content,size){
   return new Promise(function(resolve,reject){
     if(!db){resolve();return;}
@@ -341,7 +339,6 @@ function saveFileToDB(name,content,size){
   });
 }
 
-// 从 IndexedDB 读取文件内容
 function getFileFromDB(name){
   return new Promise(function(resolve,reject){
     if(!db){resolve(null);return;}
@@ -353,17 +350,15 @@ function getFileFromDB(name){
   });
 }
 
-// 检查并恢复上次阅读
+// 检查并恢复上次阅读 - 自动恢复，无需用户点击
 function checkAndRestoreLastReading(){
   var records=Object.entries(readingRecords).sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});
   if(records.length===0)return;
   var lastRecord=records[0];
   var name=lastRecord[0];
   var record=lastRecord[1];
-  // 尝试从 IndexedDB 恢复文件内容
   getFileFromDB(name).then(function(data){
     if(data&&data.content){
-      // 文件内容存在，直接恢复
       fileName=name;
       fileContent=data.content;
       totalSize=data.size||record.fileSize||fileContent.length;
@@ -373,13 +368,17 @@ function checkAndRestoreLastReading(){
       document.getElementById("emptyState").style.display="none";
       document.getElementById("contentArea").style.display="block";
       processContent();
-      renderPage();
+      // 恢复时不滚动到顶部，保持阅读位置
+      renderPage(false);
       updateProgress();
       updateNavButtons();
       saveReadingRecord();
+      // 恢复滚动位置
+      if(record.scrollY!==undefined){
+        setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},100);
+      }
       showToast("已恢复上次阅读：第 "+(currentPage+1)+" 页");
     }
-    // 如果文件内容不存在，显示历史记录让用户点击恢复
   });
 }
 
@@ -423,7 +422,6 @@ function restoreHistory(encodedName){
   var name=decodeURIComponent(encodedName);
   var record=readingRecords[name];
   if(!record){showToast("记录已失效");return;}
-  // 先尝试从 IndexedDB 恢复
   getFileFromDB(name).then(function(data){
     if(data&&data.content){
       fileName=name;
@@ -435,13 +433,15 @@ function restoreHistory(encodedName){
       document.getElementById("emptyState").style.display="none";
       document.getElementById("contentArea").style.display="block";
       processContent();
-      renderPage();
+      renderPage(false);
       updateProgress();
       updateNavButtons();
       saveReadingRecord();
+      if(record.scrollY!==undefined){
+        setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},100);
+      }
       showToast("已恢复阅读：第 "+(currentPage+1)+" 页");
     }else{
-      // 文件内容不存在，需要重新选择
       fileName=name;currentPage=record.page;totalPages=record.totalPages;
       showToast("请重新选择该文件以恢复阅读");
       document.getElementById("fileInput").click();
@@ -465,7 +465,6 @@ function handleFileSelect(event){
   var reader=new FileReader();
   reader.onload=function(e){
     fileContent=e.target.result;
-    // 保存到 IndexedDB
     saveFileToDB(fileName,fileContent,totalSize).then(function(){
       processContent();
       if(window._targetPage!==undefined&&window._targetFileName===fileName){
@@ -473,7 +472,7 @@ function handleFileSelect(event){
         window._targetPage=undefined;window._targetFileName=undefined;
         showToast("已恢复至第 "+(currentPage+1)+" 页");
       }
-      renderPage();updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast("文件读取完成");
+      renderPage(true);updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast("文件读取完成");
     });
   };
   reader.onerror=function(){showToast("文件读取失败");};
@@ -506,7 +505,8 @@ function extractChapters(){
   tocList.innerHTML=html||'<div class="empty-notes">暂无目录</div>';
 }
 
-function renderPage(){
+// renderPage: shouldScroll=true 时滚动到顶部（翻页），false 时不滚动（恢复阅读）
+function renderPage(shouldScroll){
   var start=pages[currentPage];var end=Math.min(start+CHUNK_SIZE,fileContent.length);
   var rawText=fileContent.substring(start,end);var paragraphs=rawText.split("\n").filter(function(p){return p.trim();});
   var lines=rawText.split("\n");var title="第 "+(currentPage+1)+" 页 / 共 "+totalPages+" 页";
@@ -524,7 +524,10 @@ function renderPage(){
   });
   document.getElementById("chapterTitle").textContent=title;
   document.getElementById("contentText").innerHTML=html;
-  window.scrollTo({top:0,behavior:"smooth"});
+  // 只有翻页时才滚动到顶部，恢复阅读时不滚动
+  if(shouldScroll){
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
   var tocItems=document.querySelectorAll(".toc-item");
   for(var i=0;i<tocItems.length;i++){
     tocItems[i].classList.remove("current");
@@ -565,9 +568,9 @@ function updateNavButtons(){
   document.getElementById("nextBtn").disabled=currentPage>=totalPages-1;
 }
 
-function prevPage(){if(currentPage>0){currentPage--;renderPage();updateProgress();updateNavButtons();}}
-function nextPage(){if(currentPage<totalPages-1){currentPage++;renderPage();updateProgress();updateNavButtons();}}
-function jumpToPage(page){if(page>=0&&page<totalPages){currentPage=page;renderPage();updateProgress();updateNavButtons();closeAllPanels();}}
+function prevPage(){if(currentPage>0){currentPage--;renderPage(true);updateProgress();updateNavButtons();}}
+function nextPage(){if(currentPage<totalPages-1){currentPage++;renderPage(true);updateProgress();updateNavButtons();}}
+function jumpToPage(page){if(page>=0&&page<totalPages){currentPage=page;renderPage(true);updateProgress();updateNavButtons();closeAllPanels();}}
 
 function setupSelectionHandler(){
   var popup=document.getElementById("selectionPopup");var selectionTimer=null;
@@ -629,12 +632,28 @@ function changeFontSize(delta){
 }
 
 function setTheme(theme){
-  settings.theme=theme;
-  document.documentElement.setAttribute("data-theme",theme);
-  localStorage.setItem("reader_theme",theme);
-  document.getElementById("themeLight").classList.toggle("active",theme==="light");
-  document.getElementById("themeDark").classList.toggle("active",theme==="dark");
-  saveSettings();
+  withoutTransition(function(){
+    settings.theme=theme;
+    document.documentElement.setAttribute("data-theme",theme);
+    localStorage.setItem("reader_theme",theme);
+    document.getElementById("themeLight").classList.toggle("active",theme==="light");
+    document.getElementById("themeDark").classList.toggle("active",theme==="dark");
+    saveSettings();
+  });
+}
+
+// 临时禁用 CSS 过渡，防止主题切换时闪烁
+function withoutTransition(action){
+  var style=document.createElement("style");
+  var css=document.createTextNode("*{-webkit-transition:none !important;-moz-transition:none !important;-o-transition:none !important;-ms-transition:none !important;transition:none !important;}");
+  style.appendChild(css);
+  document.head.appendChild(style);
+  action();
+  // 强制浏览器重绘以应用禁用过渡的样式
+  if(typeof window.getComputedStyle!=="undefined"){
+    window.getComputedStyle(style).opacity;
+  }
+  document.head.removeChild(style);
 }
 
 function addNote(){
@@ -643,12 +662,12 @@ function addNote(){
   var note=window._pendingNote||{id:Date.now(),text:"",fileName:fileName,page:currentPage,paraIndex:0,timestamp:new Date().toLocaleString("zh-CN"),isSelection:false};
   note.noteText=text;note.id=Date.now();notes.unshift(note);window._pendingNote=null;
   buildNoteIndex();saveNotes();renderNotes();input.value="";closeAllPanels();showToast("书评已保存");
-  if(fileName===note.fileName&&currentPage===note.page)renderPage();
+  if(fileName===note.fileName&&currentPage===note.page)renderPage(false);
 }
 
 function deleteNote(id){
   notes=notes.filter(function(n){return n.id!==id;});
-  buildNoteIndex();saveNotes();renderNotes();showToast("书评已删除");renderPage();
+  buildNoteIndex();saveNotes();renderNotes();showToast("书评已删除");renderPage(false);
 }
 
 function renderNotes(){
@@ -657,7 +676,7 @@ function renderNotes(){
   if(currentFileNotes.length===0){container.innerHTML="<div class=\"empty-notes\">暂无书评，选中文字即可添加段落书评</div>";return;}
   container.innerHTML=currentFileNotes.map(function(note){
     var html="<div class=\"note-item\">";
-    if(note.isSelection)html+="<div style=\"font-size:13px;color:var(--accent);margin-bottom:8px;padding:8px;background:rgba(139,115,85,0.1);border-radius:6px;font-style:italic\">「"+escapeHtml(note.text)+"」</div>";
+    if(note.isSelection)html+="<div style=\"font-size:13px;color:var(--accent);margin-bottom:8px;padding:8px;background-color:rgba(139,115,85,0.1);border-radius:6px;font-style:italic\">「"+escapeHtml(note.text)+"」</div>";
     html+="<div class=\"note-text\">"+escapeHtml(note.noteText||note.text)+"</div>";
     html+="<div class=\"note-meta\"><span>第"+(note.page+1)+"页"+(note.paraIndex!==undefined?" · 段落"+(note.paraIndex+1):"")+" · "+note.timestamp+"</span><span class=\"note-delete\" onclick=\"deleteNote("+note.id+")\">删除</span></div></div>";
     return html;
@@ -671,7 +690,23 @@ function loadSettings(){
 }
 function saveNotes(){localStorage.setItem("reader_notes",JSON.stringify(notes));}
 function loadNotes(){var saved=localStorage.getItem("reader_notes");if(saved)notes=JSON.parse(saved);renderNotes();}
-function saveReadingRecord(){if(!fileName||totalPages===0)return;readingRecords[fileName]={page:currentPage,totalPages:totalPages,fileSize:totalSize,lastRead:new Date().toISOString()};var entries=Object.entries(readingRecords);if(entries.length>20){entries.sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});readingRecords=Object.fromEntries(entries.slice(0,20));}localStorage.setItem("reader_records",JSON.stringify(readingRecords));}
+
+// 保存阅读记录 - 同时保存滚动位置
+function saveReadingRecord(){
+  if(!fileName||totalPages===0)return;
+  var scrollY=window.scrollY||document.documentElement.scrollTop||0;
+  readingRecords[fileName]={
+    page:currentPage,
+    totalPages:totalPages,
+    fileSize:totalSize,
+    scrollY:scrollY,
+    lastRead:new Date().toISOString()
+  };
+  var entries=Object.entries(readingRecords);
+  if(entries.length>20){entries.sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});readingRecords=Object.fromEntries(entries.slice(0,20));}
+  localStorage.setItem("reader_records",JSON.stringify(readingRecords));
+}
+
 function loadReadingRecords(){var saved=localStorage.getItem("reader_records");if(saved)readingRecords=JSON.parse(saved);}
 function exportData(){var data={settings:settings,notes:notes,readingRecords:readingRecords,exportTime:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="阅读器数据_"+new Date().toLocaleDateString("zh-CN")+".json";a.click();URL.revokeObjectURL(url);showToast("数据已导出");}
 function clearAllData(){if(!confirm("确定要清除所有阅读数据吗？此操作不可恢复。"))return;localStorage.removeItem("reader_settings");localStorage.removeItem("reader_theme");localStorage.removeItem("reader_notes");localStorage.removeItem("reader_records");if(db){var transaction=db.transaction([STORE_NAME],"readwrite");var store=transaction.objectStore(STORE_NAME);store.clear();}settings={fontSize:18,theme:"light"};notes=[];readingRecords={};location.reload();}
