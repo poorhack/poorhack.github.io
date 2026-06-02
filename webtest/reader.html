@@ -228,6 +228,26 @@ body{
   border-radius:6px;padding:4px 8px;font-size:13px;outline:none;
   -webkit-appearance:none;appearance:none;
 }
+.tts-volume-wrap{
+  display:flex;align-items:center;gap:4px;
+}
+.tts-volume-icon{
+  font-size:14px;color:var(--accent);
+}
+.tts-volume-slider{
+  width:60px;height:4px;-webkit-appearance:none;appearance:none;
+  background:var(--border);border-radius:2px;outline:none;
+}
+.tts-volume-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:14px;height:14px;
+  border-radius:50%;background:var(--accent);cursor:pointer;
+}
+.tts-volume-slider::-moz-range-thumb{
+  width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;
+}
+.tts-volume-val{
+  font-size:11px;color:var(--sec);min-width:32px;text-align:right;
+}
 .para.tts-active{
   background-color:var(--sel);border-radius:4px;
 }
@@ -286,6 +306,11 @@ body{
     <span class="tts-status" id="ttsStatus">点击段落开始朗读</span>
   </div>
   <div class="tts-controls">
+    <div class="tts-volume-wrap" title="音量">
+      <span class="tts-volume-icon">🔊</span>
+      <input type="range" class="tts-volume-slider" id="ttsVolume" min="0.1" max="1" step="0.1" value="1" oninput="changeTtsVolume()">
+      <span class="tts-volume-val" id="ttsVolumeVal">100%</span>
+    </div>
     <select class="tts-speed-select" id="ttsSpeed" onchange="changeTtsSpeed()" title="语速">
       <option value="0.7">0.7x</option>
       <option value="0.85">0.85x</option>
@@ -450,6 +475,40 @@ function autoRestoreLastReading(){
       if(record.scrollY!==undefined){
         setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
       }
+      // 如果有tts段落记录，精确定位到该段落和字符位置
+      if(record.ttsParaIndex!==undefined){
+        setTimeout(function(){
+          var paras=document.querySelectorAll(".para");
+          var targetPara=paras[record.ttsParaIndex];
+          if(targetPara){
+            targetPara.scrollIntoView({behavior:"auto",block:"center"});
+            // 如果有字符偏移，尝试精确定位
+            if(record.ttsCharOffset!==undefined&&record.ttsCharOffset>0){
+              setTimeout(function(){
+                var textNodes=getTextNodesIn(targetPara);
+                var offset=record.ttsCharOffset;
+                var cumLen=0;
+                for(var i=0;i<textNodes.length;i++){
+                  var nodeLen=textNodes[i].textContent.length;
+                  if(cumLen+nodeLen>=offset){
+                    var range=document.createRange();
+                    range.setStart(textNodes[i],Math.min(offset-cumLen,nodeLen));
+                    range.collapse(true);
+                    var sel=window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    var rect=range.getBoundingClientRect();
+                    window.scrollTo({top:window.scrollY+rect.top-window.innerHeight/3,behavior:"auto"});
+                    sel.removeAllRanges();
+                    break;
+                  }
+                  cumLen+=nodeLen;
+                }
+              },100);
+            }
+          }
+        },300);
+      }
       showToast("已恢复上次阅读：第 "+(currentPage+1)+" 页");
       var toolbarBtn=document.getElementById("toolbarTtsBtn");
       if(toolbarBtn)toolbarBtn.style.display="";
@@ -533,6 +592,38 @@ function restoreHistory(encodedName){
       saveReadingRecord();
       if(record.scrollY!==undefined){
         setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
+      }
+      if(record.ttsParaIndex!==undefined){
+        setTimeout(function(){
+          var paras=document.querySelectorAll(".para");
+          var targetPara=paras[record.ttsParaIndex];
+          if(targetPara){
+            targetPara.scrollIntoView({behavior:"auto",block:"center"});
+            if(record.ttsCharOffset!==undefined&&record.ttsCharOffset>0){
+              setTimeout(function(){
+                var textNodes=getTextNodesIn(targetPara);
+                var offset=record.ttsCharOffset;
+                var cumLen=0;
+                for(var i=0;i<textNodes.length;i++){
+                  var nodeLen=textNodes[i].textContent.length;
+                  if(cumLen+nodeLen>=offset){
+                    var range=document.createRange();
+                    range.setStart(textNodes[i],Math.min(offset-cumLen,nodeLen));
+                    range.collapse(true);
+                    var sel=window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    var rect=range.getBoundingClientRect();
+                    window.scrollTo({top:window.scrollY+rect.top-window.innerHeight/3,behavior:"auto"});
+                    sel.removeAllRanges();
+                    break;
+                  }
+                  cumLen+=nodeLen;
+                }
+              },100);
+            }
+          }
+        },300);
       }
       showToast("已恢复阅读：第 "+(currentPage+1)+" 页");
       var toolbarBtn=document.getElementById("toolbarTtsBtn");
@@ -787,13 +878,23 @@ function loadNotes(){var saved=localStorage.getItem("reader_notes");if(saved)not
 function saveReadingRecord(){
   if(!fileName||totalPages===0)return;
   var scrollY=window.scrollY||document.documentElement.scrollTop||0;
-  readingRecords[fileName]={
+  var record={
     page:currentPage,
     totalPages:totalPages,
     fileSize:totalSize,
     scrollY:scrollY,
     lastRead:new Date().toISOString()
   };
+  // 朗读位置即阅读位置：统一保存当前朗读/阅读段落
+  var ttsPos=window._ttsReadingPos&&window._ttsReadingPos[fileName];
+  if(ttsIsPlaying&&ttsCurrentParaIndex>=0&&ttsCurrentParaIndex<ttsParagraphs.length){
+    record.ttsParaIndex=ttsCurrentParaIndex;
+    record.ttsCharOffset=ttsPos&&ttsPos.page===currentPage?ttsPos.charOffset:0;
+  }else if(ttsPos&&ttsPos.page===currentPage&&ttsPos.paraIndex>=0){
+    record.ttsParaIndex=ttsPos.paraIndex;
+    record.ttsCharOffset=ttsPos.charOffset||0;
+  }
+  readingRecords[fileName]=record;
   var entries=Object.entries(readingRecords);
   if(entries.length>20){entries.sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});readingRecords=Object.fromEntries(entries.slice(0,20));}
   localStorage.setItem("reader_records",JSON.stringify(readingRecords));
@@ -847,6 +948,7 @@ let ttsParagraphs=[];
 let ttsVoices=[];
 let ttsSelectedVoice=null;
 let ttsSpeed=1.0;
+let ttsVolume=1.0;
 let ttsResumePending=false;
 
 // 初始化TTS
@@ -860,15 +962,19 @@ function initTTS(){
   // 初始化工具栏按钮状态
   var toolbarBtn=document.getElementById("toolbarTtsBtn");
   if(toolbarBtn)toolbarBtn.style.display="";
-  // 绑定段落点击：仅用于朗读中暂停/继续当前段落，不自动开始新朗读
+  // 绑定段落点击：朗读中点击任意段落，从该段落继续朗读（同步阅读点）
   document.getElementById("contentText").addEventListener("click",function(e){
     var para=e.target.closest(".para");
     if(!para)return;
     var idx=parseInt(para.dataset.para);
     if(isNaN(idx))return;
-    // 只有在朗读中，点击当前段落才暂停/继续
-    if(ttsIsPlaying&&ttsCurrentParaIndex===idx){
-      if(ttsIsPaused) resumeTts(); else pauseTts();
+    if(ttsIsPlaying){
+      // 朗读中点击任意段落：从该段落重新开始朗读（阅读点同步到朗读点）
+      window.speechSynthesis.cancel();
+      ttsCurrentParaIndex=idx-1;
+      ttsIsPaused=false;
+      ttsResumePending=false;
+      advanceTts();
     }
     // 停止状态下点击段落不自动开始朗读
   });
@@ -893,7 +999,15 @@ function startTtsFrom(paraIndex){
   stopTts();
   ttsParagraphs=getTtsParagraphs();
   if(ttsParagraphs.length===0)return;
+  // 确保传入的 paraIndex 在当前页有效
+  if(paraIndex<0||paraIndex>=ttsParagraphs.length){
+    paraIndex=findCurrentReadingPara();
+  }
   ttsCurrentParaIndex=Math.max(0,Math.min(paraIndex,ttsParagraphs.length-1));
+  // 朗读开始前先滚动到起始段落，同步阅读点
+  var startPara=ttsParagraphs[ttsCurrentParaIndex];
+  if(startPara)startPara.scrollIntoView({behavior:"auto",block:"center"});
+  saveReadingRecord();
   ttsIsPlaying=true;
   ttsIsPaused=false;
   showTtsBar(true);
@@ -907,7 +1021,7 @@ function speakCurrentPara(){
   var text=para.textContent.replace(/\d+/g,function(m){return m.split("").join(" ");});
   if(!text.trim()){advanceTts();return;}
 
-  // 高亮当前段落
+  // 高亮当前段落并同步阅读点（滚动位置）
   ttsParagraphs.forEach(function(p){p.classList.remove("tts-active");});
   para.classList.add("tts-active");
   para.scrollIntoView({behavior:"smooth",block:"center"});
@@ -916,8 +1030,16 @@ function speakCurrentPara(){
   ttsUtterance.lang="zh-CN";
   ttsUtterance.rate=ttsSpeed;
   ttsUtterance.pitch=1;
+  ttsUtterance.volume=ttsVolume;
   if(ttsSelectedVoice)ttsUtterance.voice=ttsSelectedVoice;
 
+  // 实时跟踪朗读位置：charIndex 表示已朗读到的字符索引
+  ttsUtterance.onboundary=function(e){
+    if(e.name==="word"||e.name==="sentence"){
+      // 计算当前朗读到的段落内偏移
+      updateTtsReadingPosition(e.charIndex);
+    }
+  };
   ttsUtterance.onend=function(){
     if(!ttsIsPaused&&!ttsResumePending)advanceTts();
   };
@@ -931,11 +1053,69 @@ function speakCurrentPara(){
   updateTtsUI();
 }
 
+function findCurrentReadingPara(){
+  ttsParagraphs=getTtsParagraphs();
+  if(ttsParagraphs.length===0)return 0;
+  var scrollY=window.scrollY||document.documentElement.scrollTop||0;
+  var viewportCenter=scrollY+window.innerHeight/2;
+  var closestIdx=0;var closestDist=Infinity;
+  for(var i=0;i<ttsParagraphs.length;i++){
+    var rect=ttsParagraphs[i].getBoundingClientRect();
+    var paraCenter=rect.top+window.scrollY+rect.height/2;
+    var dist=Math.abs(paraCenter-viewportCenter);
+    if(dist<closestDist){closestDist=dist;closestIdx=i;}
+  }
+  return closestIdx;
+}
+
+// 实时更新朗读位置作为阅读点
+function updateTtsReadingPosition(charIndex){
+  if(!ttsIsPlaying||ttsCurrentParaIndex<0||ttsCurrentParaIndex>=ttsParagraphs.length||!ttsParagraphs[ttsCurrentParaIndex])return;
+  var para=ttsParagraphs[ttsCurrentParaIndex];
+  var paraText=para.textContent;
+  var approxOffset=Math.min(charIndex,paraText.length);
+  if(!window._ttsReadingPos)window._ttsReadingPos={};
+  window._ttsReadingPos[fileName]={
+    page:currentPage,
+    paraIndex:ttsCurrentParaIndex,
+    charOffset:approxOffset,
+    lastRead:new Date().toISOString()
+  };
+  // 同步更新 readingRecords，确保朗读点和阅读点始终一致
+  if(readingRecords[fileName]){
+    readingRecords[fileName].page=currentPage;
+    readingRecords[fileName].ttsParaIndex=ttsCurrentParaIndex;
+    readingRecords[fileName].ttsCharOffset=approxOffset;
+    readingRecords[fileName].lastRead=new Date().toISOString();
+  }
+  saveReadingRecord();
+}
+
 function advanceTts(){
   ttsCurrentParaIndex++;
   var total=ttsParagraphs.length;
   document.getElementById("ttsProgressMini").style.width=total>0?Math.round((ttsCurrentParaIndex/total)*100)+"%":"0%";
   if(ttsCurrentParaIndex>=total){
+    // 当前页朗读完毕，自动翻页继续朗读
+    if(currentPage<totalPages-1){
+      currentPage++;
+      // 翻页后清除旧缓存，朗读位置跟随阅读位置（新页当前阅读点）
+      if(window._ttsReadingPos&&window._ttsReadingPos[fileName]){
+        delete window._ttsReadingPos[fileName];
+      }
+      renderPage(true);
+      updateProgress();
+      updateNavButtons();
+      saveReadingRecord();
+      // 新页面渲染后重新获取段落并从当前阅读点开始
+      setTimeout(function(){
+        ttsParagraphs=getTtsParagraphs();
+        // 新页从当前阅读点开始朗读，而不是从第0段
+        ttsCurrentParaIndex=findCurrentReadingPara();
+        speakCurrentPara();
+      },100);
+      return;
+    }
     stopTts();
     showToast("朗读完成");
     return;
@@ -992,12 +1172,61 @@ function stopTts(){
   ttsIsPlaying=false;
   ttsIsPaused=false;
   ttsResumePending=false;
+  // 保存当前朗读位置作为阅读点
+  var savedPos=window._ttsReadingPos&&window._ttsReadingPos[fileName];
+  if(savedPos&&savedPos.page===currentPage&&savedPos.paraIndex>=0&&savedPos.paraIndex<ttsParagraphs.length&&ttsParagraphs[savedPos.paraIndex]){
+    var activePara=ttsParagraphs[savedPos.paraIndex];
+    activePara.scrollIntoView({behavior:"auto",block:"center"});
+    // 尝试滚动到段落内具体字符位置
+    setTimeout(function(){
+      var textNodes=getTextNodesIn(activePara);
+      var offset=savedPos.charOffset||0;
+      var cumLen=0;
+      for(var i=0;i<textNodes.length;i++){
+        var nodeLen=textNodes[i].textContent.length;
+        if(cumLen+nodeLen>=offset){
+          var range=document.createRange();
+          range.setStart(textNodes[i],Math.min(offset-cumLen,nodeLen));
+          range.collapse(true);
+          var sel=window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          var rect=range.getBoundingClientRect();
+          window.scrollTo({top:window.scrollY+rect.top-window.innerHeight/3,behavior:"auto"});
+          sel.removeAllRanges();
+          break;
+        }
+        cumLen+=nodeLen;
+      }
+      saveReadingRecord();
+    },50);
+  }else if(ttsCurrentParaIndex>=0&&ttsCurrentParaIndex<ttsParagraphs.length&&ttsParagraphs[ttsCurrentParaIndex]){
+    var activePara=ttsParagraphs[ttsCurrentParaIndex];
+    activePara.scrollIntoView({behavior:"auto",block:"center"});
+    saveReadingRecord();
+  }
+  // 如果缓存页和当前页不一致，清除过期缓存
+  if(savedPos&&savedPos.page!==currentPage){
+    if(window._ttsReadingPos&&window._ttsReadingPos[fileName]){
+      delete window._ttsReadingPos[fileName];
+    }
+  }
   ttsCurrentParaIndex=-1;
   if(window.speechSynthesis)window.speechSynthesis.cancel();
   ttsParagraphs.forEach(function(p){p.classList.remove("tts-active");});
   document.getElementById("ttsProgressMini").style.width="0%";
   showTtsBar(false);
   updateTtsUI();
+}
+
+function getTextNodesIn(node){
+  var textNodes=[];
+  function walk(n){
+    if(n.nodeType===Node.TEXT_NODE){textNodes.push(n);}
+    else{for(var i=0;i<n.childNodes.length;i++)walk(n.childNodes[i]);}
+  }
+  walk(node);
+  return textNodes;
 }
 
 function prevTtsPara(){
@@ -1034,6 +1263,18 @@ function changeTtsSpeed(){
   }
 }
 
+function changeTtsVolume(){
+  var slider=document.getElementById("ttsVolume");
+  var valDisplay=document.getElementById("ttsVolumeVal");
+  ttsVolume=parseFloat(slider.value);
+  valDisplay.textContent=Math.round(ttsVolume*100)+"%";
+  // 音量改变不需要重启，下一段自动生效
+  // 如果正在播放，尝试实时更新（部分浏览器支持）
+  if(ttsUtterance&&ttsIsPlaying){
+    ttsUtterance.volume=ttsVolume;
+  }
+}
+
 function showTtsBar(show){
   var bar=document.getElementById("ttsBar");
   var toolbarBtn=document.getElementById("toolbarTtsBtn");
@@ -1054,7 +1295,30 @@ function toolbarTtsToggle(){
   if(ttsIsPlaying){stopTts();return;}
   ttsParagraphs=getTtsParagraphs();
   if(ttsParagraphs.length===0){showToast("当前页面无内容");return;}
-  startTtsFrom(0);
+  // 严格检查：只有当前页且段落存在时，才从上次朗读位置继续
+  var ttsPos=window._ttsReadingPos&&window._ttsReadingPos[fileName];
+  var record=readingRecords[fileName];
+  var startIdx=-1;
+  if(ttsPos&&ttsPos.page===currentPage&&ttsPos.paraIndex>=0&&ttsPos.paraIndex<ttsParagraphs.length){
+    startIdx=ttsPos.paraIndex;
+    ttsParagraphs[startIdx].scrollIntoView({behavior:"auto",block:"center"});
+    showToast("从上次朗读位置继续");
+  }else if(record&&record.ttsParaIndex!==undefined&&record.page===currentPage&&record.ttsParaIndex>=0&&record.ttsParaIndex<ttsParagraphs.length){
+    startIdx=record.ttsParaIndex;
+    ttsParagraphs[startIdx].scrollIntoView({behavior:"auto",block:"center"});
+    showToast("从上次朗读位置继续");
+  }
+  // 缓存不匹配当前页，或缓存段落越界，从当前阅读点开始
+  if(startIdx<0||startIdx>=ttsParagraphs.length){
+    startIdx=findCurrentReadingPara();
+    // 清除过期缓存
+    if(window._ttsReadingPos&&window._ttsReadingPos[fileName]){
+      window._ttsReadingPos[fileName].page=currentPage;
+      window._ttsReadingPos[fileName].paraIndex=startIdx;
+      window._ttsReadingPos[fileName].charOffset=0;
+    }
+  }
+  startTtsFrom(startIdx);
 }
 
 function updateTtsUI(){
@@ -1076,6 +1340,10 @@ function updateTtsUI(){
 var _origRenderPage=renderPage;
 renderPage=function(shouldScroll){
   stopTts();
+  // 翻页后清除朗读位置缓存，确保朗读从新页当前阅读点开始
+  if(window._ttsReadingPos&&window._ttsReadingPos[fileName]){
+    delete window._ttsReadingPos[fileName];
+  }
   _origRenderPage(shouldScroll);
 };
 
