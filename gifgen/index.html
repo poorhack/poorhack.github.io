@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIF 图片生成器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <h1 class="app-title">GIF 图片生成器</h1>
+        <p class="app-desc">支持 PNG / JPEG / BMP / WebP 等多种图片格式混合输入，生成 GIF 动图</p>
+
+        <div class="main-layout">
+            <div class="left-panel">
+                <section class="upload-section">
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-zone-icon">+</div>
+                        <p>拖拽图片到这里，或点击选择文件</p>
+                        <p class="drop-zone-hint">支持 PNG、JPEG、BMP、WebP、GIF 等格式</p>
+                        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/bmp,image/webp,image/gif" multiple hidden>
+                    </div>
+                </section>
+
+                <section class="params-section">
+                    <h2 class="section-title">参数设置</h2>
+
+                    <div class="param-group">
+                        <label class="param-label">输出宽度 (px)</label>
+                        <input type="number" id="outputWidth" class="param-input" value="800" min="1" max="4096">
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">输出高度 (px)</label>
+                        <input type="number" id="outputHeight" class="param-input" value="600" min="1" max="4096">
+                    </div>
+
+                    <div class="param-group param-group-inline">
+                        <label class="param-checkbox-label">
+                            <input type="checkbox" id="keepAspectRatio" checked>
+                            保持原始比例
+                        </label>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">缩放模式</label>
+                        <select id="resizeMode" class="param-select">
+                            <option value="fit">适配 (Fit) - 保持比例，空白填充</option>
+                            <option value="fill">填充 (Fill) - 保持比例，裁剪超出</option>
+                            <option value="stretch">拉伸 (Stretch) - 强制填满</option>
+                        </select>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">帧间隔 (ms)</label>
+                        <input type="number" id="frameDelay" class="param-input" value="200" min="10" max="10000" step="10">
+                        <span class="param-hint">帧率 = 1000 / 帧间隔，当前约 <span id="fpsDisplay">5</span> fps</span>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">每帧独立延迟</label>
+                        <span class="param-hint">可在图片列表中单独设置每帧的延迟时间</span>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">量化质量 (1-20)</label>
+                        <input type="number" id="quality" class="param-input" value="10" min="1" max="20">
+                        <span class="param-hint">越小质量越好，但速度越慢</span>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">重复次数</label>
+                        <select id="repeat" class="param-select">
+                            <option value="0">无限循环</option>
+                            <option value="1">循环 1 次</option>
+                            <option value="3">循环 3 次</option>
+                            <option value="5">循环 5 次</option>
+                            <option value="10">循环 10 次</option>
+                            <option value="-1">不循环 (播放一次)</option>
+                        </select>
+                    </div>
+
+                    <div class="param-group">
+                        <label class="param-label">背景色</label>
+                        <input type="color" id="bgColor" class="param-color" value="#000000">
+                        <span class="param-hint">适配模式下空白区域的填充颜色</span>
+                    </div>
+                </section>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary" id="generateBtn" disabled>
+                        <span class="btn-icon">▶</span> 生成 GIF
+                    </button>
+                    <button class="btn btn-secondary" id="clearBtn" disabled>
+                        清空所有图片
+                    </button>
+                </div>
+
+                <div class="progress-bar" id="progressBar" style="display:none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <span class="progress-text" id="progressText">0%</span>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <section class="preview-section">
+                    <h2 class="section-title">图片列表 (<span id="frameCount">0</span> 帧)</h2>
+                    <div class="frame-list" id="frameList"></div>
+                </section>
+
+                <section class="output-section" id="outputSection" style="display:none;">
+                    <h2 class="section-title">输出结果</h2>
+                    <div class="output-preview">
+                        <img id="outputPreview" alt="GIF Preview">
+                    </div>
+                    <div class="output-info" id="outputInfo"></div>
+                    <div class="output-actions">
+                        <button class="btn btn-primary" id="downloadBtn">
+                            <span class="btn-icon">↓</span> 下载 GIF
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <script src="gif-generator.js"></script>
+</body>
+</html>
