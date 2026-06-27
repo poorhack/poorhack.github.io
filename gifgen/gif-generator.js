@@ -35,6 +35,11 @@ var GIF_WORKER_BLOB_URL = URL.createObjectURL(new Blob([GIF_WORKER_CODE], {type:
     var repeatSelect = $('repeat');
     var bgColorInput = $('bgColor');
     var themeToggle = $('themeToggle');
+    var transitionEffectSelect = $('transitionEffect');
+    var transitionStepsInput = $('transitionSteps');
+    var transitionDelayInput = $('transitionDelay');
+    var transitionStepsGroup = $('transitionStepsGroup');
+    var transitionDelayGroup = $('transitionDelayGroup');
 
     function initTheme() {
         var saved = localStorage.getItem('gif-gen-theme');
@@ -113,6 +118,42 @@ var GIF_WORKER_BLOB_URL = URL.createObjectURL(new Blob([GIF_WORKER_CODE], {type:
         }
 
         ctx.drawImage(img, dx, dy, dw, dh);
+        return canvas;
+    }
+
+    function drawTransitionFrame(canvasA, canvasB, width, height, bgColor, effect, t) {
+        var canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        var ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, width, height);
+
+        if (effect === 'crossfade') {
+            ctx.globalAlpha = 1;
+            ctx.drawImage(canvasA, 0, 0);
+            ctx.globalAlpha = t;
+            ctx.drawImage(canvasB, 0, 0);
+            ctx.globalAlpha = 1;
+        } else if (effect === 'slideLeft') {
+            var offset = Math.round(t * width);
+            ctx.drawImage(canvasA, -offset, 0);
+            ctx.drawImage(canvasB, width - offset, 0);
+        } else if (effect === 'slideRight') {
+            var offset = Math.round(t * width);
+            ctx.drawImage(canvasA, offset, 0);
+            ctx.drawImage(canvasB, -width + offset, 0);
+        } else if (effect === 'slideUp') {
+            var offset = Math.round(t * height);
+            ctx.drawImage(canvasA, 0, -offset);
+            ctx.drawImage(canvasB, 0, height - offset);
+        } else if (effect === 'slideDown') {
+            var offset = Math.round(t * height);
+            ctx.drawImage(canvasA, 0, offset);
+            ctx.drawImage(canvasB, 0, -height + offset);
+        }
+
         return canvas;
     }
 
@@ -266,6 +307,12 @@ var GIF_WORKER_BLOB_URL = URL.createObjectURL(new Blob([GIF_WORKER_CODE], {type:
         outputHeightInput.disabled = !this.checked;
     });
 
+    transitionEffectSelect.addEventListener('change', function () {
+        var show = this.value !== 'none';
+        transitionStepsGroup.style.display = show ? '' : 'none';
+        transitionDelayGroup.style.display = show ? '' : 'none';
+    });
+
     clearBtn.addEventListener('click', function () {
         if (generating) return;
         frames = [];
@@ -305,6 +352,9 @@ var GIF_WORKER_BLOB_URL = URL.createObjectURL(new Blob([GIF_WORKER_CODE], {type:
         var quality = parseInt(qualityInput.value) || 10;
         var repeatCount = parseInt(repeatSelect.value) || 0;
         var bgColor = bgColorInput.value;
+        var effect = transitionEffectSelect.value;
+        var steps = parseInt(transitionStepsInput.value) || 5;
+        var transDelay = parseInt(transitionDelayInput.value) || 40;
 
         var gif = new GIF({
             workers: 2,
@@ -318,14 +368,30 @@ var GIF_WORKER_BLOB_URL = URL.createObjectURL(new Blob([GIF_WORKER_CODE], {type:
 
         var loadPromises = frames.map(function (frame) {
             return loadImage(frame.dataURL).then(function (img) {
-                var canvas = drawFrameToCanvas(img, width, height, mode, bgColor);
-                var delay = frame.delay || parseInt(frameDelayInput.value) || 200;
-                gif.addFrame(canvas, { delay: delay, copy: true });
+                return drawFrameToCanvas(img, width, height, mode, bgColor);
             });
         });
 
-        Promise.all(loadPromises).then(function () {
+        Promise.all(loadPromises).then(function (renderedCanvases) {
+            for (var i = 0; i < renderedCanvases.length; i++) {
+                var delay = frames[i].delay || parseInt(frameDelayInput.value) || 200;
+                gif.addFrame(renderedCanvases[i], { delay: delay, copy: true });
+
+                if (effect !== 'none' && i < renderedCanvases.length - 1) {
+                    for (var s = 1; s <= steps; s++) {
+                        var t = s / steps;
+                        var transCanvas = drawTransitionFrame(
+                            renderedCanvases[i], renderedCanvases[i + 1],
+                            width, height, bgColor, effect, t
+                        );
+                        gif.addFrame(transCanvas, { delay: transDelay, copy: true });
+                    }
+                }
+            }
+
             progressText.textContent = '编码中...';
+
+            var totalFrames = gif.frames.length;
 
             gif.on('progress', function (p) {
                 var pct = Math.round(p * 100);
@@ -343,7 +409,7 @@ var GIF_WORKER_BLOB_URL = URL.createObjectURL(new Blob([GIF_WORKER_CODE], {type:
                 outputPreview.src = URL.createObjectURL(blob);
                 outputInfo.textContent =
                     '尺寸: ' + width + ' × ' + height + ' | ' +
-                    '帧数: ' + frames.length + ' | ' +
+                    '帧数: ' + totalFrames + ' | ' +
                     '文件大小: ' + formatFileSize(blob.size) + ' | ' +
                     '循环: ' + (repeatCount === 0 ? '无限' : (repeatCount === -1 ? '不循环' : repeatCount + '次'));
                 outputSection.style.display = 'block';

@@ -296,6 +296,12 @@ body {
     height: 16px;
 }
 
+.param-group-divider {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1.5px dashed var(--border);
+}
+
 .action-bar {
     display: flex;
     gap: 12px;

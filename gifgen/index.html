@@ -91,6 +91,31 @@
                         <input type="color" id="bgColor" class="param-color" value="#000000">
                         <span class="param-hint">适配模式下空白区域的填充颜色</span>
                     </div>
+
+                    <div class="param-group param-group-divider">
+                        <label class="param-label">过渡效果</label>
+                        <select id="transitionEffect" class="param-select">
+                            <option value="none">无 - 直接切换</option>
+                            <option value="crossfade">淡入淡出 - 画面逐渐融合</option>
+                            <option value="slideLeft">左滑入 - 下一帧从右侧滑入</option>
+                            <option value="slideRight">右滑入 - 下一帧从左侧滑入</option>
+                            <option value="slideUp">上滑入 - 下一帧从下方滑入</option>
+                            <option value="slideDown">下滑入 - 下一帧从上方滑入</option>
+                        </select>
+                        <span class="param-hint">相邻帧之间的过渡动画方式</span>
+                    </div>
+
+                    <div class="param-group" id="transitionStepsGroup" style="display:none;">
+                        <label class="param-label">过渡步数</label>
+                        <input type="number" id="transitionSteps" class="param-input" value="5" min="2" max="20">
+                        <span class="param-hint">过渡中间帧数量，越多越平滑但文件更大</span>
+                    </div>
+
+                    <div class="param-group" id="transitionDelayGroup" style="display:none;">
+                        <label class="param-label">过渡帧间隔 (ms)</label>
+                        <input type="number" id="transitionDelay" class="param-input" value="40" min="10" max="500" step="10">
+                        <span class="param-hint">每个过渡中间帧的显示时长</span>
+                    </div>
                 </section>
 
                 <div class="action-bar">
