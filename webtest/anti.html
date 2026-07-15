@@ -84,7 +84,7 @@
         
         // 拦截包含 "debugger" 字样的动态函数构造
         if (typeof body === 'string' && body.includes('bugger')) {
-            console.warn("已拦截动态 debugger 注入");
+            // console.warn("已拦截动态 debugger 注入");
             return function() {}; 
         }
         
