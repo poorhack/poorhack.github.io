@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二维码生成与解析</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { color: #fff; text-align: center; margin-bottom: 30px; font-size: 2.2rem; text-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 12px 40px rgba(0,0,0,.18); }
+  .card h2 { margin-bottom: 20px; font-size: 1.3rem; color: #4a4a4a; border-bottom: 2px solid #eee; padding-bottom: 12px; }
+  textarea, input[type=text] { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; transition: border-color .2s; }
+  textarea:focus, input[type=text]:focus { outline: none; border-color: #667eea; }
+  textarea { min-height: 100px; }
+  .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; padding: 11px 22px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: transform .15s, box-shadow .2s; font-weight: 600; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.2); }
+  .btn:active { transform: translateY(0); }
+  .btn-secondary { background: #6c757d; }
+  .btn-row { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  #qrcode { margin-top: 20px; text-align: center; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  #qrcode img { max-width: 100%; height: auto; }
+  .placeholder { color: #aaa; font-style: italic; }
+  .drop-zone { margin-top: 16px; border: 2px dashed #b0b0b0; border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all .2s; background: #fafafa; }
+  .drop-zone.dragover { border-color: #667eea; background: #eef0ff; transform: scale(1.01); }
+  .drop-zone .icon { font-size: 2.4rem; margin-bottom: 8px; }
+  .drop-zone p { color: #888; margin-top: 6px; font-size: 13px; }
+  .drop-zone .hint { color: #667eea; font-size: 12px; margin-top: 10px; }
+  .result-box { margin-top: 20px; padding: 16px; background: #f6f8fa; border-radius: 8px; border-left: 4px solid #667eea; min-height: 80px; word-break: break-all; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+  .result-box.empty { color: #aaa; font-style: italic; border-left-color: #ddd; }
+  .preview-img { max-width: 100%; max-height: 180px; margin-top: 12px; border-radius: 8px; display: none; }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.85); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999; }
+  .toast.show { opacity: 1; }
+  .size-row { margin-top: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #666; flex-wrap: wrap; }
+  .size-row select { padding: 6px 8px; border-radius: 6px; border: 1px solid #ddd; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>二维码生成与解析工具</h1>
+  <div class="grid">
+    <div class="card">
+      <h2>生成二维码</h2>
+      <textarea id="genInput" placeholder="在此输入文字、网址、JSON 等内容..."></textarea>
+      <div class="size-row">
+        <label>尺寸:</label>
+        <select id="genSize">
+          <option value="128">小 (128px)</option>
+          <option value="200" selected>中 (200px)</option>
+          <option value="256">大 (256px)</option>
+          <option value="384">特大 (384px)</option>
+        </select>
+        <label style="margin-left:12px;">纠错级别:</label>
+        <select id="genLevel">
+          <option value="L">L (7%)</option>
+          <option value="M" selected>M (15%)</option>
+          <option value="Q">Q (25%)</option>
+          <option value="H">H (30%)</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="downloadQR()">下载图片</button>
+        <button class="btn btn-secondary" onclick="clearGen()">清空</button>
+      </div>
+      <div id="qrcode"><span class="placeholder">输入内容后自动生成二维码</span></div>
+    </div>
+    <div class="card">
+      <h2>解析二维码</h2>
+      <div class="drop-zone" id="dropZone">
+        <div class="icon">📁</div>
+        <div><strong>点击、拖动或粘贴二维码图片</strong></div>
+        <p>支持 PNG / JPG / BMP / WEBP / GIF 格式</p>
+        <p class="hint">提示：可直接 Ctrl+V 粘贴截图，或将图片拖到此处</p>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;">
+      </div>
+      <img id="previewImg" class="preview-img" alt="预览">
+      <div class="result-box empty" id="resultBox">解析结果将显示在此处</div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="copyResult()">复制结果</button>
+        <button class="btn btn-secondary" onclick="clearDec()">清空</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var qrInstance = null;
+var genInput = document.getElementById('genInput');
+var genSize = document.getElementById('genSize');
+var genLevel = document.getElementById('genLevel');
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+function generateQR() {
+  var text = genInput.value;
+  var size = parseInt(genSize.value, 10);
+  var level = genLevel.value;
+  var ecMap = { L: QRCode.CorrectLevel.L, M: QRCode.CorrectLevel.M, Q: QRCode.CorrectLevel.Q, H: QRCode.CorrectLevel.H };
+  var container = document.getElementById('qrcode');
+  if (!text.trim()) {
+    container.innerHTML = '<span class="placeholder">输入内容后自动生成二维码</span>';
+    qrInstance = null;
+    return;
+  }
+  container.innerHTML = '';
+  qrInstance = new QRCode(container, { text: text, width: size, height: size, correctLevel: ecMap[level] });
+}
+
+genInput.addEventListener('input', generateQR);
+genSize.addEventListener('change', generateQR);
+genLevel.addEventListener('change', generateQR);
+
+function downloadQR() {
+  if (!qrInstance) { showToast('请先生成二维码'); return; }
+  var canvas = document.querySelector('#qrcode canvas');
+  var img = document.querySelector('#qrcode img');
+  var src = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
+  if (!src) { showToast('无法获取图片'); return; }
+  var a = document.createElement('a');
+  a.href = src; a.download = 'qrcode.png'; a.click();
+}
+
+function clearGen() {
+  genInput.value = '';
+  document.getElementById('qrcode').innerHTML = '<span class="placeholder">输入内容后自动生成二维码</span>';
+  qrInstance = null;
+}
+
+var dropZone = document.getElementById('dropZone');
+var fileInput = document.getElementById('fileInput');
+var previewImg = document.getElementById('previewImg');
+var resultBox = document.getElementById('resultBox');
+
+dropZone.addEventListener('click', function() { fileInput.click(); });
+
+fileInput.addEventListener('change', function(e) {
+  if (e.target.files && e.target.files[0]) decodeImage(e.target.files[0]);
+});
+
+['dragenter', 'dragover'].forEach(function(ev) {
+  dropZone.addEventListener(ev, function(e) { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover'); });
+});
+['dragleave', 'drop'].forEach(function(ev) {
+  dropZone.addEventListener(ev, function(e) { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover'); });
+});
+dropZone.addEventListener('drop', function(e) {
+  var f = e.dataTransfer.files[0];
+  if (f) decodeImage(f);
+});
+
+window.addEventListener('paste', function(e) {
+  var items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      var f = items[i].getAsFile();
+      if (f) { decodeImage(f); break; }
+    }
+  }
+});
+
+function decodeImage(file) {
+  if (!file.type.startsWith('image/')) { showToast('请选择图片文件'); return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    previewImg.src = dataUrl;
+    previewImg.style.display = 'block';
+    var img = new Image();
+    img.onload = function() { runDecode(img); };
+    img.onerror = function() { showToast('图片加载失败'); };
+    img.src = dataUrl;
+  };
+  reader.onerror = function() { showToast('读取文件失败'); };
+  reader.readAsDataURL(file);
+}
+
+function runDecode(img) {
+  var tries = [1, 0.5, 2, 1.5, 3];
+  var idx = 0;
+  function attempt() {
+    if (idx >= tries.length) {
+      resultBox.classList.remove('empty');
+      resultBox.textContent = '未能识别出二维码内容，请尝试更清晰的图片。';
+      showToast('解析失败');
+      return;
+    }
+    var scale = tries[idx++];
+    var w = Math.max(1, Math.round(img.width * scale));
+    var h = Math.max(1, Math.round(img.height * scale));
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    var data;
+    try { data = ctx.getImageData(0, 0, w, h); } catch (e) { attempt(); return; }
+    var code = jsQR(data.data, w, h, { inversionAttempts: 'attemptBoth' });
+    if (code && code.data) {
+      resultBox.classList.remove('empty');
+      resultBox.textContent = code.data;
+      showToast('解析成功');
+      return;
+    }
+    attempt();
+  }
+  attempt();
+}
+
+function copyResult() {
+  if (resultBox.classList.contains('empty')) { showToast('暂无可复制内容'); return; }
+  var text = resultBox.textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() { showToast('已复制到剪贴板'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('已复制到剪贴板'); } catch (e) { showToast('复制失败'); }
+    document.body.removeChild(ta);
+  }
+}
+
+function clearDec() {
+  previewImg.src = ''; previewImg.style.display = 'none';
+  resultBox.classList.add('empty');
+  resultBox.textContent = '解析结果将显示在此处';
+  fileInput.value = '';
+}
+
+</script>
+</body>
+</html>
