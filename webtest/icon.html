@@ -165,9 +165,5 @@ code { font-size: 12px; }
 </tr>
 </table>
 
-<div class="note">
-<strong>Bug condition:</strong> This page uses <code>font-display: swap</code> in <code>icon.css</code> with local <code>icon.woff2</code>. When the font fails to load in WebView, ligature mapping is lost and raw text (<code>add</code>, <code>chevron_right</code>, etc.) is displayed instead of icons. On desktop browsers the local font loads fine — this bug only reproduces in Huawei WebView.
-</div>
-
 </body>
 </html>
