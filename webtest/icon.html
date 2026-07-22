@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Material Icons Ligature Bug - WebView Reproduction</title>
+
+<!-- Same loading strategy as Pizza Hut app -->
+<link href="assets/fonts/material/icon.css" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background: #fff;
+    color: #333;
+}
+
+h1 { font-size: 1.1rem; margin: 0 0 4px; }
+.subtitle { font-size: 13px; color: #888; margin: 0 0 16px; }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; color: #999; padding: 8px 6px; border-bottom: 2px solid #eee; }
+td { padding: 10px 6px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+
+.icon-cell {
+    width: 48px;
+    height: 48px;
+}
+
+.icon-cell .material-icons {
+    font-size: 28px;
+    color: #333;
+}
+
+code { font-size: 12px; }
+
+/* Pizza Hut style add/remove buttons */
+.ph-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 500px;
+    border: none;
+    cursor: default;
+}
+.ph-btn-red {
+    width: 28px;
+    height: 28px;
+    background: #e53935;
+}
+.ph-btn-red .material-icons {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    color: #fff;
+}
+.ph-btn-gray {
+    width: 28px;
+    height: 28px;
+    background: #eee;
+}
+.ph-btn-gray .material-icons {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    color: #666;
+}
+
+.note {
+    margin-top: 16px;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #555;
+}
+</style>
+</head>
+<body>
+
+<h1>Material Icons Ligature Bug</h1>
+<p class="subtitle">WebView reproduction page — uses local icon.woff2, same as Pizza Hut app</p>
+
+<h2 style="font-size:14px;margin:16px 0 8px">All Material Icons used in Pizza Hut app</h2>
+<table>
+<tr>
+    <th>Icon Name</th>
+    <th>Rendered Icon</th>
+    <th>Expected</th>
+</tr>
+<tr>
+    <td><code>add</code></td>
+    <td class="icon-cell"><span class="material-icons">add</span></td>
+    <td>+ (plus)</td>
+</tr>
+<tr>
+    <td><code>remove</code></td>
+    <td class="icon-cell"><span class="material-icons">remove</span></td>
+    <td>− (minus)</td>
+</tr>
+<tr>
+    <td><code>close</code></td>
+    <td class="icon-cell"><span class="material-icons">close</span></td>
+    <td>✕ (close)</td>
+</tr>
+<tr>
+    <td><code>chevron_right</code></td>
+    <td class="icon-cell"><span class="material-icons">chevron_right</span></td>
+    <td>› (right arrow)</td>
+</tr>
+<tr>
+    <td><code>arrow_forward</code></td>
+    <td class="icon-cell"><span class="material-icons">arrow_forward</span></td>
+    <td>→ (right arrow)</td>
+</tr>
+<tr>
+    <td><code>arrow_back</code></td>
+    <td class="icon-cell"><span class="material-icons">arrow_back</span></td>
+    <td>← (left arrow)</td>
+</tr>
+<tr>
+    <td><code>arrow_back_ios</code></td>
+    <td class="icon-cell"><span class="material-icons">arrow_back_ios</span></td>
+    <td>‹ (ios back)</td>
+</tr>
+<tr>
+    <td><code>arrow_drop_down</code></td>
+    <td class="icon-cell"><span class="material-icons">arrow_drop_down</span></td>
+    <td>▾ (dropdown)</td>
+</tr>
+<tr>
+    <td><code>arrow_drop_up</code></td>
+    <td class="icon-cell"><span class="material-icons">arrow_drop_up</span></td>
+    <td>▴ (dropup)</td>
+</tr>
+<tr>
+    <td><code>arrow_upward</code></td>
+    <td class="icon-cell"><span class="material-icons">arrow_upward</span></td>
+    <td>↑ (upward)</td>
+</tr>
+</table>
+
+<h2 style="font-size:14px;margin:20px 0 8px">Pizza Hut button (font-size:0 override)</h2>
+<table>
+<tr>
+    <th>Description</th>
+    <th>Button</th>
+</tr>
+<tr>
+    <td>Add button (red, font-size:0)</td>
+    <td><span class="ph-btn ph-btn-red"><span class="material-icons">add</span></span></td>
+</tr>
+<tr>
+    <td>Remove button (gray, font-size:0)</td>
+    <td><span class="ph-btn ph-btn-gray"><span class="material-icons">remove</span></span></td>
+</tr>
+<tr>
+    <td>Add button (red, no override)</td>
+    <td><span class="ph-btn ph-btn-red"><span class="material-icons" style="font-size:18px!important;line-height:1!important;color:#fff">add</span></span></td>
+</tr>
+<tr>
+    <td>Chevron button (no override)</td>
+    <td><span class="ph-btn ph-btn-gray"><span class="material-icons" style="font-size:18px!important;line-height:1!important">chevron_right</span></span></td>
+</tr>
+</table>
+
+<div class="note">
+<strong>Bug condition:</strong> This page uses <code>font-display: swap</code> in <code>icon.css</code> with local <code>icon.woff2</code>. When the font fails to load in WebView, ligature mapping is lost and raw text (<code>add</code>, <code>chevron_right</code>, etc.) is displayed instead of icons. On desktop browsers the local font loads fine — this bug only reproduces in Huawei WebView.
+</div>
+
+</body>
+</html>
