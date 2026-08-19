@@ -57,6 +57,26 @@
             margin-top: 6px;
         }
 
+        /* 主按钮行：让按钮与百度链接横向排列 */
+        .action-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .baidu-link {
+            font-family: monospace;
+            font-size: 13px;
+            color: #00c;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .baidu-link:visited {
+            color: #639;
+        }
+
         /* 日志区域：完全顶格，无任何边框背景 */
         .log-area {
             margin-top: 16px;
@@ -119,11 +139,14 @@
         <label>输入框 (键盘事件全局上报，显示十进制keyCode)</label>
         <input type="text" id="mainInput" placeholder="任意输入，按键将被记录..." autocomplete="off">
     </div>
-    <button id="actionButton">主要操作按钮</button>
+    <div class="action-row">
+        <button id="actionButton">主要操作按钮</button>
+        <a href="https://www.baidu.com" target="_blank" rel="noopener noreferrer" id="baiduLink" class="baidu-link">百度</a>
+    </div>
     
     <div class="log-area">
         <div class="log-header">
-            <span>事件上报日志 (click / hover / touch / mousedown/up / keydown含十进制)</span>
+            <span>事件上报日志 (click / hover enter·exit / touch / mousedown/up / keydown含十进制)</span>
             <button id="clearLogsBtn" class="clear-btn">清除日志</button>
         </div>
         <div id="eventListContainer" class="event-list">
@@ -131,7 +154,7 @@
         </div>
     </div>
     <div class="info-note">
-        上报: 点击 | 鼠标按下/抬起 | 悬停 | 触摸 | 键盘(keydown) — 显示 key / code / keyCode(十进制)
+        上报: 点击 | 鼠标按下/抬起 | 悬停(进入/离开) | 触摸 | 键盘(keydown) — 显示 key / code / keyCode(十进制)
     </div>
     <input type="text" id="tttInput" placeholder="xxx." autocomplete="off">
 </div>
@@ -140,6 +163,7 @@
     (function() {
         const actionButton = document.getElementById('actionButton');
         const mainInput = document.getElementById('mainInput');
+        const baiduLink = document.getElementById('baiduLink');
         const clearBtn = document.getElementById('clearLogsBtn');
         const eventContainer = document.getElementById('eventListContainer');
         
@@ -159,6 +183,7 @@
             if (!element) return '未知';
             if (element.id === 'actionButton') return '主按钮';
             if (element.id === 'mainInput') return '输入框';
+            if (element.id === 'baiduLink') return '百度链接';
             if (element.id === 'clearLogsBtn') return '清除按钮';
             if (element === document.body) return 'body';
             if (element.tagName === 'BODY') return 'body';
@@ -183,6 +208,8 @@
         function reportEvent(eventType, eventLabel, targetElement, originalEvent = null) {
             let typeTag = '';
             if (eventType === 'click') typeTag = '[CLICK]';
+            else if (eventType === 'hoverenter') typeTag = '[HOVER ENTER]';
+            else if (eventType === 'hoverexit') typeTag = '[HOVER EXIT]';
             else if (eventType === 'hover') typeTag = '[HOVER]';
             else if (eventType === 'touch') typeTag = '[TOUCH]';
             else if (eventType === 'mousedown') typeTag = '[MOUSEDOWN]';
@@ -206,7 +233,7 @@
                 } else if (eventType === 'touch' && originalEvent.changedTouches && originalEvent.changedTouches.length > 0) {
                     clientX = Math.round(originalEvent.changedTouches[0].clientX);
                     clientY = Math.round(originalEvent.changedTouches[0].clientY);
-                } else if (eventType === 'hover' && originalEvent.clientX !== undefined) {
+                } else if ((eventType === 'hover' || eventType === 'hoverenter' || eventType === 'hoverexit') && originalEvent.clientX !== undefined) {
                     clientX = Math.round(originalEvent.clientX);
                     clientY = Math.round(originalEvent.clientY);
                 }
@@ -290,6 +317,8 @@
                 detail = `输入框内按键`;
             } else if (target === actionButton) {
                 detail = `主按钮上按键`;
+            } else if (target === baiduLink) {
+                detail = `百度链接上按键`;
             } else if (target.id === 'clearLogsBtn') {
                 detail = `清除按钮上按键`;
             } else {
@@ -306,6 +335,8 @@
             let detail = '';
             if (target === actionButton || target.closest?.('#actionButton')) {
                 detail = `点击主按钮`;
+            } else if (target === baiduLink || target.closest?.('#baiduLink')) {
+                detail = `点击百度链接`;
             } else if (target === mainInput) {
                 let val = mainInput.value;
                 if (val.length > 40) val = val.substring(0, 40) + '…';
@@ -329,6 +360,8 @@
             let detail = '';
             if (target === actionButton || target.closest?.('#actionButton')) {
                 detail = `主按钮按下${btn}`;
+            } else if (target === baiduLink || target.closest?.('#baiduLink')) {
+                detail = `百度链接按下${btn}`;
             } else if (target === mainInput) {
                 detail = `输入框按下${btn}`;
             } else if (target.id === 'clearLogsBtn') {
@@ -345,6 +378,8 @@
             let detail = '';
             if (target === actionButton || target.closest?.('#actionButton')) {
                 detail = `主按钮抬起${btn}`;
+            } else if (target === baiduLink || target.closest?.('#baiduLink')) {
+                detail = `百度链接抬起${btn}`;
             } else if (target === mainInput) {
                 detail = `输入框抬起${btn}`;
             } else if (target.id === 'clearLogsBtn') {
@@ -355,15 +390,27 @@
             reportEvent('mouseup', detail, target, e);
         }
         
-        // ----- Hover 事件 -----
+        // ----- Hover 事件 (Enter / Exit) -----
         function onMouseEnter(e) {
             const target = e.currentTarget;
             let detail = '';
-            if (target === actionButton) detail = '悬停主按钮';
-            else if (target === mainInput) detail = '悬停输入框';
-            else if (target.classList && target.classList.contains('container')) detail = '悬停容器';
-            else detail = `悬停${getElementDescription(target)}`;
-            reportEvent('hover', detail, target, e);
+            if (target === actionButton) detail = '进入主按钮';
+            else if (target === mainInput) detail = '进入输入框';
+            else if (target === baiduLink) detail = '进入百度链接';
+            else if (target.classList && target.classList.contains('container')) detail = '进入容器';
+            else detail = `进入${getElementDescription(target)}`;
+            reportEvent('hoverenter', detail, target, e);
+        }
+        
+        function onMouseLeave(e) {
+            const target = e.currentTarget;
+            let detail = '';
+            if (target === actionButton) detail = '离开主按钮';
+            else if (target === mainInput) detail = '离开输入框';
+            else if (target === baiduLink) detail = '离开百度链接';
+            else if (target.classList && target.classList.contains('container')) detail = '离开容器';
+            else detail = `离开${getElementDescription(target)}`;
+            reportEvent('hoverexit', detail, target, e);
         }
         
         // ----- 触摸事件 (移动端) -----
@@ -371,6 +418,7 @@
             const target = e.target;
             let detail = '';
             if (target === actionButton || target.closest?.('#actionButton')) detail = '触摸主按钮';
+            else if (target === baiduLink || target.closest?.('#baiduLink')) detail = '触摸百度链接';
             else if (target === mainInput) detail = '触摸输入框';
             else if (target.id === 'clearLogsBtn') detail = '触摸清除按钮';
             else detail = `触摸${getElementDescription(target)}`;
@@ -393,14 +441,32 @@
         document.addEventListener('mousedown', onGlobalMouseDown);
         document.addEventListener('mouseup', onGlobalMouseUp);
         
-        // Hover 监听
-        if (actionButton) actionButton.addEventListener('mouseenter', onMouseEnter);
-        if (mainInput) mainInput.addEventListener('mouseenter', onMouseEnter);
+        // Hover 监听 (Enter + Exit)
+        if (actionButton) {
+            actionButton.addEventListener('mouseenter', onMouseEnter);
+            actionButton.addEventListener('mouseleave', onMouseLeave);
+        }
+        if (mainInput) {
+            mainInput.addEventListener('mouseenter', onMouseEnter);
+            mainInput.addEventListener('mouseleave', onMouseLeave);
+        }
+        if (baiduLink) {
+            baiduLink.addEventListener('mouseenter', onMouseEnter);
+            baiduLink.addEventListener('mouseleave', onMouseLeave);
+        }
         const containerDiv = document.querySelector('.container');
-        if (containerDiv) containerDiv.addEventListener('mouseenter', onMouseEnter);
+        if (containerDiv) {
+            containerDiv.addEventListener('mouseenter', onMouseEnter);
+            containerDiv.addEventListener('mouseleave', onMouseLeave);
+        }
         document.body.addEventListener('mouseenter', function(e) {
             if (e.target === document.body || e.currentTarget === document.body) {
-                reportEvent('hover', '悬停body', document.body, e);
+                reportEvent('hoverenter', '进入body', document.body, e);
+            }
+        });
+        document.body.addEventListener('mouseleave', function(e) {
+            if (e.target === document.body || e.currentTarget === document.body) {
+                reportEvent('hoverexit', '离开body', document.body, e);
             }
         });
         
@@ -415,7 +481,7 @@
             });
         }
         
-        console.log('事件上报已启动 | 键盘keyDown显示十进制keyCode | 完全顶行无格式');
+        console.log('事件上报已启动 | HOVER Enter/Exit | 键盘keyDown显示十进制keyCode | 完全顶行无格式');
     })();
 </script>
 </body>
