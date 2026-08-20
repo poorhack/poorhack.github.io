@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拖动/滑动测试 (合并)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); padding: 20px; color: white; }
+        .container { width: 100%; max-width: 800px; text-align: center; }
+        h1 { margin-bottom: 20px; font-size: 2.2rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .description { margin-bottom: 30px; font-size: 1.05rem; line-height: 1.6; }
+        .draggable-area { width: 100%; height: 360px; background-color: rgba(255,255,255,0.1); border-radius: 15px; border: 2px dashed rgba(255,255,255,0.3); position: relative; overflow: hidden; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .draggable-item { width: 100px; height: 100px; background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 100%); border-radius: 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); cursor: grab; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #333; user-select: none; touch-action: none; }
+        .draggable-item:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.05); }
+        .coordinates { margin-top: 12px; font-size: 0.9rem; color: #e0e0e0; }
+        .instructions { background-color: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; margin-top: 20px; font-size: 0.9rem; }
+        .scroll-row { display: flex; flex-shrink: 0; overflow: auto hidden; margin-top: 30px; border-radius: 10px; }
+        .scroll-row > div { width: 300px; flex-shrink: 0; background: rgba(255,255,255,0.15); margin: 4px; padding: 40px 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>拖动 / 水平滑动演示</h1>
+    <p class="description">上方为鼠标/触摸拖动方块；下方为水平滑动列表。桌面用鼠标，移动端用手指。</p>
+
+    <div class="draggable-area" id="dragArea">
+        <div class="draggable-item" id="draggable">拖我</div>
+    </div>
+    <div class="coordinates" id="coordinates">当前位置: X: 50%, Y: 50%</div>
+
+    <div class="instructions">
+        <p>桌面端: 鼠标按住拖动方块</p>
+        <p>移动端: 手指按住拖动方块</p>
+    </div>
+
+    <h3 style="margin-top:30px;">水平滑动 (scroll)</h3>
+    <div class="scroll-row">
+        <div>项目1</div><div>项目2</div><div>项目3</div><div>项目4</div>
+        <div>项目5</div><div>项目6</div><div>项目7</div><div>项目8</div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var draggable = document.getElementById('draggable');
+        var dragArea = document.getElementById('dragArea');
+        var coordinates = document.getElementById('coordinates');
+        var isDragging = false, currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+
+        draggable.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+        draggable.addEventListener('touchstart', dragStart);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('touchend', dragEnd);
+
+        function dragStart(e) {
+            if (e.type === 'touchstart') { initialX = e.touches[0].clientX - xOffset; initialY = e.touches[0].clientY - yOffset; }
+            else { initialX = e.clientX - xOffset; initialY = e.clientY - yOffset; }
+            if (e.target === draggable) isDragging = true;
+        }
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            if (e.type === 'touchmove') { currentX = e.touches[0].clientX - initialX; currentY = e.touches[0].clientY - initialY; }
+            else { currentX = e.clientX - initialX; currentY = e.clientY - initialY; }
+            xOffset = currentX; yOffset = currentY;
+            draggable.style.transform = 'translate3d(' + currentX + 'px,' + currentY + 'px,0)';
+            var areaRect = dragArea.getBoundingClientRect();
+            var itemRect = draggable.getBoundingClientRect();
+            var rx = ((itemRect.left + itemRect.width/2 - areaRect.left) / areaRect.width * 100).toFixed(1);
+            var ry = ((itemRect.top + itemRect.height/2 - areaRect.top) / areaRect.height * 100).toFixed(1);
+            coordinates.textContent = '当前位置: X: ' + rx + '%, Y: ' + ry + '%';
+        }
+        function dragEnd() { initialX = currentX; initialY = currentY; isDragging = false; }
+    });
+</script>
+</body>
+</html>

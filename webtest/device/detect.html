@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>设备/环境检测 (合并)</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace; line-height: 1.6; padding: 16px; background: #f4f7f9; color: #333; }
+        .tabs { border-bottom: 2px solid #888; margin-bottom: 12px; }
+        .tab-btn { background: #eee; border: 1px solid #888; border-bottom: none; padding: 4px 12px; cursor: pointer; }
+        .tab-btn.active { background: #fff; font-weight: bold; }
+        .tab-panel { display: none; padding: 12px; border: 1px solid #ccc; border-top: none; background: #fff; }
+        .tab-panel.active { display: block; }
+        button { padding: 4px 10px; cursor: pointer; }
+        ul { padding-left: 20px; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+        .card { padding: 12px; border-radius: 6px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .supported { background: #e8f5e9; border-color: #a5d6a7; color: #2e7d32; }
+        .unsupported { background: #ffebee; border-color: #ef9a9a; color: #c62828; }
+        .summary { margin-top: 16px; padding: 12px; border-radius: 6px; font-weight: bold; text-align: center; }
+        .binary-box { background: #272822; color: #f8f8f2; padding: 12px; border-radius: 4px; font-family: monospace; overflow-x: auto; margin: 12px 0; }
+        .status { background: rgba(0,0,0,0.8); color: #fff; padding: 8px; border-radius: 4px; display: inline-block; margin: 8px 0; }
+    </style>
+</head>
+<body>
+<h3>设备 / 环境检测</h3>
+<div class="tabs">
+    <button class="tab-btn active" data-tab="t-label">设备 Label</button>
+    <button class="tab-btn" data-tab="t-noti">接口检测</button>
+    <button class="tab-btn" data-tab="t-env">env() CSS</button>
+    <button class="tab-btn" data-tab="t-wasm">Wasm 特性</button>
+</div>
+
+<div id="t-label" class="tab-panel active">
+    <h4>MediaStream 设备 Label 列表</h4>
+    <button onclick="getLabels()">获取设备列表</button>
+    <ul id="label-list"></ul>
+    <script>
+        async function getLabels() {
+            var listElement = document.getElementById('label-list');
+            listElement.innerHTML = '正在请求权限...';
+            try {
+                var stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                var devices = await navigator.mediaDevices.enumerateDevices();
+                listElement.innerHTML = '';
+                devices.forEach(function(device) {
+                    if (device.label) {
+                        var li = document.createElement('li');
+                        li.textContent = '[' + device.kind + '] ' + device.label;
+                        listElement.appendChild(li);
+                    }
+                });
+                stream.getTracks().forEach(function(track) { track.stop(); });
+                if (listElement.innerHTML === '') listElement.innerHTML = '未找到带有 Label 的设备。';
+            } catch (err) {
+                listElement.innerHTML = '错误: ' + err.message + '<br>请确保已允许摄像头/麦克风权限。';
+            }
+        }
+    </script>
+</div>
+
+<div id="t-noti" class="tab-panel">
+    <p>window.chrome: <span id="chromeResult">检测中...</span></p>
+    <p>window.Notification: <span id="notifyResult">检测中...</span></p>
+    <script>
+        (function() {
+            var c = document.getElementById('chromeResult');
+            if (typeof window.chrome !== 'undefined') { c.textContent = '支持'; c.style.color = 'green'; }
+            else { c.textContent = '不支持'; c.style.color = 'red'; }
+            var n = document.getElementById('notifyResult');
+            if (typeof window.Notification !== 'undefined') { n.textContent = '支持'; n.style.color = 'green'; }
+            else { n.textContent = '不支持'; n.style.color = 'red'; }
+        })();
+    </script>
+</div>
+
+<div id="t-env" class="tab-panel">
+    <div class="status" id="envStatus">检测 env() 支持...</div>
+    <div id="safeAreaDisplay"></div>
+    <script>
+        function checkEnvSupport() {
+            var statusEl = document.getElementById('envStatus');
+            var displayEl = document.getElementById('safeAreaDisplay');
+            var supportsEnv = CSS.supports('padding', 'env(safe-area-inset-top)');
+            var testEl = document.createElement('div');
+            testEl.style.padding = 'env(safe-area-inset-top)';
+            var computedPadding = window.getComputedStyle(testEl).paddingTop;
+            if (supportsEnv && computedPadding !== '0px') { statusEl.innerHTML = '✅ env() 支持已启用'; statusEl.style.background = 'green'; }
+            else { statusEl.innerHTML = '❌ env() 不支持'; statusEl.style.background = 'red'; }
+            displayEl.innerHTML = '<p>上: ' + '0px' + '</p><p>(安全区域值需在沉浸式设备上观察)</p>';
+        }
+        document.addEventListener('DOMContentLoaded', checkEnvSupport);
+    </script>
+</div>
+
+<div id="t-wasm" class="tab-panel">
+    <p>检测以下 Wasm 特性：</p>
+    <div class="binary-box">[0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,5,4,1,3,1,1,10,11,1,9,0,65,0,254,16,2,0,26,11]</div>
+    <div id="results" class="feature-grid"></div>
+    <div id="final-status" class="summary">正在初始化检测...</div>
+    <script>
+        var featuresToTest = {
+            'SIMD': async function() { return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,10,1,8,0,65,0,253,15,26,11])); },
+            'Threads': async function() { return typeof SharedArrayBuffer !== 'undefined' && WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,5,4,1,3,1,1,10,11,1,9,0,65,0,254,16,2,0,26,11])); },
+            'Bulk Memory': async function() { return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,4,1,96,0,0,3,2,1,0,10,14,1,12,0,65,0,65,0,65,0,252,10,0,0,11])); },
+            'BigInt JS-API': async function() { return typeof BigUint64Array !== 'undefined'; },
+            'Mutable Globals': async function() { return WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,2,7,1,1,101,1,103,127,1])); }
+        };
+        async function runCheck() {
+            var resultsContainer = document.getElementById('results');
+            var finalStatus = document.getElementById('final-status');
+            var unsupported = 0;
+            for (var name in featuresToTest) {
+                var isSupported = false;
+                try { isSupported = await featuresToTest[name](); } catch (e) { isSupported = false; }
+                if (!isSupported) unsupported++;
+                var card = document.createElement('div');
+                card.className = 'card ' + (isSupported ? 'supported' : 'unsupported');
+                card.innerHTML = '<span>' + name + '</span><span>' + (isSupported ? '✓' : '✕') + '</span>';
+                resultsContainer.appendChild(card);
+            }
+            if (unsupported === 0) { finalStatus.innerText = '🎉 完全兼容所有 Wasm 特性。'; finalStatus.style.background = '#e8f5e9'; finalStatus.style.color = '#2e7d32'; }
+            else { finalStatus.innerText = '⚠️ 检测到 ' + unsupported + ' 项特性不支持。'; finalStatus.style.background = '#fff3e0'; finalStatus.style.color = '#ef6c00'; }
+        }
+        window.addEventListener('load', runCheck);
+    </script>
+</div>
+
+<script>
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>

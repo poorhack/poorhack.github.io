@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UA 检测 (合并)</title>
+    <style>
+        body { font-family: monospace; padding: 16px; font-size: 14px; }
+        .tabs { border-bottom: 2px solid #888; margin-bottom: 12px; }
+        .tab-btn { background: #eee; border: 1px solid #888; border-bottom: none; padding: 4px 12px; cursor: pointer; font-family: monospace; }
+        .tab-btn.active { background: #fff; font-weight: bold; }
+        .tab-panel { display: none; padding: 8px; border: 1px solid #ccc; border-top: none; }
+        .tab-panel.active { display: block; }
+        .box { width: 100%; border: 1px dashed rgb(148,119,82); padding: 4px; margin: 4px 0; word-break: break-all; }
+        .label { margin-top: 8px; font-weight: bold; }
+        .note { color: #555; font-size: 12px; }
+    </style>
+</head>
+<body>
+<h3>UA 检测</h3>
+<div class="tabs">
+    <button class="tab-btn active" data-tab="t1">UA 类型检测</button>
+    <button class="tab-btn" data-tab="t2">PC 适配 (pcua)</button>
+    <button class="tab-btn" data-tab="t3">移动适配 (phoneua)</button>
+</div>
+
+<div id="t1" class="tab-panel active">
+    <div class="note">依据 UA 字符串判断 OpenHarmony / Android / iOS / 其它移动 / 非移动。</div>
+    <div class="label">检测结果：</div>
+    <div id="detRes" class="box"></div>
+    <div class="label">原生 UA：</div>
+    <div id="ori" class="box"></div>
+    <script>
+        (function() {
+            var ua = navigator.userAgent;
+            if (/AppleWebKit.*Mobile/i.test(ua) || /MIDP|Harmony|SymbianOS|NOKIA|SAMSUNG|LG|NEC|TCL|Alcatel|BIRD|DBTEL|Dopod|PHILIPS|HAIER|LENOVO|MOT-|Nokia|SonyEricsson|SIE-|Amoi|ZTE/.test(ua)) {
+                if (/OpenHarmony/i.test(ua)) document.getElementById('detRes').textContent = '检测到 OpenHarmony UA';
+                else if (/Android/i.test(ua)) document.getElementById('detRes').textContent = '检测到 Android UA';
+                else if (/iPhone|iPod|iPad/i.test(ua)) document.getElementById('detRes').textContent = '检测到 iPhone|iPod|iPad UA';
+                else document.getElementById('detRes').textContent = '其它移动类型 UA';
+            } else {
+                document.getElementById('detRes').textContent = '非移动类型 UA';
+            }
+            document.getElementById('ori').textContent = ua;
+        })();
+    </script>
+</div>
+
+<div id="t2" class="tab-panel">
+    <div class="label">Current UA</div>
+    <div id="showUA2" class="box"></div>
+    <div class="label">Current URL</div>
+    <div id="showURL2" class="box"></div>
+    <div class="label">Note</div>
+    <div id="showNote2" class="box"></div>
+    <div class="note">原 pcua 检测到移动 UA 会 JS 跳转 phoneua；合并后跳转已禁用（同页切换 tab 即可）。</div>
+    <script>
+        (function() {
+            var ua = navigator.userAgent;
+            document.getElementById('showUA2').textContent = ua;
+            document.getElementById('showURL2').textContent = location.href;
+            var note = '当前为 PC 适配页面。phoneua 不会通过 js 跳转到 pcua。';
+            var mobileAgents = ['Windows CE','iPod','Symbian','iPhone','BlackBerry','Android','Windows Phone','OpenHarmony 5.0'];
+            for (var i = 0; i < mobileAgents.length; i++) {
+                if (ua.indexOf(mobileAgents[i]) !== -1) { note += ' [命中移动关键字: ' + mobileAgents[i] + '，原逻辑会跳转 phoneua]'; break; }
+            }
+            document.getElementById('showNote2').textContent = note;
+        })();
+    </script>
+</div>
+
+<div id="t3" class="tab-panel">
+    <div class="label">Current UA</div>
+    <div id="showUA3" class="box"></div>
+    <div class="label">Current URL</div>
+    <div id="showURL3" class="box"></div>
+    <div class="label">Note</div>
+    <div id="showNote3" class="box"></div>
+    <div class="note">原 phoneua 检测到 Windows NT 注释掉跳转；合并后跳转已禁用。</div>
+    <script>
+        (function() {
+            var ua = navigator.userAgent;
+            document.getElementById('showUA3').textContent = ua;
+            document.getElementById('showURL3').textContent = location.href;
+            var note = '当前为移动端适配页面。切换成移动 UA 后 pcua 会通过 js 跳转到 phoneua。';
+            if (ua.indexOf('Windows NT') !== -1) note += ' [命中 Windows NT，原逻辑注释跳转]';
+            document.getElementById('showNote3').textContent = note;
+        })();
+    </script>
+</div>
+
+<script>
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>

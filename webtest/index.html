@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebTest 测试页入口 | poorhack</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fafafa;
+            font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            color: #1a1a1a;
+            line-height: 1.5;
+            padding: 16px;
+        }
+        .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 16px; }
+        .header h1 { font-size: 20px; font-weight: bold; }
+        .header .sub { color: #555; font-size: 12px; margin-top: 4px; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+        #filter { flex: 1; min-width: 200px; padding: 6px 8px; font-family: monospace; font-size: 13px; border: 1px solid #888; background: #fff; }
+        .count { font-size: 12px; color: #555; white-space: nowrap; }
+        .category { margin-bottom: 20px; }
+        .category h2 { font-size: 15px; font-weight: bold; border-left: 4px solid #444; padding-left: 8px; margin-bottom: 8px; }
+        .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 6px; }
+        .card { display: block; padding: 6px 10px; border: 1px solid #ddd; background: #fff; text-decoration: none; color: #00c; }
+        .card:hover { background: #eef; border-color: #666; }
+        .card .name { font-weight: bold; color: #1a1a1a; }
+        .card .desc { font-size: 12px; color: #666; margin-top: 2px; }
+        .card .file { font-size: 11px; color: #999; margin-top: 2px; }
+        .card .tag { display: inline-block; font-size: 10px; background: #d4edda; color: #155724; padding: 0 4px; border-radius: 3px; margin-left: 4px; }
+        .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 12px; color: #777; }
+        .empty { color: #888; padding: 8px; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>WebTest 测试页入口</h1>
+    <div class="sub">poorhack.github.io/webtest — 前端特性测试索引（按类别分子目录，同类小功能已合并为聚合页）</div>
+</div>
+
+<div class="toolbar">
+    <input type="text" id="filter" placeholder="输入关键字过滤（名称/描述/路径）..." autocomplete="off">
+    <span class="count" id="count"></span>
+</div>
+
+<div id="root"></div>
+
+<div class="footer">
+    共 <span id="total">0</span> 个测试页。点击卡片打开对应测试页（新标签页）。
+    <span style="color:#155724">绿色"合并"标签表示该页由多个原小页聚合而来。</span>
+</div>
+
+<script>
+(function() {
+    const groups = [
+        {
+            title: '1. 键盘 / 输入 / 表单  (keyboard/)',
+            items: [
+                { file: 'keyboard/input.html',    name: '事件上报系统',         desc: '键盘 keyCode(十进制) + HOVER Enter/Exit + 点击/触摸上报' },
+                { file: 'keyboard/key.html',      name: '键盘事件监听',         desc: 'Key Event Listener' },
+                { file: 'keyboard/sinput.html',   name: '软键盘覆盖输入框',     desc: '移动端软键盘遮挡输入框 Demo' },
+                { file: 'keyboard/tim.html',      name: '定时器 + 表单自动填充', desc: 'setTimeout 演示 + 表单 autocomplete 字段' },
+                { file: 'keyboard/password.html', name: '密码保存', tag: '合并', desc: '3 种密码保存方式：onfocus清空 / readonly陷阱 / one-time-code' },
+            ]
+        },
+        {
+            title: '2. UA / 设备 / 环境检测  (device/)',
+            items: [
+                { file: 'device/ua.html',     name: 'UA 检测', tag: '合并', desc: 'UA 类型判断 + PC适配 + 移动适配（原 ua/pcua/phoneua）' },
+                { file: 'device/detect.html', name: '设备/环境检测', tag: '合并', desc: '设备Label + 接口检测 + env() + Wasm（原 4 页）' },
+                { file: 'device/sab/index.html', name: 'SharedArrayBuffer', desc: 'SharedWorker/ServiceWorker/AudioWorklet SAB' },
+            ]
+        },
+        {
+            title: '3. 摄像头 / 媒体 / 音视频  (media/)',
+            items: [
+                { file: 'media/camera.html', name: '摄像头测试', tag: '合并', desc: '截图 + 设备选择预览 + MediaRecorder 录制（原 cam/cam2）' },
+                { file: 'media/video.html', name: 'Video 测试',  desc: 'VideoTest 视频播放 + 背景音乐' },
+                { file: 'media/tts.html',    name: 'TTS 语音合成', desc: 'SpeechSynthesis 朗读' },
+            ]
+        },
+        {
+            title: '4. 位置 / 跳转 / 导航  (nav/)',
+            items: [
+                { file: 'nav/location.html',  name: '获取地理位置',     desc: 'Geolocation 当前位置' },
+                { file: 'nav/sl.html',        name: '行政区划(iframe)', desc: '行政区划查询 API 嵌入' },
+                { file: 'nav/jump.html',      name: '定时器自动跳转',   desc: '延时跳转演示' },
+                { file: 'nav/nav-actions.html', name: '跳转/剪贴板', tag: '合并', desc: 'window.open 新窗口 + clipboard + scheme 跳转（原 open/copy）' },
+            ]
+        },
+        {
+            title: '5. 交互 / 手势 / 振动  (interaction/)',
+            items: [
+                { file: 'interaction/gesture.html', name: '拖动/滑动', tag: '合并', desc: '鼠标/触摸拖动 + 水平滑动（原 move/sc）' },
+                { file: 'interaction/vibrate.html', name: '振动测试',  desc: 'navigator.vibrate' },
+            ]
+        },
+        {
+            title: '6. 性能 / 内存 / 异常  (stress/)',
+            items: [
+                { file: 'stress/mem.html',  name: '内存占用演示', desc: '大内存分配压力测试' },
+                { file: 'stress/anr.html',  name: 'ANR 无响应',   desc: '主线程阻塞演示（独立隔离）' },
+                { file: 'stress/anti.html', name: 'Debugger 拦截', desc: '反调试脚本（独立隔离）' },
+            ]
+        },
+        {
+            title: '7. 加密 / 安全  (crypto/)',
+            items: [
+                { file: 'crypto/sm2.html',   name: 'SM2 加解密',  desc: 'SM2 兼容性测试 (ArkWeb)' },
+                { file: 'crypto/cusm2.html', name: 'SM2 全链路', desc: '用户网页逻辑复现 全链路测试' },
+            ]
+        },
+        {
+            title: '8. 其它 / 工具  (misc/)',
+            items: [
+                { file: 'misc/hello.html',   name: 'helloWorld',     desc: '基础示例页' },
+                { file: 'misc/bmr.html',     name: 'BMR 计算器',     desc: '基础代谢率计算' },
+                { file: 'misc/cmd.html',     name: '网页命令行',     desc: '网页命令行终端' },
+                { file: 'misc/reader.html',  name: '本地文本阅读器', desc: '本地文件阅读' },
+                { file: 'misc/icon.html',    name: 'Material Icons Bug', desc: '图标连字 WebView 复现' },
+                { file: 'misc/img.html',      name: '图片保护',       desc: '禁止长按保存图片' },
+                { file: 'misc/frameTest.html', name: 'iframe 测试',  desc: 'Frame 嵌套测试（内嵌 setting 面板）' },
+                { file: 'misc/notice.html',   name: '证书打印',       desc: '外部保存的证书打印页' },
+                { file: 'misc/console/index.html', name: 'Console 测试', desc: 'console 输出测试' },
+                { file: 'misc/panel/dist-setting/setting.html', name: '设置面板', desc: 'Settings 面板' },
+            ]
+        },
+    ];
+
+    const root = document.getElementById('root');
+    const filterInput = document.getElementById('filter');
+    const countEl = document.getElementById('count');
+    const totalEl = document.getElementById('total');
+
+    let total = 0;
+    groups.forEach(g => total += g.items.length);
+    totalEl.textContent = total;
+
+    function render(query) {
+        const q = (query || '').trim().toLowerCase();
+        let shown = 0;
+        let html = '';
+        groups.forEach(g => {
+            const items = g.items.filter(it => !q || (it.name + ' ' + it.desc + ' ' + it.file).toLowerCase().indexOf(q) !== -1);
+            if (items.length === 0) return;
+            shown += items.length;
+            html += '<div class="category">';
+            html += '<h2>' + g.title + ' <span style="color:#999;font-weight:normal;font-size:12px">(' + items.length + ')</span></h2>';
+            html += '<div class="links">';
+            items.forEach(it => {
+                html += '<a class="card" href="' + it.file + '" target="_blank" rel="noopener noreferrer">';
+                html += '<div class="name">' + it.name + (it.tag ? '<span class="tag">' + it.tag + '</span>' : '') + '</div>';
+                html += '<div class="desc">' + it.desc + '</div>';
+                html += '<div class="file">' + it.file + '</div>';
+                html += '</a>';
+            });
+            html += '</div></div>';
+        });
+        if (shown === 0) html = '<div class="empty">无匹配的测试页。</div>';
+        root.innerHTML = html;
+        countEl.textContent = '显示 ' + shown + ' / ' + total;
+    }
+
+    render('');
+    filterInput.addEventListener('input', function() { render(this.value); });
+})();
+</script>
+</body>
+</html>
