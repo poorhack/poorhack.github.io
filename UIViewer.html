@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Android UI Layout Viewer</title>
+<style>
+  :root{ --bg:#1e1f22; --panel:#26282d; --panel2:#2e3137; --line:#3a3d44; --txt:#d6d8db; --mut:#8b9099; --acc:#4ea1ff; --hi:#ffcc40; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:13px/1.45 -apple-system,Segoe UI,Roboto,"Microsoft YaHei",sans-serif;overflow:hidden}
+  body{display:flex;flex-direction:column}
+  button,input,select{font:inherit;color:inherit}
+  button{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:4px 10px;cursor:pointer}
+  button:hover{border-color:var(--acc)}
+  button.active{background:var(--acc);border-color:var(--acc);color:#fff}
+  .bar{display:flex;gap:8px;align-items:center;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar .title{font-weight:600;margin-right:6px}
+  .bar .spacer{flex:1}
+  .bar input[type=search]{flex:1;min-width:160px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
+  .bar label{display:inline-flex;align-items:center;gap:4px;color:var(--mut);user-select:none}
+  .bar label input{accent-color:var(--acc)}
+  .stat{color:var(--mut);font-variant-numeric:tabular-nums}
+  .wrap{display:flex;flex:1;min-height:0}
+  .wrap.fit-mode .stage{flex:0 0 auto}
+  .wrap.fit-mode .sidebar{flex:1 1 auto;width:auto}
+  .stage{flex:1;min-width:0;min-height:0;overflow:auto;position:relative;background:var(--bg)}
+  .canvas{position:relative;margin:16px auto}
+  .canvas img{display:block;max-width:none;pointer-events:none;user-select:none}
+  .box{position:absolute;border:1px solid rgba(78,161,255,.35);background:rgba(78,161,255,.06);cursor:pointer;box-sizing:border-box}
+  .box:hover{border-color:var(--hi);background:rgba(255,204,64,.18);z-index:5}
+  .box.click{border-color:rgba(120,220,120,.5)}
+  .box.text{border-color:rgba(255,140,200,.45)}
+  #boxes{position:absolute;top:0;left:0}
+  #boxes.filtering .box{opacity:.06;pointer-events:none}
+  #boxes.filtering .box.match{opacity:1;pointer-events:auto;border-color:rgba(78,161,255,.9);background:rgba(78,161,255,.2)}
+  .box.sel{border-color:#fff!important;border-width:2px;background:rgba(255,204,64,.28)!important;z-index:10;opacity:1!important;pointer-events:auto!important}
+  .box .tag{position:absolute;left:0;top:-14px;font:10px/1 ui-monospace,monospace;background:var(--acc);color:#fff;padding:1px 4px;border-radius:2px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;display:none}
+  .box:hover .tag,.box.sel .tag{display:block}
+  .sidebar{width:480px;max-width:80vw;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-width:0}
+  .tabs{display:flex;border-bottom:1px solid var(--line)}
+  .tabs button{flex:1;border:none;border-radius:0;background:transparent;padding:8px;border-bottom:2px solid transparent;color:var(--mut)}
+  .tabs button.active{color:var(--txt);border-bottom-color:var(--acc)}
+  .pane{flex:1;overflow:auto;padding:8px 10px}
+  .sec-hd{color:var(--mut);font-size:11px;margin:14px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--line)}
+  .tree ul{list-style:none;margin:0;padding-left:14px}
+  .tree>ul{padding-left:0}
+  .tree li{margin:1px 0;position:relative}
+  .tree .row{display:flex;align-items:center;gap:4px;padding:2px 4px;border-radius:3px;cursor:default;white-space:nowrap}
+  .tree .row:hover{background:var(--panel2)}
+  .tree .row.sel{background:rgba(78,161,255,.25)}
+  .tree .tw{cursor:pointer;width:12px;color:var(--mut);flex:0 0 12px;text-align:center}
+  .tree .cls{color:#9ccc65}
+  .tree .rid{color:#4ea1ff}
+  .tree .txt{color:#ffcc40;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+  .tree .bnd{color:var(--mut);font:11px ui-monospace,monospace}
+  .chainhd{color:var(--mut);font:11px ui-monospace,monospace;margin:0 0 8px;padding:4px 6px;background:var(--panel2);border-radius:4px}
+  .row.leaf{background:rgba(255,204,64,.16);outline:1px solid var(--hi)}
+  .row .badge{color:var(--hi);font-size:10px;margin-left:4px;border:1px solid var(--hi);border-radius:3px;padding:0 3px}
+  .tree .tw.has{cursor:pointer}
+  .kv{display:grid;grid-template-columns:90px 1fr;gap:2px 8px;font-size:12px}
+  .kv .k{color:var(--mut)}
+  .kv .v{color:var(--txt);word-break:break-all;font-family:ui-monospace,monospace}
+  .chain{font-size:11px;line-height:1.6}
+  .chain a{color:var(--acc);cursor:pointer;text-decoration:none}
+  .chain a:hover{text-decoration:underline}
+  .empty{color:var(--mut);padding:20px;text-align:center}
+  .drop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(30,31,34,.9);color:var(--hi);font-size:20px;border:3px dashed var(--hi);z-index:9999;pointer-events:none}
+  body.drag .drop{display:flex}
+  .stage,#stage{cursor:default}
+  .hint{color:var(--mut);font-size:11px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <span class="title">📐 Android Layout Viewer</span>
+  <button id="loadBtn">加载文件</button>
+  <input type="file" id="filePick" accept="image/*,.xml,application/xml,text/xml" multiple hidden>
+  <input type="search" id="search" placeholder="搜索 text / resource-id / class…">
+  <label>缩放<select id="zoom"><option value="fit" selected>适应</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
+  <span class="spacer"></span>
+  <span class="stat" id="stat">未加载</span>
+</div>
+<div class="wrap" id="wrap">
+  <div class="stage" id="stage">
+    <div class="canvas" id="canvas" style="display:none">
+      <img id="img" alt="screenshot">
+      <div id="boxes"></div>
+    </div>
+    <div class="empty" id="empty">把 <b>screenshot.png</b> 和 <b>window_dump.xml</b> 一起拖到这里<br><span class="hint">(可一次拖两个，也可分两次拖入；或点上方"加载文件"按钮)</span></div>
+    <div class="drop">松开以加载 screenshot.png + window_dump.xml</div>
+  </div>
+  <div class="sidebar">
+    <div class="tabs">
+      <button class="active" data-pane="info">详情</button>
+      <button data-pane="chain">层级</button>
+    </div>
+    <div class="pane" id="paneInfo"></div>
+    <div class="pane" id="paneChain" style="display:none"><div class="empty">点击左侧截图任意一点<br>查看该点从外层到内层的容器链</div></div>
+  </div>
+</div>
+
+<script>
+(()=>{
+  const $=s=>document.querySelector(s);
+  const stage=$('#stage'),canvas=$('#canvas'),img=$('#img'),boxLayer=$('#boxes'),wrap=$('#wrap');
+  const empty=$('#empty'),stat=$('#stat'),search=$('#search');
+  const infoSec=$('#paneInfo'),chainSec=$('#paneChain');
+  let nodes=[],byId=new Map(),rootEl=null,imgW=0,imgH=0,scale=1,selId=null;
+
+  // ---------- file loading ----------
+  async function tryAutoLoad(){
+    try{
+      const [r1,r2]=await Promise.all([
+        fetch('./screenshot.png'),
+        fetch('./window_dump.xml')
+      ]);
+      if(!r1.ok||!r2.ok) throw 0;
+      const xml=await r2.text();
+      const blob=await r1.blob();
+      const url=URL.createObjectURL(blob);
+      loadImg(url, xml);
+      return true;
+    }catch(e){ return false; }
+  }
+
+  $('#loadBtn').onclick=()=>{ $('#filePick').click(); };
+  // supports both: pick both files at once (Ctrl/Shift multi-select), or one at a time (accumulates)
+  let pickUrl=null, pickXml=null;
+  $('#filePick').onchange=async e=>{
+    const files=Array.from(e.target.files||[]);
+    for(const f of files){
+      if(/^image\//.test(f.type)||/\.png$/i.test(f.name)) pickUrl=URL.createObjectURL(f);
+      else if(/\.xml$/i.test(f.name)||/xml/.test(f.type)) pickXml=await f.text();
+    }
+    if(pickUrl&&pickXml){ loadImg(pickUrl,pickXml); }
+    else if(pickUrl||pickXml){
+      stat.textContent=`已选 ${pickUrl?'截图':'XML'}，再加载 ${pickUrl?'window_dump.xml':'screenshot.png'}`;
+    }
+    e.target.value='';
+  };
+
+  // drag & drop (window-level so browser won't navigate to the file)
+  let dUrl=null,dXml=null;
+  function dtFiles(e){ return Array.from(e.dataTransfer.files||[]); }
+  let dragDepth=0;
+  window.addEventListener('dragenter',e=>{e.preventDefault();e.stopPropagation();dragDepth++;document.body.classList.add('drag');});
+  window.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();e.dataTransfer.dropEffect='copy';document.body.classList.add('drag');});
+  window.addEventListener('dragleave',e=>{e.preventDefault();e.stopPropagation();dragDepth=Math.max(0,dragDepth-1);if(dragDepth===0)document.body.classList.remove('drag');});
+  window.addEventListener('drop',async e=>{
+    e.preventDefault();e.stopPropagation();dragDepth=0;document.body.classList.remove('drag');
+    const files=dtFiles(e);
+    if(!files.length) return;
+    const readers=[];
+    for(const f of files){
+      if(/^image\//.test(f.type)||/\.png$/i.test(f.name)) dUrl=URL.createObjectURL(f);
+      else if(/\.xml$/i.test(f.name)||/xml/.test(f.type)) readers.push(f.text().then(t=>{dXml=t;}));
+    }
+    await Promise.all(readers);
+    if(dUrl&&dXml){ loadImg(dUrl,dXml); }
+    else if(dUrl||dXml){
+      const miss=dUrl?'window_dump.xml':'screenshot.png';
+      stat.textContent=`已收到 ${dUrl?'截图':'XML'}，再拖入 ${miss}`;
+    } else { alert('请拖入 screenshot.png 和 window_dump.xml'); }
+  });
+
+  // ---------- main load ----------
+  function loadImg(url, xml){
+    window.__xmlLoaded=true;
+    img.onload=()=>{
+      imgW=img.naturalWidth; imgH=img.naturalHeight;
+      parseXml(xml);
+      applyZoom();          // 设置缩放尺寸 + 渲染 boxes
+      applyFilters();
+      empty.style.display='none';
+      canvas.style.display='block';
+      stat.textContent=`${nodes.length} 节点 · ${imgW}×${imgH}`;
+  };
+    img.onerror=()=>{ window.__xmlLoaded=false; alert('图片加载失败'); };
+    if(url) img.src=url;
+    else if(img.src) img.onload();
+  }
+
+  // ---------- xml parsing ----------
+  function parseBounds(s){
+    const m=/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/.exec(s||'');
+    if(!m) return null;
+    return [+m[1],+m[2],+m[3],+m[4]];
+  }
+  function parseXml(xml){
+    if(!xml){ nodes=[]; return; }
+    const doc=new DOMParser().parseFromString(xml,'text/xml');
+    const hier=doc.querySelector('hierarchy')||doc;
+    nodes=[];byId=new Map();
+    let id=0;
+    function walk(el,parent){
+      if(el.tagName!=='node'||el.nodeType!==1) {
+        // still descend? hierarchy contains node children directly
+        for(const c of el.children) walk(c,parent);
+        return;
+      }
+      const o={
+        id:id++,
+        text:el.getAttribute('text')||'',
+        rid:el.getAttribute('resource-id')||'',
+        cls:el.getAttribute('class')||'',
+        pkg:el.getAttribute('package')||'',
+        desc:el.getAttribute('content-desc')||'',
+        clickable:el.getAttribute('clickable')==='true',
+        long:el.getAttribute('long-clickable')==='true',
+        scrollable:el.getAttribute('scrollable')==='true',
+        checkable:el.getAttribute('checkable')==='true',
+        checked:el.getAttribute('checked')==='true',
+        enabled:el.getAttribute('enabled')==='true',
+        focusable:el.getAttribute('focusable')==='true',
+        selected:el.getAttribute('selected')==='true',
+        index:+(el.getAttribute('index')||0),
+        bounds:parseBounds(el.getAttribute('bounds')),
+        hint:el.getAttribute('hint')||'',
+        parent:parent,
+        children:[]
+      };
+      nodes.push(o);byId.set(o.id,o);
+      for(const c of el.children) walk(c,o);
+    }
+    walk(hier,null);
+    // build children list (already in walk)
+    rootEl=nodes[0]||null;
+  }
+
+  // ---------- boxes ----------
+  function renderBoxes(){
+    boxLayer.innerHTML='';
+    for(const n of nodes){
+      if(!n.bounds) continue;
+      const d=document.createElement('div');
+      d.className='box';
+      d.dataset.id=n.id;
+      const [x1,y1,x2,y2]=n.bounds;
+      d.style.left=(x1*scale)+'px';d.style.top=(y1*scale)+'px';
+      d.style.width=((x2-x1)*scale)+'px';d.style.height=((y2-y1)*scale)+'px';
+      let tag=n.rid||n.text||n.desc||n.cls.replace(/^android\.widget\./,'#');
+      d._tag=tag;
+      const span=document.createElement('span');span.className='tag';span.textContent=tag;
+      d.appendChild(span);
+      if(n.clickable) d.classList.add('click');
+      if(n.text) d.classList.add('text');
+      d.onmouseenter=()=>highlightNode(n,true);
+      d.onmouseleave=()=>highlightNode(n,false);
+      boxLayer.appendChild(d);
+      n._box=d;
+    }
+  }
+
+  function highlightNode(n,on){
+    if(n._box){
+      if(on) n._box.classList.add('hover');
+      else n._box.classList.remove('hover');
+    }
+    if(on) stat.textContent=`${n.cls}  ${n.rid||'(no id)'}  bounds=${n.bounds?n.bounds.join(','):''}`;
+  }
+
+  // ---------- tree helpers ----------
+  function shortCls(c){return c.replace(/^android\.widget\./,'').replace(/^android\.[^.]+\./,'');}
+  function esc(s){return (s+'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));}
+  function trunc(s,n){return s.length>n?s.slice(0,n)+'…':s;}
+
+  // ---------- selection / info ----------
+  function selectNode(n){
+    if(selId!=null){
+      const prev=byId.get(selId); if(prev&&prev._box) prev._box.classList.remove('sel');
+    }
+    document.querySelectorAll('.row.sel').forEach(r=>r.classList.remove('sel'));
+    selId=n.id;
+    if(n._box) n._box.classList.add('sel');
+    document.querySelectorAll(`.row[data-id="${n.id}"]`).forEach(r=>{r.classList.add('sel');r.scrollIntoView({block:'nearest',behavior:'smooth'});});
+    renderInfo(n);
+  }
+  function renderInfo(n){
+    const kv=(k,v)=>`<div class="k">${esc(k)}</div><div class="v">${esc(v==null?'':v)}</div>`;
+    const boolFlags=['clickable','long-clickable','scrollable','checkable','checked','enabled','focusable','focused','selected'];
+    const b=n.bounds?n.bounds.join(', '):'';
+    infoSec.innerHTML=`
+      <div class="sec-hd">节点详情</div>
+      <div class="kv">
+        ${kv('class',n.cls)}
+        ${kv('resource-id',n.rid)}
+        ${kv('text',n.text)}
+        ${kv('content-desc',n.desc)}
+        ${kv('hint',n.hint)}
+        ${kv('package',n.pkg)}
+        ${kv('index',n.index)}
+        ${kv('bounds',b)}
+        ${kv('size',n.bounds?`${n.bounds[2]-n.bounds[0]} × ${n.bounds[3]-n.bounds[1]}`:'')}
+      </div>
+      <div class="sec-hd">状态</div>
+      <div class="kv">${boolFlags.map(f=>kv(f,n[f.replace(/-/g,'')])).join('')}</div>`;
+  }
+
+  // ---------- click-to-chain ----------
+  function clickAtPoint(imgX, imgY){
+    const chain=nodes.filter(n=>{
+      if(!n.bounds) return false;
+      const [x1,y1,x2,y2]=n.bounds;
+      return imgX>=x1 && imgX<x2 && imgY>=y1 && imgY<y2;
+    });
+    // root (largest area) first, innermost (smallest) last
+    chain.sort((a,b)=>{
+      const aa=(a.bounds[2]-a.bounds[0])*(a.bounds[3]-a.bounds[1]);
+      const bb=(b.bounds[2]-b.bounds[0])*(b.bounds[3]-b.bounds[1]);
+      return bb-aa;
+    });
+    renderChainTree(chain, imgX, imgY);
+    if(chain.length){
+      selectNode(chain[chain.length-1]);
+    }
+  }
+
+  function makeRow(n, isLeaf){
+    const row=document.createElement('div');
+    row.className='row'+(isLeaf?' leaf':'');
+    row.dataset.id=n.id;
+    row.innerHTML=
+      `<span class="tw"></span>`+
+      `<span class="cls">${shortCls(n.cls)}</span>`+
+      (n.rid?` <span class="rid">${esc(n.rid)}</span>`:'')+
+      (n.text?` <span class="txt">"${esc(trunc(n.text,30))}"</span>`:'')+
+      (n.bounds?` <span class="bnd">${n.bounds.join(',')}</span>`:'')+
+      (isLeaf?` <span class="badge">点击</span>`:'');
+    row.onclick=e=>{e.stopPropagation();selectNode(n);};
+    row.onmouseenter=()=>{if(n._box)n._box.classList.add('hover');};
+    row.onmouseleave=()=>{if(n._box)n._box.classList.remove('hover');};
+    return row;
+  }
+
+  function renderChainTree(chain, imgX, imgY){
+    if(!chain.length){
+      chainSec.innerHTML=`<div class="empty">点 (${Math.round(imgX)}, ${Math.round(imgY)}) 不在任何节点内</div>`;
+      return;
+    }
+    const hd=document.createElement('div');
+    hd.className='chainhd';
+    hd.textContent=`点 (${Math.round(imgX)}, ${Math.round(imgY)}) · 共 ${chain.length} 层`;
+    chainSec.innerHTML='';
+    chainSec.appendChild(hd);
+    const wrap=document.createElement('div');
+    wrap.className='tree';
+    // build nested: level i wraps level i+1
+    function level(i){
+      if(i>=chain.length) return null;
+      const n=chain[i];
+      const isLeaf=i===chain.length-1;
+      const ul=document.createElement('ul');
+      const li=document.createElement('li');
+      li.appendChild(makeRow(n,isLeaf));
+      const childUL=level(i+1);
+      if(childUL){
+        li.appendChild(childUL);
+        const tw=li.querySelector('.tw');
+        tw.classList.add('has');
+        tw.textContent='▾';
+        tw.onclick=(e)=>{
+          e.stopPropagation();
+          const open=childUL.style.display!=='none';
+          childUL.style.display=open?'none':'block';
+          tw.textContent=open?'▸':'▾';
+        };
+      }
+      ul.appendChild(li);
+      return ul;
+    }
+    const rootUL=level(0);
+    if(rootUL) wrap.appendChild(rootUL);
+    chainSec.appendChild(wrap);
+    const inner=chain[chain.length-1];
+    chainSec.querySelector(`.row[data-id="${inner.id}"]`)?.classList.add('sel');
+  }
+
+  // click on the screenshot anywhere → build the chain tree
+  stage.addEventListener('click',e=>{
+    if(!imgW) return;
+    const rect=canvas.getBoundingClientRect();
+    if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom) return;
+    const imgX=(e.clientX-rect.left)/scale;
+    const imgY=(e.clientY-rect.top)/scale;
+    clickAtPoint(imgX, imgY);
+  });
+
+  // ---------- tabs ----------
+  document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    switchPane(b.dataset.pane);
+  });
+  function switchPane(p){
+    infoSec.style.display=p==='info'?'block':'none';
+    chainSec.style.display=p==='chain'?'block':'none';
+  }
+
+  // ---------- filters ----------
+  function applyFilters(){
+    const q=search.value.trim().toLowerCase();
+    const active=!!q;
+    boxLayer.classList.toggle('filtering',active);
+    let matched=0;
+    for(const n of nodes){
+      if(!n._box) continue;
+      let m=true;
+      if(q){
+        const hay=(n.text+' '+n.rid+' '+n.cls+' '+n.desc).toLowerCase();
+        if(!hay.includes(q)) m=false;
+      }
+      n._box.classList.toggle('match',active&&m);
+      if(active&&m) matched++;
+    }
+    stat.textContent=`${nodes.length} 节点 · ${imgW}×${imgH}${active?` · 匹配 ${matched}`:''}`;
+  }
+  search.oninput=applyFilters;
+
+  // ---------- zoom ----------
+  $('#zoom').onchange=applyZoom;
+  function applyZoom(){
+    const z=$('#zoom').value;
+    const fit=(z==='fit');
+    wrap.classList.toggle('fit-mode',fit);
+    if(fit){
+      // 按高度适应。留 8px 安全余量吸收亚像素舍入
+      const sh=stage.clientHeight-40;
+      scale = imgH? sh/imgH : 1;
+      stage.style.width=(imgW*scale+24)+'px';
+    }else{
+      scale=parseFloat(z);
+      stage.style.width='';
+    }
+    // 直接用缩放后的像素尺寸，不用 transform（transform 不改布局高度，会导致 scrollHeight 溢出）
+    canvas.style.width=(imgW*scale)+'px';
+    canvas.style.height=(imgH*scale)+'px';
+    canvas.style.margin='16px auto';
+    img.style.width=(imgW*scale)+'px';
+    img.style.height=(imgH*scale)+'px';
+    boxLayer.style.width=(imgW*scale)+'px';
+    boxLayer.style.height=(imgH*scale)+'px';
+    renderBoxes();
+  }
+  // stage 高度变化（窗口缩放）时重算 fit
+  if(window.ResizeObserver){
+    const ro=new ResizeObserver(()=>{ if(imgW && $('#zoom').value==='fit') applyZoom(); });
+    ro.observe(stage);
+  }
+  stage.addEventListener('wheel',e=>{
+    if(e.ctrlKey){
+      e.preventDefault();
+      const sel=$('#zoom');
+      let v=parseFloat(sel.value==='fit'?'1':sel.value);
+      v*=e.deltaY<0?1.1:0.9;
+      v=Math.min(4,Math.max(0.2,v));
+      sel.value='1';
+      // 自由缩放：走 applyZoom（用缩放像素尺寸 + 重渲染 boxes），不用 transform
+      scale=v;
+      stage.style.width='';
+      wrap.classList.remove('fit-mode');
+      canvas.style.width=(imgW*v)+'px';
+      canvas.style.height=(imgH*v)+'px';
+      img.style.width=(imgW*v)+'px';
+      img.style.height=(imgH*v)+'px';
+      boxLayer.style.width=(imgW*v)+'px';
+      boxLayer.style.height=(imgH*v)+'px';
+      renderBoxes();
+    }
+  },{passive:false});
+
+  // init
+  (async()=>{ const ok=await tryAutoLoad(); if(!ok){ stat.textContent='提示：直接用 file:// 打开时浏览器禁止读取同目录文件，请拖入文件或点“加载文件”选择。'; } })();
+  // also wire ssPick fallback when auto xml fails
+})();
+</script>
+</body>
+</html>
