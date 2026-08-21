@@ -5,58 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebTest 测试页入口 | poorhack</title>
     <style>
+        :root {
+            --bg: #1b1e22;
+            --bg-alt: #21252a;
+            --text: #d6d9df;
+            --text-dim: #8b8f96;
+            --shadow-dark: #14171a;
+            --shadow-light: #262b31;
+            --accent: #00e6a8;
+            --accent-soft: rgba(0,230,168,0.14);
+            --accent-glow: rgba(0,230,168,0.40);
+            --dot: rgba(255,255,255,0.045);
+            --radius: 16px;
+        }
+        [data-theme="light"] {
+            --bg: #e3e6ec;
+            --bg-alt: #eef1f6;
+            --text: #2a2e35;
+            --text-dim: #6a6f79;
+            --shadow-dark: #b8bcc4;
+            --shadow-light: #ffffff;
+            --accent: #00a877;
+            --accent-soft: rgba(0,168,119,0.12);
+            --accent-glow: rgba(0,168,119,0.30);
+            --dot: rgba(0,0,0,0.05);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
         body {
-            background: #fafafa;
+            background-color: var(--bg);
+            background-image: radial-gradient(circle, var(--dot) 1px, transparent 1px);
+            background-size: 26px 26px;
             font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
             font-size: 14px;
-            color: #1a1a1a;
-            line-height: 1.5;
-            padding: 16px;
+            color: var(--text);
+            line-height: 1.55;
+            padding: 24px;
+            transition: background-color .3s, color .3s;
         }
-        .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 16px; }
-        .header h1 { font-size: 20px; font-weight: bold; }
-        .header .sub { color: #555; font-size: 12px; margin-top: 4px; }
-        .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
-        #filter { flex: 1; min-width: 200px; padding: 6px 8px; font-family: monospace; font-size: 13px; border: 1px solid #888; background: #fff; }
-        .count { font-size: 12px; color: #555; white-space: nowrap; }
-        .category { margin-bottom: 20px; }
-        .category h2 { font-size: 15px; font-weight: bold; border-left: 4px solid #444; padding-left: 8px; margin-bottom: 8px; }
-        .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 6px; }
-        .card { display: block; padding: 6px 10px; border: 1px solid #ddd; background: #fff; text-decoration: none; color: #00c; }
-        .card:hover { background: #eef; border-color: #666; }
-        .card .name { font-weight: bold; color: #1a1a1a; }
-        .card .desc { font-size: 12px; color: #666; margin-top: 2px; }
-        .card .file { font-size: 11px; color: #999; margin-top: 2px; }
-        .card .tag { display: inline-block; font-size: 10px; background: #d4edda; color: #155724; padding: 0 4px; border-radius: 3px; margin-left: 4px; }
-        .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 12px; color: #777; }
-        .empty { color: #888; padding: 8px; }
+        .shell { max-width: 1080px; margin: 0 auto; }
+
+        .header { padding-bottom: 18px; margin-bottom: 22px; border-bottom: 1px solid var(--accent-soft); }
+        .title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .logo { width: 26px; height: 26px; border-radius: 8px; background: var(--bg);
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            display: grid; place-items: center; }
+        .logo::after { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+        h1 { font-size: 20px; font-weight: bold; letter-spacing: .5px; }
+        .cursor { display: inline-block; color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); animation: blink 1.1s steps(1) infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .sub { color: var(--text-dim); font-size: 12px; margin-top: 8px; }
+        .back { margin-top: 6px; }
+        .back a { color: var(--accent); text-decoration: none; font-size: 12px; opacity: .85; }
+        .back a:hover { opacity: 1; text-shadow: 0 0 8px var(--accent-glow); }
+
+        .toggle { width: 64px; height: 32px; border-radius: 999px; position: relative; cursor: pointer;
+            background: var(--bg); border: none; flex-shrink: 0;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+        .toggle .knob { position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%;
+            background: var(--bg); box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); transition: .25s; }
+        [data-theme="light"] .toggle .knob { left: 36px; background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+
+        .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; }
+        #filter { flex: 1; padding: 12px 16px; font-family: inherit; font-size: 13px; color: var(--text);
+            background: var(--bg); border: 1px solid transparent; border-radius: var(--radius);
+            box-shadow: inset 4px 4px 9px var(--shadow-dark), inset -4px -4px 9px var(--shadow-light); transition: .2s; }
+        #filter::placeholder { color: var(--text-dim); }
+        #filter:focus { outline: none; box-shadow: inset 4px 4px 9px var(--shadow-dark), inset -4px -4px 9px var(--shadow-light), 0 0 0 1.5px var(--accent), 0 0 16px var(--accent-glow); }
+        .count { font-size: 12px; color: var(--text-dim); white-space: nowrap; padding: 0 6px; }
+        .count b { color: var(--accent); }
+
+        .category { margin-bottom: 26px; }
+        .cat-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .cat-head h2 { font-size: 14px; font-weight: bold; padding: 6px 14px; border-radius: 999px; color: var(--text);
+            background: var(--bg); box-shadow: 4px 4px 9px var(--shadow-dark), -4px -4px 9px var(--shadow-light); }
+        .cat-head .num { font-size: 12px; color: var(--text-dim); }
+
+        .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+        .card { display: block; padding: 14px 16px; border-radius: var(--radius); text-decoration: none; color: var(--text);
+            background: var(--bg); box-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+            transition: transform .18s, box-shadow .2s; border: 1px solid transparent; }
+        .card:hover { transform: translateY(-3px); border-color: var(--accent);
+            box-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light), 0 0 22px var(--accent-glow); }
+        .card .name { font-weight: bold; font-size: 14px; color: var(--text); }
+        .card:hover .name { color: var(--accent); }
+        .card .desc { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+        .card .file { font-size: 11px; color: var(--text-dim); margin-top: 8px; opacity: .7; }
+        .card .tag { display: inline-block; font-size: 10px; color: var(--accent); border: 1px solid var(--accent-soft);
+            padding: 0 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+
+        .footer { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--accent-soft); font-size: 12px; color: var(--text-dim); }
+        .empty { color: var(--text-dim); padding: 18px; text-align: center; }
+        @media (max-width: 560px) { .toolbar { flex-direction: column; align-items: stretch; } .count { text-align: right; } }
     </style>
 </head>
-<body>
-<div class="header">
-    <h1>WebTest 测试页入口</h1>
-    <div class="sub">poorhack.github.io/webtest — 前端特性测试索引（按类别分子目录，同类小功能已合并为聚合页）</div>
-</div>
+<body data-theme="dark">
+<div class="shell">
+    <div class="header">
+        <div class="title-row">
+            <div class="brand">
+                <div class="logo" aria-hidden="true"></div>
+                <h1>WebTest 测试页入口<span class="cursor">▍</span></h1>
+            </div>
+            <button class="toggle" id="themeToggle" role="switch" aria-checked="false" aria-label="切换深色/浅色模式" title="切换深色/浅色模式">
+                <span class="knob"></span>
+            </button>
+        </div>
+        <div class="sub">poorhack.github.io/webtest — 前端特性测试索引（按类别分子目录，同类小功能已合并为聚合页）</div>
+        <div class="back"><a href="../tools/index.html">→ 前往 Tools 工具箱入口</a></div>
+    </div>
 
-<div class="toolbar">
-    <input type="text" id="filter" placeholder="输入关键字过滤（名称/描述/路径）..." autocomplete="off">
-    <span class="count" id="count"></span>
-</div>
+    <div class="toolbar">
+        <input type="text" id="filter" placeholder="> 输入关键字过滤（名称/描述/路径）..." autocomplete="off">
+        <span class="count" id="count"></span>
+    </div>
 
-<div id="root"></div>
+    <div id="root"></div>
 
-<div class="footer">
-    共 <span id="total">0</span> 个测试页。点击卡片打开对应测试页（新标签页）。
-    <span style="color:#155724">绿色"合并"标签表示该页由多个原小页聚合而来。</span>
+    <div class="footer">共 <span id="total">0</span> 个测试页 · 点击卡片打开（新标签页） · <span style="color:var(--accent)">绿色"合并"标签表示聚合页</span></div>
 </div>
 
 <script>
 (function() {
     const groups = [
         {
-            title: '1. 键盘 / 输入 / 表单  (keyboard/)',
-            items: [
+            title: '1. 键盘 / 输入 / 表单  (keyboard/)', items: [
                 { file: 'keyboard/input.html',    name: '事件上报系统',         desc: '键盘 keyCode(十进制) + HOVER Enter/Exit + 点击/触摸上报' },
                 { file: 'keyboard/key.html',      name: '键盘事件监听',         desc: 'Key Event Listener' },
                 { file: 'keyboard/sinput.html',   name: '软键盘覆盖输入框',     desc: '移动端软键盘遮挡输入框 Demo' },
@@ -65,54 +139,47 @@
             ]
         },
         {
-            title: '2. UA / 设备 / 环境检测  (device/)',
-            items: [
+            title: '2. UA / 设备 / 环境检测  (device/)', items: [
                 { file: 'device/ua.html',     name: 'UA 检测', tag: '合并', desc: 'UA 类型判断 + PC适配 + 移动适配（原 ua/pcua/phoneua）' },
                 { file: 'device/detect.html', name: '设备/环境检测', tag: '合并', desc: '设备Label + 接口检测 + env() + Wasm（原 4 页）' },
                 { file: 'device/sab/index.html', name: 'SharedArrayBuffer', desc: 'SharedWorker/ServiceWorker/AudioWorklet SAB' },
             ]
         },
         {
-            title: '3. 摄像头 / 媒体 / 音视频  (media/)',
-            items: [
+            title: '3. 摄像头 / 媒体 / 音视频  (media/)', items: [
                 { file: 'media/camera.html', name: '摄像头测试', tag: '合并', desc: '截图 + 设备选择预览 + MediaRecorder 录制（原 cam/cam2）' },
-                { file: 'media/video.html', name: 'Video 测试',  desc: 'VideoTest 视频播放 + 背景音乐' },
-                { file: 'media/tts.html',    name: 'TTS 语音合成', desc: 'SpeechSynthesis 朗读' },
+                { file: 'media/video.html',  name: 'Video 测试',  desc: 'VideoTest 视频播放 + 背景音乐' },
+                { file: 'media/tts.html',     name: 'TTS 语音合成', desc: 'SpeechSynthesis 朗读' },
             ]
         },
         {
-            title: '4. 位置 / 跳转 / 导航  (nav/)',
-            items: [
+            title: '4. 位置 / 跳转 / 导航  (nav/)', items: [
                 { file: 'nav/location.html',  name: '获取地理位置',     desc: 'Geolocation 当前位置' },
-                { file: 'nav/sl.html',        name: '行政区划(iframe)', desc: '行政区划查询 API 嵌入' },
-                { file: 'nav/jump.html',      name: '定时器自动跳转',   desc: '延时跳转演示' },
+                { file: 'nav/sl.html',         name: '行政区划(iframe)', desc: '行政区划查询 API 嵌入' },
+                { file: 'nav/jump.html',       name: '定时器自动跳转',   desc: '延时跳转演示' },
                 { file: 'nav/nav-actions.html', name: '跳转/剪贴板', tag: '合并', desc: 'window.open 新窗口 + clipboard + scheme 跳转（原 open/copy）' },
             ]
         },
         {
-            title: '5. 交互 / 手势 / 振动  (interaction/)',
-            items: [
+            title: '5. 交互 / 手势 / 振动  (interaction/)', items: [
                 { file: 'interaction/gesture.html', name: '拖动/滑动', tag: '合并', desc: '鼠标/触摸拖动 + 水平滑动（原 move/sc）' },
-                { file: 'interaction/vibrate.html', name: '振动测试',  desc: 'navigator.vibrate' },
+                { file: 'interaction/vibrate.html',  name: '振动测试',  desc: 'navigator.vibrate' },
             ]
         },
         {
-            title: '6. 性能 / 内存 / 异常  (stress/)',
-            items: [
+            title: '6. 性能 / 内存 / 异常  (stress/)', items: [
                 { file: 'stress/mem.html',  name: '内存占用演示', desc: '大内存分配压力测试' },
                 { file: 'stress/anr.html',  name: 'ANR 无响应',   desc: '主线程阻塞演示（独立隔离）' },
             ]
         },
         {
-            title: '7. 加密 / 安全  (crypto/)',
-            items: [
+            title: '7. 加密 / 安全  (crypto/)', items: [
                 { file: 'crypto/sm2.html',   name: 'SM2 加解密',  desc: 'SM2 兼容性测试 (ArkWeb)' },
-                { file: 'crypto/cusm2.html', name: 'SM2 全链路', desc: '用户网页逻辑复现 全链路测试' },
+                { file: 'crypto/cusm2.html',  name: 'SM2 全链路', desc: '用户网页逻辑复现 全链路测试' },
             ]
         },
         {
-            title: '8. 其它 / 工具  (misc/)',
-            items: [
+            title: '8. 其它 / 工具  (misc/)', items: [
                 { file: 'misc/hello.html',   name: 'helloWorld',     desc: '基础示例页' },
                 { file: 'misc/bmr.html',     name: 'BMR 计算器',     desc: '基础代谢率计算' },
                 { file: 'misc/cmd.html',     name: '网页命令行',     desc: '网页命令行终端' },
@@ -144,25 +211,38 @@
             const items = g.items.filter(it => !q || (it.name + ' ' + it.desc + ' ' + it.file).toLowerCase().indexOf(q) !== -1);
             if (items.length === 0) return;
             shown += items.length;
-            html += '<div class="category">';
-            html += '<h2>' + g.title + ' <span style="color:#999;font-weight:normal;font-size:12px">(' + items.length + ')</span></h2>';
-            html += '<div class="links">';
+            html += '<div class="category"><div class="cat-head"><h2>' + g.title + '</h2><span class="num">(' + items.length + ')</span></div><div class="links">';
             items.forEach(it => {
                 html += '<a class="card" href="' + it.file + '" target="_blank" rel="noopener noreferrer">';
                 html += '<div class="name">' + it.name + (it.tag ? '<span class="tag">' + it.tag + '</span>' : '') + '</div>';
                 html += '<div class="desc">' + it.desc + '</div>';
-                html += '<div class="file">' + it.file + '</div>';
-                html += '</a>';
+                html += '<div class="file">' + it.file + '</div></a>';
             });
             html += '</div></div>';
         });
         if (shown === 0) html = '<div class="empty">无匹配的测试页。</div>';
         root.innerHTML = html;
-        countEl.textContent = '显示 ' + shown + ' / ' + total;
+        countEl.innerHTML = '显示 <b>' + shown + '</b> / ' + total;
     }
 
     render('');
     filterInput.addEventListener('input', function() { render(this.value); });
+
+    const toggle = document.getElementById('themeToggle');
+    function applyTheme(t) {
+        document.body.setAttribute('data-theme', t);
+        toggle.setAttribute('aria-checked', t === 'light' ? 'true' : 'false');
+        try { localStorage.setItem('theme', t); } catch (e) {}
+    }
+    (function init() {
+        let saved = null;
+        try { saved = localStorage.getItem('theme'); } catch (e) {}
+        if (!saved) saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        applyTheme(saved);
+    })();
+    toggle.addEventListener('click', function() {
+        applyTheme(document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+    });
 })();
 </script>
 </body>
