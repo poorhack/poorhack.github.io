@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools 工具箱入口 | poorhack</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fafafa;
+            font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            color: #1a1a1a;
+            line-height: 1.5;
+            padding: 16px;
+        }
+        .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 16px; }
+        .header h1 { font-size: 20px; font-weight: bold; }
+        .header .sub { color: #555; font-size: 12px; margin-top: 4px; }
+        .header .back { margin-top: 6px; }
+        .header .back a { color: #00c; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+        #filter { flex: 1; min-width: 200px; padding: 6px 8px; font-family: monospace; font-size: 13px; border: 1px solid #888; background: #fff; }
+        .count { font-size: 12px; color: #555; white-space: nowrap; }
+        .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 6px; }
+        .card { display: block; padding: 10px; border: 1px solid #ddd; background: #fff; text-decoration: none; color: #00c; }
+        .card:hover { background: #eef; border-color: #666; }
+        .card .name { font-weight: bold; color: #1a1a1a; font-size: 15px; }
+        .card .desc { font-size: 12px; color: #666; margin-top: 4px; }
+        .card .file { font-size: 11px; color: #999; margin-top: 4px; }
+        .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 12px; color: #777; }
+        .empty { color: #888; padding: 8px; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Tools 工具箱</h1>
+    <div class="sub">poorhack.github.io/tools — 小工具集合入口</div>
+    <div class="back"><a href="../webtest/index.html">← 返回 WebTest 测试页入口</a></div>
+</div>
+
+<div class="toolbar">
+    <input type="text" id="filter" placeholder="输入关键字过滤（名称/描述/路径）..." autocomplete="off">
+    <span class="count" id="count"></span>
+</div>
+
+<div id="root" class="links"></div>
+
+<div class="footer">
+    共 <span id="total">0</span> 个工具。点击卡片打开（新标签页）。
+</div>
+
+<script>
+(function() {
+    const items = [
+        { file: 'qr.html',        name: '二维码生成与解析',  desc: 'QR Code 生成与扫码解析' },
+        { file: 'gifgen/',        name: 'GIF 图片生成器',    desc: '在线 GIF 生成（gifgen 子目录）' },
+        { file: 'UIViewer.html',  name: 'Android UI Viewer', desc: 'Android 布局结构查看器' },
+        { file: 'anti.html',     name: 'Debugger 拦截',     desc: '反调试/调试器拦截脚本（原 webtest/stress/anti.html）' },
+    ];
+
+    const root = document.getElementById('root');
+    const filterInput = document.getElementById('filter');
+    const countEl = document.getElementById('count');
+    const totalEl = document.getElementById('total');
+    totalEl.textContent = items.length;
+
+    function render(query) {
+        const q = (query || '').trim().toLowerCase();
+        const list = items.filter(it => !q || (it.name + ' ' + it.desc + ' ' + it.file).toLowerCase().indexOf(q) !== -1);
+        if (list.length === 0) { root.outerHTML = '<div id="root" class="empty">无匹配的工具。</div>'; countEl.textContent = '显示 0 / ' + items.length; return; }
+        let html = '';
+        list.forEach(it => {
+            html += '<a class="card" href="' + it.file + '" target="_blank" rel="noopener noreferrer">';
+            html += '<div class="name">' + it.name + '</div>';
+            html += '<div class="desc">' + it.desc + '</div>';
+            html += '<div class="file">' + it.file + '</div>';
+            html += '</a>';
+        });
+        root.outerHTML = '<div id="root" class="links">' + html + '</div>';
+        countEl.textContent = '显示 ' + list.length + ' / ' + items.length;
+    }
+
+    render('');
+    filterInput.addEventListener('input', function() { render(this.value); });
+})();
+</script>
+</body>
+</html>

@@ -26,13 +26,13 @@
   .stage{flex:1;min-width:0;min-height:0;overflow:auto;position:relative;background:var(--bg)}
   .canvas{position:relative;margin:16px auto}
   .canvas img{display:block;max-width:none;pointer-events:none;user-select:none}
-  .box{position:absolute;border:1px solid rgba(78,161,255,.35);background:rgba(78,161,255,.06);cursor:pointer;box-sizing:border-box}
-  .box:hover{border-color:var(--hi);background:rgba(255,204,64,.18);z-index:5}
-  .box.click{border-color:rgba(120,220,120,.5)}
-  .box.text{border-color:rgba(255,140,200,.45)}
+  .box{position:absolute;border:1px solid rgba(78,161,255,.3);cursor:pointer;box-sizing:border-box}
+  .box:hover{border-color:var(--hi);background:rgba(255,204,64,.14);z-index:5}
+  .box.click{border-color:rgba(120,220,120,.45)}
+  .box.text{border-color:rgba(255,140,200,.4)}
   #boxes{position:absolute;top:0;left:0}
-  #boxes.filtering .box{opacity:.06;pointer-events:none}
-  #boxes.filtering .box.match{opacity:1;pointer-events:auto;border-color:rgba(78,161,255,.9);background:rgba(78,161,255,.2)}
+  #boxes.filtering .box{opacity:.08;pointer-events:none}
+  #boxes.filtering .box.match{opacity:1;pointer-events:auto;border-color:var(--hi);background:rgba(255,204,64,.12)}
   .box.sel{border-color:#fff!important;border-width:2px;background:rgba(255,204,64,.28)!important;z-index:10;opacity:1!important;pointer-events:auto!important}
   .box .tag{position:absolute;left:0;top:-14px;font:10px/1 ui-monospace,monospace;background:var(--acc);color:#fff;padding:1px 4px;border-radius:2px;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;display:none}
   .box:hover .tag,.box.sel .tag{display:block}
