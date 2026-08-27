@@ -168,8 +168,9 @@
         },
         {
             title: '6. 性能 / 内存 / 异常  (stress/)', items: [
-                { file: 'stress/mem.html',  name: '内存占用演示', desc: '大内存分配压力测试' },
-                { file: 'stress/anr.html',  name: 'ANR 无响应',   desc: '主线程阻塞演示（独立隔离）' },
+                { file: 'stress/mem.html',      name: '内存占用演示',    desc: '大内存分配压力测试' },
+                { file: 'stress/anr.html',      name: 'ANR 无响应',     desc: '主线程阻塞演示（独立隔离）' },
+                { file: 'stress/pdfcanvas.html', name: 'PDF多Canvas内存复现', desc: 'resize→renderAllPages重建所有高分辨率canvas致内存增长' },
             ]
         },
         {
