@@ -88,9 +88,6 @@ body{
 .note-preview-item:last-child{border-bottom:none}
 .note-preview-text{color:var(--text);margin-bottom:4px}
 .note-preview-time{font-size:11px;color:var(--sec)}
-.loading{text-align:center;padding:40px;color:var(--sec)}
-.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;background-color:transparent}
-@keyframes spin{to{transform:rotate(360deg)}}
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:20px;text-align:center}
 .empty-icon{font-size:64px;margin-bottom:20px;opacity:.5;background-color:transparent}
 .empty-title{font-size:20px;font-weight:600;margin-bottom:12px}
@@ -260,7 +257,6 @@ body{
   .tts-speed-select{padding:4px 6px;font-size:12px}
 }
 </style>
-<base target="_blank">
 </head>
 <body>
 <div class="selection-popup" id="selectionPopup" onclick="addSelectionNote()">✎ 写书评</div>
@@ -276,8 +272,8 @@ body{
 <button class="btn" onclick="toggleSettings()" title="设置">⚙</button>
 </div>
 </div>
-<div class="main-container" id="mainContainer">
-<div class="content-wrapper" id="contentWrapper">
+<div class="main-container">
+<div class="content-wrapper">
 <div class="empty-state" id="emptyState">
 <div class="empty-icon">📖</div>
 <div class="empty-title">本地文本阅读器</div>
@@ -292,10 +288,6 @@ body{
 <div id="contentArea" style="display:none">
 <div class="chapter-title" id="chapterTitle">第一章</div>
 <div class="content-text read-area" id="contentText"></div>
-<div class="loading" id="loadingMore" style="display:none">
-<div class="loading-spinner"></div>
-<div>加载中...</div>
-</div>
 </div>
 </div>
 </div>
@@ -371,7 +363,7 @@ body{
 </div>
 <div class="setting-item">
 <label class="setting-label">关于</label>
-<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.7<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>选中文字即可添加段落书评</div>
+<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.8<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>自动识别 UTF-8 / GBK / UTF-16 编码<br>选中文字即可添加段落书评<br><span id="fileEncodingInfo"></span></div>
 </div>
 </div>
 </div>
@@ -383,8 +375,8 @@ const DB_NAME='ReaderDB';
 const DB_VERSION=1;
 const STORE_NAME='files';
 let db=null;
-let currentFile=null,fileContent="",totalSize=0,currentPage=0,totalPages=0,pages=[],fileName="";
-let isLoading=false,autoHideTimer=null,currentSelection="",selectionRange=null,notePreviewTimer=null;
+let fileContent="",totalSize=0,currentPage=0,totalPages=0,pages=[],fileName="",fileEncoding="";
+let autoHideTimer=null,currentSelection="",selectionRange=null,notePreviewTimer=null;
 let settings={fontSize:18,theme:"light"};
 let notes=[];
 let readingRecords={};
@@ -398,13 +390,20 @@ let scrollSaveTimer=null; // 滚动保存防抖定时器
 })();
 
 document.addEventListener("DOMContentLoaded",function(){
-  initDB().then(function(){
+  function setupFeatures(){
     loadSettings();loadNotes();loadReadingRecords();buildNoteIndex();
     setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
     setupContextMenuBlock();
-    setupScrollSave(); // 设置滚动位置自动保存
+    setupScrollSave();
     initTTS();
+  }
+  initDB().then(function(){
+    setupFeatures();
     autoRestoreLastReading();
+  }).catch(function(){
+    setupFeatures();
+    renderHistory();
+    showToast("本地数据库不可用：阅读进度/书评仍可用，大文件缓存受限");
   });
 });
 
@@ -428,11 +427,30 @@ function saveFileToDB(name,content,size){
     if(!db){resolve();return;}
     var transaction=db.transaction([STORE_NAME],"readwrite");
     var store=transaction.objectStore(STORE_NAME);
-    var data={name:name,content:content,size:size,timestamp:new Date().toISOString()};
-    var request=store.put(data);
-    request.onsuccess=function(){resolve();};
-    request.onerror=function(){reject(request.error);};
+    var request=store.put({name:name,content:content,size:size,timestamp:new Date().toISOString()});
+    // 在事务提交后再淘汰旧缓存并 resolve，避免与活动事务冲突、并保证落盘确认
+    transaction.oncomplete=function(){pruneCache(name);resolve();};
+    transaction.onerror=function(){reject(request.error||transaction.error||new Error("保存失败"));};
+    transaction.onabort=function(){reject(request.error||transaction.error||new Error("保存中断"));};
   });
+}
+
+// 缓存上限管理：按文件名索引淘汰最旧条目，避免 IndexedDB 无限增长
+const MAX_CACHE=8;
+function loadCacheIndex(){try{return JSON.parse(localStorage.getItem("reader_cache_index")||"[]");}catch(e){return[];}}
+function saveCacheIndex(idx){try{localStorage.setItem("reader_cache_index",JSON.stringify(idx));}catch(e){}}
+function pruneCache(newName){
+  if(!db)return;
+  var idx=loadCacheIndex().filter(function(e){return e&&e.name!==newName;});
+  idx.push({name:newName,ts:Date.now()});
+  if(idx.length>MAX_CACHE){
+    idx.sort(function(a,b){return a.ts-b.ts;});
+    var evict=idx.splice(0,idx.length-MAX_CACHE);
+    evict.forEach(function(e){
+      try{var t=db.transaction([STORE_NAME],"readwrite");t.objectStore(STORE_NAME).delete(e.name);}catch(err){}
+    });
+  }
+  saveCacheIndex(idx);
 }
 
 function getFileFromDB(name){
@@ -444,6 +462,62 @@ function getFileFromDB(name){
     request.onsuccess=function(){resolve(request.result);};
     request.onerror=function(){reject(request.error);};
   });
+}
+
+// 应用恢复的阅读状态（文件内容 + 记录），供自动恢复与历史恢复共用
+function applyRestoredContent(name,record,data){
+  fileName=name;
+  fileContent=data.content;
+  totalSize=data.size||record.fileSize||fileContent.length;
+  currentPage=record.page;
+  totalPages=record.totalPages;
+  fileEncoding=record.encoding||"";
+  document.getElementById("fileName").textContent=fileName;
+  document.getElementById("emptyState").style.display="none";
+  document.getElementById("contentArea").style.display="block";
+  processContent();
+  renderPage(false);
+  updateProgress();
+  updateNavButtons();
+  saveReadingRecord();
+  if(record.scrollY!==undefined){
+    setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
+  }
+  if(record.ttsParaIndex!==undefined){
+    setTimeout(function(){restoreTtsPosition(record);},300);
+  }
+  var toolbarBtn=document.getElementById("toolbarTtsBtn");
+  if(toolbarBtn)toolbarBtn.style.display="";
+}
+// 恢复 TTS 朗读位置（段落 + 字符偏移）
+function restoreTtsPosition(record){
+  var paras=document.querySelectorAll(".para");
+  var targetPara=paras[record.ttsParaIndex];
+  if(!targetPara)return;
+  targetPara.scrollIntoView({behavior:"auto",block:"center"});
+  if(record.ttsCharOffset!==undefined&&record.ttsCharOffset>0){
+    setTimeout(function(){
+      var textNodes=getTextNodesIn(targetPara);
+      var offset=record.ttsCharOffset;
+      var cumLen=0;
+      for(var i=0;i<textNodes.length;i++){
+        var nodeLen=textNodes[i].textContent.length;
+        if(cumLen+nodeLen>=offset){
+          var range=document.createRange();
+          range.setStart(textNodes[i],Math.min(offset-cumLen,nodeLen));
+          range.collapse(true);
+          var sel=window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          var rect=range.getBoundingClientRect();
+          window.scrollTo({top:window.scrollY+rect.top-window.innerHeight/3,behavior:"auto"});
+          sel.removeAllRanges();
+          break;
+        }
+        cumLen+=nodeLen;
+      }
+    },100);
+  }
 }
 
 // 自动恢复上次阅读 - 刷新后直接跳转，无需用户点击
@@ -458,60 +532,9 @@ function autoRestoreLastReading(){
   var record=lastRecord[1];
   getFileFromDB(name).then(function(data){
     if(data&&data.content){
-      fileName=name;
-      fileContent=data.content;
-      totalSize=data.size||record.fileSize||fileContent.length;
-      currentPage=record.page;
-      totalPages=record.totalPages;
-      document.getElementById("fileName").textContent=fileName;
-      document.getElementById("emptyState").style.display="none";
-      document.getElementById("contentArea").style.display="block";
-      processContent();
-      renderPage(false);
-      updateProgress();
-      updateNavButtons();
-      saveReadingRecord();
+      applyRestoredContent(name,record,data);
       renderHistory();
-      if(record.scrollY!==undefined){
-        setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
-      }
-      // 如果有tts段落记录，精确定位到该段落和字符位置
-      if(record.ttsParaIndex!==undefined){
-        setTimeout(function(){
-          var paras=document.querySelectorAll(".para");
-          var targetPara=paras[record.ttsParaIndex];
-          if(targetPara){
-            targetPara.scrollIntoView({behavior:"auto",block:"center"});
-            // 如果有字符偏移，尝试精确定位
-            if(record.ttsCharOffset!==undefined&&record.ttsCharOffset>0){
-              setTimeout(function(){
-                var textNodes=getTextNodesIn(targetPara);
-                var offset=record.ttsCharOffset;
-                var cumLen=0;
-                for(var i=0;i<textNodes.length;i++){
-                  var nodeLen=textNodes[i].textContent.length;
-                  if(cumLen+nodeLen>=offset){
-                    var range=document.createRange();
-                    range.setStart(textNodes[i],Math.min(offset-cumLen,nodeLen));
-                    range.collapse(true);
-                    var sel=window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                    var rect=range.getBoundingClientRect();
-                    window.scrollTo({top:window.scrollY+rect.top-window.innerHeight/3,behavior:"auto"});
-                    sel.removeAllRanges();
-                    break;
-                  }
-                  cumLen+=nodeLen;
-                }
-              },100);
-            }
-          }
-        },300);
-      }
       showToast("已恢复上次阅读：第 "+(currentPage+1)+" 页");
-      var toolbarBtn=document.getElementById("toolbarTtsBtn");
-      if(toolbarBtn)toolbarBtn.style.display="";
     }else{
       renderHistory();
     }
@@ -523,7 +546,7 @@ function openNewBook(){
   if(fileName&&totalPages>0){
     saveReadingRecord();
   }
-  fileName="";fileContent="";totalSize=0;currentPage=0;totalPages=0;pages=[];
+  fileName="";fileContent="";totalSize=0;currentPage=0;totalPages=0;pages=[];fileEncoding="";window._targetPage=undefined;window._targetFileName=undefined;updateEncodingInfo();
   document.getElementById("fileName").textContent="未选择文件";
   document.getElementById("emptyState").style.display="flex";
   document.getElementById("contentArea").style.display="none";
@@ -562,11 +585,13 @@ function renderHistory(){
   section.style.display="block";
   list.innerHTML=records.map(function(item){
     var name=item[0],record=item[1];
-    var percent=record.totalPages>0?Math.round(((record.page+1)/record.totalPages)*100):0;
+    var page=parseInt(record.page,10)||0;
+    var tpages=parseInt(record.totalPages,10)||0;
+    var percent=tpages>0?Math.round(((page+1)/tpages)*100):0;
     var date=new Date(record.lastRead).toLocaleDateString("zh-CN");
     return '<div class="history-item" onclick="restoreHistory(\''+encodeURIComponent(name)+'\')">'+
       '<div class="history-name">'+escapeHtml(name)+'</div>'+
-      '<div class="history-meta"><span>第'+(record.page+1)+'页 / 共'+record.totalPages+'页</span><span>'+date+'</span></div>'+
+      '<div class="history-meta"><span>第'+(page+1)+'页 / 共'+tpages+'页</span><span>'+date+'</span></div>'+
       '<div class="history-progress"><div class="history-progress-fill" style="width:'+percent+'%"></div></div></div>';
   }).join("");
 }
@@ -577,57 +602,8 @@ function restoreHistory(encodedName){
   if(!record){showToast("记录已失效");return;}
   getFileFromDB(name).then(function(data){
     if(data&&data.content){
-      fileName=name;
-      fileContent=data.content;
-      totalSize=data.size||record.fileSize||fileContent.length;
-      currentPage=record.page;
-      totalPages=record.totalPages;
-      document.getElementById("fileName").textContent=fileName;
-      document.getElementById("emptyState").style.display="none";
-      document.getElementById("contentArea").style.display="block";
-      processContent();
-      renderPage(false);
-      updateProgress();
-      updateNavButtons();
-      saveReadingRecord();
-      if(record.scrollY!==undefined){
-        setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
-      }
-      if(record.ttsParaIndex!==undefined){
-        setTimeout(function(){
-          var paras=document.querySelectorAll(".para");
-          var targetPara=paras[record.ttsParaIndex];
-          if(targetPara){
-            targetPara.scrollIntoView({behavior:"auto",block:"center"});
-            if(record.ttsCharOffset!==undefined&&record.ttsCharOffset>0){
-              setTimeout(function(){
-                var textNodes=getTextNodesIn(targetPara);
-                var offset=record.ttsCharOffset;
-                var cumLen=0;
-                for(var i=0;i<textNodes.length;i++){
-                  var nodeLen=textNodes[i].textContent.length;
-                  if(cumLen+nodeLen>=offset){
-                    var range=document.createRange();
-                    range.setStart(textNodes[i],Math.min(offset-cumLen,nodeLen));
-                    range.collapse(true);
-                    var sel=window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                    var rect=range.getBoundingClientRect();
-                    window.scrollTo({top:window.scrollY+rect.top-window.innerHeight/3,behavior:"auto"});
-                    sel.removeAllRanges();
-                    break;
-                  }
-                  cumLen+=nodeLen;
-                }
-              },100);
-            }
-          }
-        },300);
-      }
+      applyRestoredContent(name,record,data);
       showToast("已恢复阅读：第 "+(currentPage+1)+" 页");
-      var toolbarBtn=document.getElementById("toolbarTtsBtn");
-      if(toolbarBtn)toolbarBtn.style.display="";
     }else{
       fileName=name;currentPage=record.page;totalPages=record.totalPages;
       showToast("缓存已清除，请重新选择文件");
@@ -637,6 +613,40 @@ function restoreHistory(encodedName){
   });
 }
 
+// 编码检测：BOM 优先，其次严格 UTF-8，最后回退 GBK（兼容 Windows 中文 txt）
+function decodeBytes(arrayBuffer){
+  var bytes=new Uint8Array(arrayBuffer);
+  var encoding="",text="";
+  if(bytes.length>=3&&bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF){
+    encoding="utf-8";
+  }else if(bytes.length>=2&&bytes[0]===0xFF&&bytes[1]===0xFE){
+    encoding="utf-16le";
+  }else if(bytes.length>=2&&bytes[0]===0xFE&&bytes[1]===0xFF){
+    encoding="utf-16be";
+  }
+  if(encoding){
+    try{text=new TextDecoder(encoding).decode(bytes);}catch(e){encoding="";text="";}
+  }
+  if(!encoding||!text){
+    try{
+      text=new TextDecoder("utf-8",{fatal:true}).decode(bytes);
+      encoding="utf-8";
+    }catch(e){
+      try{
+        text=new TextDecoder("gbk").decode(bytes);
+        encoding="gbk";
+      }catch(e2){
+        text=new TextDecoder("utf-8").decode(bytes);
+        encoding="utf-8";
+      }
+    }
+  }
+  return{text:text,encoding:encoding};
+}
+function updateEncodingInfo(){
+  var el=document.getElementById("fileEncodingInfo");
+  if(el)el.textContent=fileName?("当前文件编码："+fileEncoding):"";
+}
 function handleFileSelect(event){
   var file=event.target.files[0];
   if(!file)return;
@@ -644,26 +654,38 @@ function handleFileSelect(event){
   if(window._targetFileName&&file.name!==window._targetFileName){
     if(!confirm('您选择的是 "'+file.name+'"，但记录中的文件是 "'+window._targetFileName+'"。是否继续？'))return;
   }
-  currentFile=file;fileName=file.name;totalSize=file.size;
+  fileName=file.name;totalSize=file.size;
   document.getElementById("fileName").textContent=fileName;
   document.getElementById("emptyState").style.display="none";
   document.getElementById("contentArea").style.display="block";
   showToast("正在读取文件...");
   var reader=new FileReader();
   reader.onload=function(e){
-    fileContent=e.target.result;
+    var decoded;
+    try{decoded=decodeBytes(e.target.result);}
+    catch(err){showToast("文件读取失败："+err.message);return;}
+    fileContent=decoded.text;fileEncoding=decoded.encoding;
     saveFileToDB(fileName,fileContent,totalSize).then(function(){
-      processContent();
-      if(window._targetPage!==undefined&&window._targetFileName===fileName){
-        currentPage=Math.min(window._targetPage,totalPages-1);
-        window._targetPage=undefined;window._targetFileName=undefined;
-        showToast("已恢复至第 "+(currentPage+1)+" 页");
-      }
-      renderPage(true);updateProgress();updateNavButtons();saveReadingRecord();renderHistory();showToast("文件读取完成");var toolbarBtn=document.getElementById("toolbarTtsBtn");if(toolbarBtn)toolbarBtn.style.display="";
+      finishFileLoad();
+      showToast("文件读取完成（编码："+fileEncoding+"）");
+    }).catch(function(err){
+      finishFileLoad();
+      showToast("文件读取完成（缓存保存失败："+(err&&err.message||err)+"）");
     });
   };
   reader.onerror=function(){showToast("文件读取失败");};
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);
+}
+// 文件读取完成后的统一渲染流程（DB 保存成功/失败均调用）
+function finishFileLoad(){
+  processContent();
+  if(window._targetPage!==undefined&&window._targetFileName===fileName){
+    currentPage=Math.min(window._targetPage,totalPages-1);
+    showToast("已恢复至第 "+(currentPage+1)+" 页");
+  }
+  window._targetPage=undefined;window._targetFileName=undefined;
+  renderPage(true);updateProgress();updateNavButtons();saveReadingRecord();renderHistory();
+  var toolbarBtn=document.getElementById("toolbarTtsBtn");if(toolbarBtn)toolbarBtn.style.display="";
 }
 
 function processContent(){
@@ -671,6 +693,7 @@ function processContent(){
   while(position<fileContent.length){pages.push(position);position+=CHUNK_SIZE;}
   if(pages.length===0)pages.push(0);totalPages=pages.length;
   extractChapters();
+  updateEncodingInfo();
 }
 
 function extractChapters(){
@@ -734,7 +757,7 @@ function setupNotePreview(){
     if(paraNotes.length===0)return;
     var preview=document.createElement("div");preview.className="note-preview";
     preview.innerHTML=paraNotes.map(function(n){
-      return '<div class="note-preview-item"><div class="note-preview-text">'+escapeHtml(n.noteText||n.text)+'</div><div class="note-preview-time">'+n.timestamp+'</div></div>';
+      return '<div class="note-preview-item"><div class="note-preview-text">'+escapeHtml(n.noteText||n.text)+'</div><div class="note-preview-time">'+escapeHtml(n.timestamp)+'</div></div>';
     }).join("");
     para.appendChild(preview);
     requestAnimationFrame(function(){preview.classList.add("show");});
@@ -786,7 +809,7 @@ function addSelectionNote(){
     var para=node.closest?node.closest(".para"):null;
     if(para)paraIndex=parseInt(para.dataset.para)||0;
   }
-  var note={id:Date.now(),text:currentSelection,noteText:"",fileName:fileName,page:currentPage,paraIndex:paraIndex,timestamp:new Date().toLocaleString("zh-CN"),isSelection:true};
+  var note={id:genNoteId(),text:currentSelection,noteText:"",fileName:fileName,page:currentPage,paraIndex:paraIndex,timestamp:new Date().toLocaleString("zh-CN"),isSelection:true};
   toggleNotes();document.getElementById("noteInput").value="「"+currentSelection+"」\n\n";
   document.getElementById("noteInput").focus();window._pendingNote=note;
   window.getSelection().removeAllRanges();
@@ -839,11 +862,14 @@ function withoutTransition(action){
   document.head.removeChild(style);
 }
 
+let _noteSeq=0;
+function genNoteId(){_noteSeq++;return Date.now()*1000+(_noteSeq%1000);}
+
 function addNote(){
   var input=document.getElementById("noteInput");var text=input.value.trim();
   if(!text){showToast("请输入书评内容");return;}
-  var note=window._pendingNote||{id:Date.now(),text:"",fileName:fileName,page:currentPage,paraIndex:0,timestamp:new Date().toLocaleString("zh-CN"),isSelection:false};
-  note.noteText=text;note.id=Date.now();notes.unshift(note);window._pendingNote=null;
+  var note=window._pendingNote||{id:genNoteId(),text:"",fileName:fileName,page:currentPage,paraIndex:0,timestamp:new Date().toLocaleString("zh-CN"),isSelection:false};
+  note.noteText=text;note.id=genNoteId();notes.unshift(note);window._pendingNote=null;
   buildNoteIndex();saveNotes();renderNotes();input.value="";closeAllPanels();showToast("书评已保存");
   if(fileName===note.fileName&&currentPage===note.page)renderPage(false);
 }
@@ -858,21 +884,28 @@ function renderNotes(){
   var currentFileNotes=notes.filter(function(n){return n.fileName===fileName;});
   if(currentFileNotes.length===0){container.innerHTML="<div class=\"empty-notes\">暂无书评，选中文字即可添加段落书评</div>";return;}
   container.innerHTML=currentFileNotes.map(function(note){
+    var nid=(typeof note.id==="number"&&isFinite(note.id))?note.id:0;
     var html="<div class=\"note-item\">";
     if(note.isSelection)html+="<div style=\"font-size:13px;color:var(--accent);margin-bottom:8px;padding:8px;background:rgba(139,115,85,0.1);border-radius:6px;font-style:italic\">「"+escapeHtml(note.text)+"」</div>";
     html+="<div class=\"note-text\">"+escapeHtml(note.noteText||note.text)+"</div>";
-    html+="<div class=\"note-meta\"><span>第"+(note.page+1)+"页"+(note.paraIndex!==undefined?" · 段落"+(note.paraIndex+1):"")+" · "+note.timestamp+"</span><span class=\"note-delete\" onclick=\"deleteNote("+note.id+")\">删除</span></div></div>";
+    html+="<div class=\"note-meta\"><span>第"+(note.page+1)+"页"+(note.paraIndex!==undefined?" · 段落"+(note.paraIndex+1):"")+" · "+escapeHtml(note.timestamp)+"</span><span class=\"note-delete\" onclick=\"deleteNote("+nid+")\">删除</span></div></div>";
     return html;
   }).join("");
 }
 
-function saveSettings(){localStorage.setItem("reader_settings",JSON.stringify(settings));}
+function saveSettings(){try{localStorage.setItem("reader_settings",JSON.stringify(settings));}catch(e){}}
 function loadSettings(){
   var saved=localStorage.getItem("reader_settings");
-  if(saved){settings=JSON.parse(saved);document.documentElement.style.setProperty("--fs",settings.fontSize+"px");document.getElementById("fontSizeValue").textContent=settings.fontSize;document.getElementById("themeLight").classList.toggle("active",settings.theme==="light");document.getElementById("themeDark").classList.toggle("active",settings.theme==="dark");}
+  if(saved){
+    try{var s=JSON.parse(saved);if(s&&typeof s.fontSize==="number")settings=s;}catch(e){}
+    document.documentElement.style.setProperty("--fs",settings.fontSize+"px");
+    document.getElementById("fontSizeValue").textContent=settings.fontSize;
+    document.getElementById("themeLight").classList.toggle("active",settings.theme==="light");
+    document.getElementById("themeDark").classList.toggle("active",settings.theme==="dark");
+  }
 }
-function saveNotes(){localStorage.setItem("reader_notes",JSON.stringify(notes));}
-function loadNotes(){var saved=localStorage.getItem("reader_notes");if(saved)notes=JSON.parse(saved);renderNotes();}
+function saveNotes(){try{localStorage.setItem("reader_notes",JSON.stringify(notes));}catch(e){}}
+function loadNotes(){var saved=localStorage.getItem("reader_notes");if(saved){try{notes=JSON.parse(saved)||[];}catch(e){notes=[];}}renderNotes();}
 
 // 保存阅读记录 - 同时保存滚动位置
 function saveReadingRecord(){
@@ -882,6 +915,7 @@ function saveReadingRecord(){
     page:currentPage,
     totalPages:totalPages,
     fileSize:totalSize,
+    encoding:fileEncoding,
     scrollY:scrollY,
     lastRead:new Date().toISOString()
   };
@@ -897,12 +931,28 @@ function saveReadingRecord(){
   readingRecords[fileName]=record;
   var entries=Object.entries(readingRecords);
   if(entries.length>20){entries.sort(function(a,b){return new Date(b[1].lastRead)-new Date(a[1].lastRead);});readingRecords=Object.fromEntries(entries.slice(0,20));}
-  localStorage.setItem("reader_records",JSON.stringify(readingRecords));
+  try{localStorage.setItem("reader_records",JSON.stringify(readingRecords));}catch(e){}
 }
 
-function loadReadingRecords(){var saved=localStorage.getItem("reader_records");if(saved)readingRecords=JSON.parse(saved);}
+function loadReadingRecords(){var saved=localStorage.getItem("reader_records");if(saved){try{readingRecords=JSON.parse(saved)||{};}catch(e){readingRecords={};}}}
 function exportData(){var data={settings:settings,notes:notes,readingRecords:readingRecords,exportTime:new Date().toISOString()};var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});var url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download="阅读器数据_"+new Date().toLocaleDateString("zh-CN")+".json";a.click();URL.revokeObjectURL(url);showToast("数据已导出");}
-function clearAllData(){if(!confirm("确定要清除所有阅读数据吗？此操作不可恢复。"))return;localStorage.removeItem("reader_settings");localStorage.removeItem("reader_theme");localStorage.removeItem("reader_notes");localStorage.removeItem("reader_records");if(db){var transaction=db.transaction([STORE_NAME],"readwrite");var store=transaction.objectStore(STORE_NAME);store.clear();}settings={fontSize:18,theme:"light"};notes=[];readingRecords={};location.reload();}
+function clearAllData(){
+  if(!confirm("确定要清除所有阅读数据吗？此操作不可恢复。"))return;
+  localStorage.removeItem("reader_settings");localStorage.removeItem("reader_theme");localStorage.removeItem("reader_notes");localStorage.removeItem("reader_records");localStorage.removeItem("reader_cache_index");
+  settings={fontSize:18,theme:"light"};notes=[];readingRecords={};
+  // 等 DB clear 事务提交后再刷新，避免 IndexedDB 未真正清空
+  if(db){
+    try{
+      var transaction=db.transaction([STORE_NAME],"readwrite");
+      transaction.objectStore(STORE_NAME).clear();
+      transaction.oncomplete=function(){location.reload();};
+      transaction.onerror=function(){location.reload();};
+      transaction.onabort=function(){location.reload();};
+    }catch(e){location.reload();}
+  }else{
+    location.reload();
+  }
+}
 function showToast(msg){var toast=document.getElementById("toast");toast.textContent=msg;toast.classList.add("show");setTimeout(function(){toast.classList.remove("show");},2000);}
 function escapeHtml(text){var div=document.createElement("div");div.textContent=text;return div.innerHTML;}
 function formatBytes(bytes){if(bytes===0)return"0 B";var k=1024;var sizes=["B","KB","MB","GB"];var i=Math.floor(Math.log(bytes)/Math.log(k));return parseFloat((bytes/Math.pow(k,i)).toFixed(2))+" "+sizes[i];}
@@ -950,6 +1000,9 @@ let ttsSelectedVoice=null;
 let ttsSpeed=1.0;
 let ttsVolume=1.0;
 let ttsResumePending=false;
+let ttsSaveTimer=null;
+let _ttsAdvancing=false;
+let ttsGen=0;
 
 // 初始化TTS
 function initTTS(){
@@ -1026,6 +1079,7 @@ function speakCurrentPara(){
   para.classList.add("tts-active");
   para.scrollIntoView({behavior:"smooth",block:"center"});
 
+  var myGen=++ttsGen;
   ttsUtterance=new SpeechSynthesisUtterance(text);
   ttsUtterance.lang="zh-CN";
   ttsUtterance.rate=ttsSpeed;
@@ -1041,9 +1095,11 @@ function speakCurrentPara(){
     }
   };
   ttsUtterance.onend=function(){
-    if(!ttsIsPaused&&!ttsResumePending)advanceTts();
+    // 仅当前代次的 utterance 才推进，避免被取消/翻页后的过期回调误触发
+    if(myGen===ttsGen&&ttsIsPlaying&&!ttsIsPaused&&!ttsResumePending)advanceTts();
   };
   ttsUtterance.onerror=function(e){
+    if(myGen!==ttsGen)return;
     if(e.error==="canceled"||e.error==="interrupted")return;
     console.error("TTS error:",e);
     advanceTts();
@@ -1081,14 +1137,15 @@ function updateTtsReadingPosition(charIndex){
     charOffset:approxOffset,
     lastRead:new Date().toISOString()
   };
-  // 同步更新 readingRecords，确保朗读点和阅读点始终一致
   if(readingRecords[fileName]){
     readingRecords[fileName].page=currentPage;
     readingRecords[fileName].ttsParaIndex=ttsCurrentParaIndex;
     readingRecords[fileName].ttsCharOffset=approxOffset;
     readingRecords[fileName].lastRead=new Date().toISOString();
   }
-  saveReadingRecord();
+  // 防抖落盘：朗读时 onboundary 每词触发，避免高频写 localStorage
+  clearTimeout(ttsSaveTimer);
+  ttsSaveTimer=setTimeout(function(){if(ttsIsPlaying)saveReadingRecord();},1000);
 }
 
 function advanceTts(){
@@ -1103,7 +1160,9 @@ function advanceTts(){
       if(window._ttsReadingPos&&window._ttsReadingPos[fileName]){
         delete window._ttsReadingPos[fileName];
       }
+      _ttsAdvancing=true;
       renderPage(true);
+      _ttsAdvancing=false;
       updateProgress();
       updateNavButtons();
       saveReadingRecord();
@@ -1172,6 +1231,7 @@ function stopTts(){
   ttsIsPlaying=false;
   ttsIsPaused=false;
   ttsResumePending=false;
+  ++ttsGen; // 使所有未决 utterance 的 onend/onerror 回调失效
   // 保存当前朗读位置作为阅读点
   var savedPos=window._ttsReadingPos&&window._ttsReadingPos[fileName];
   if(savedPos&&savedPos.page===currentPage&&savedPos.paraIndex>=0&&savedPos.paraIndex<ttsParagraphs.length&&ttsParagraphs[savedPos.paraIndex]){
@@ -1336,21 +1396,18 @@ function updateTtsUI(){
   }
 }
 
-// 翻页时自动停止TTS
+// 翻页时自动停止TTS（TTS 自动翻页时通过 _ttsAdvancing 跳过，避免中断朗读）
 var _origRenderPage=renderPage;
 renderPage=function(shouldScroll){
-  stopTts();
-  // 翻页后清除朗读位置缓存，确保朗读从新页当前阅读点开始
-  if(window._ttsReadingPos&&window._ttsReadingPos[fileName]){
-    delete window._ttsReadingPos[fileName];
+  if(!_ttsAdvancing){
+    stopTts();
+    // 翻页后清除朗读位置缓存，确保朗读从新页当前阅读点开始
+    if(window._ttsReadingPos&&window._ttsReadingPos[fileName]){
+      delete window._ttsReadingPos[fileName];
+    }
   }
   _origRenderPage(shouldScroll);
 };
-
-// 在DOMContentLoaded中初始化TTS
-var _origDOMReady=document.addEventListener;
-// 实际上我们已经有了DOMContentLoaded的监听器，在initDB之后添加initTTS
-// 修改现有的DOMContentLoaded回调
 </script>
 </body>
 </html>
