@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Android UI Layout Viewer</title>
+<title>UI Layout Viewer</title>
 <style>
   :root{ --bg:#1e1f22; --panel:#26282d; --panel2:#2e3137; --line:#3a3d44; --txt:#d6d8db; --mut:#8b9099; --acc:#4ea1ff; --hi:#ffcc40; }
   *{box-sizing:border-box}
@@ -72,10 +72,10 @@
 </head>
 <body>
 <div class="bar">
-  <span class="title">📐 Android Layout Viewer</span>
+  <span class="title">📐 UI Layout Viewer</span>
   <button id="loadBtn">加载文件</button>
-  <input type="file" id="filePick" accept="image/*,.xml,application/xml,text/xml" multiple hidden>
-  <input type="search" id="search" placeholder="搜索 text / resource-id / class…">
+  <input type="file" id="filePick" accept="image/*,.xml,application/xml,text/xml,.json,application/json" multiple hidden>
+  <input type="search" id="search" placeholder="搜索 text / resource-id / type…">
   <label>缩放<select id="zoom"><option value="fit" selected>适应</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
   <span class="spacer"></span>
   <span class="stat" id="stat">未加载</span>
@@ -86,8 +86,8 @@
       <img id="img" alt="screenshot">
       <div id="boxes"></div>
     </div>
-    <div class="empty" id="empty">把 <b>screenshot.png</b> 和 <b>window_dump.xml</b> 一起拖到这里<br><span class="hint">(可一次拖两个，也可分两次拖入；或点上方"加载文件"按钮)</span></div>
-    <div class="drop">松开以加载 screenshot.png + window_dump.xml</div>
+    <div class="empty" id="empty">把截图和布局文件一起拖到这里<br><span class="hint">安卓：screenshot.png + window_dump.xml &nbsp;|&nbsp; 鸿蒙：snapshot.jpeg + layout.json<br>(可一次拖两个，也可分两次拖入；或点上方"加载文件"按钮)</span></div>
+    <div class="drop">松开以加载截图 + 布局文件</div>
   </div>
   <div class="sidebar">
     <div class="tabs">
@@ -110,37 +110,46 @@
   // ---------- file loading ----------
   async function tryAutoLoad(){
     try{
-      const [r1,r2]=await Promise.all([
-        fetch('./screenshot.png'),
-        fetch('./window_dump.xml')
-      ]);
-      if(!r1.ok||!r2.ok) throw 0;
-      const xml=await r2.text();
+      // 截图：安卓 screenshot.png 或 鸿蒙 snapshot.jpeg/png
+      let r1=await fetch('./screenshot.png');
+      if(!r1.ok) r1=await fetch('./snapshot.jpeg');
+      if(!r1.ok) r1=await fetch('./snapshot.png');
+      if(!r1.ok) throw 0;
+      // 布局：安卓 window_dump.xml 或 鸿蒙 layout.json
+      let r2=await fetch('./window_dump.xml');
+      let layout='';
+      if(r2.ok){ layout=await r2.text(); }
+      else{
+        r2=await fetch('./layout.json');
+        if(!r2.ok) throw 0;
+        layout=await r2.text();
+      }
       const blob=await r1.blob();
       const url=URL.createObjectURL(blob);
-      loadImg(url, xml);
+      loadImg(url, layout);
       return true;
     }catch(e){ return false; }
   }
 
   $('#loadBtn').onclick=()=>{ $('#filePick').click(); };
-  // supports both: pick both files at once (Ctrl/Shift multi-select), or one at a time (accumulates)
-  let pickUrl=null, pickXml=null;
+  // 接受安卓 window_dump.xml 或 鸿蒙 layout.json；可一次选两个，也可分两次（累积）
+  const isLayout = f => /\.xml$/i.test(f.name)||/\.json$/i.test(f.name)||/xml/.test(f.type)||/json/.test(f.type);
+  let pickUrl=null, pickLayout=null;
   $('#filePick').onchange=async e=>{
     const files=Array.from(e.target.files||[]);
     for(const f of files){
       if(/^image\//.test(f.type)||/\.png$/i.test(f.name)) pickUrl=URL.createObjectURL(f);
-      else if(/\.xml$/i.test(f.name)||/xml/.test(f.type)) pickXml=await f.text();
+      else if(isLayout(f)) pickLayout=await f.text();
     }
-    if(pickUrl&&pickXml){ loadImg(pickUrl,pickXml); }
-    else if(pickUrl||pickXml){
-      stat.textContent=`已选 ${pickUrl?'截图':'XML'}，再加载 ${pickUrl?'window_dump.xml':'screenshot.png'}`;
+    if(pickUrl&&pickLayout){ loadImg(pickUrl,pickLayout); }
+    else if(pickUrl||pickLayout){
+      stat.textContent=`已选 ${pickUrl?'截图':'布局文件'}，再加载 ${pickUrl?'window_dump.xml / layout.json':'screenshot.png / snapshot.jpeg'}`;
     }
     e.target.value='';
   };
 
   // drag & drop (window-level so browser won't navigate to the file)
-  let dUrl=null,dXml=null;
+  let dUrl=null,dLayout=null;
   function dtFiles(e){ return Array.from(e.dataTransfer.files||[]); }
   let dragDepth=0;
   window.addEventListener('dragenter',e=>{e.preventDefault();e.stopPropagation();dragDepth++;document.body.classList.add('drag');});
@@ -153,14 +162,14 @@
     const readers=[];
     for(const f of files){
       if(/^image\//.test(f.type)||/\.png$/i.test(f.name)) dUrl=URL.createObjectURL(f);
-      else if(/\.xml$/i.test(f.name)||/xml/.test(f.type)) readers.push(f.text().then(t=>{dXml=t;}));
+      else if(isLayout(f)) readers.push(f.text().then(t=>{dLayout=t;}));
     }
     await Promise.all(readers);
-    if(dUrl&&dXml){ loadImg(dUrl,dXml); }
-    else if(dUrl||dXml){
-      const miss=dUrl?'window_dump.xml':'screenshot.png';
-      stat.textContent=`已收到 ${dUrl?'截图':'XML'}，再拖入 ${miss}`;
-    } else { alert('请拖入 screenshot.png 和 window_dump.xml'); }
+    if(dUrl&&dLayout){ loadImg(dUrl,dLayout); }
+    else if(dUrl||dLayout){
+      const miss=dUrl?'window_dump.xml / layout.json':'screenshot.png / snapshot.jpeg';
+      stat.textContent=`已收到 ${dUrl?'截图':'布局文件'}，再拖入 ${miss}`;
+    } else { alert('请拖入截图和布局文件（安卓 screenshot.png+window_dump.xml，或鸿蒙 snapshot.jpeg+layout.json）'); }
   });
 
   // ---------- main load ----------
@@ -168,7 +177,7 @@
     window.__xmlLoaded=true;
     img.onload=()=>{
       imgW=img.naturalWidth; imgH=img.naturalHeight;
-      parseXml(xml);
+      parseLayout(xml);
       applyZoom();          // 设置缩放尺寸 + 渲染 boxes
       applyFilters();
       empty.style.display='none';
@@ -224,6 +233,81 @@
     }
     walk(hier,null);
     // build children list (already in walk)
+    rootEl=nodes[0]||null;
+  }
+
+  // ---------- layout parser dispatcher (安卓 XML / 鸿蒙 JSON) ----------
+  function parseLayout(content){
+    const s=(content||'').trim();
+    if(s.startsWith('{')||s.startsWith('[')) return parseHarmonyJson(content);
+    return parseXml(content);
+  }
+
+  // 鸿蒙 uitest dumpLayout 输出 JSON，字段嵌套在 attributes 下，这里尽量兼容
+  function normalizeBounds(v){
+    if(v==null) return null;
+    if(typeof v==='string'){
+      let m=/\[(\d+)[,\s]+(\d+)\]\[(\d+)[,\s]+(\d+)\]/.exec(v);
+      if(m) return [+m[1],+m[2],+m[3],+m[4]];
+      m=/^\[?(\d+)[,\s]+(\d+)[,\s]+(\d+)[,\s]+(\d+)\]?$/.exec(v);
+      if(m) return [+m[1],+m[2],+m[3],+m[4]];
+    }
+    if(Array.isArray(v)&&v.length>=4) return [+v[0],+v[1],+v[2],+v[3]];
+    if(typeof v==='object'){
+      if(v.left!=null&&v.right!=null) return [+v.left,+v.top,+v.right,+v.bottom];
+      if(v.x!=null&&v.width!=null) return [+v.x,+v.y,+v.x+(+v.width),+v.y+(+v.height)];
+    }
+    return null;
+  }
+  function parseHarmonyJson(content){
+    nodes=[];byId=new Map();
+    let data;
+    try{ data=JSON.parse(content); }catch(e){ rootEl=null; return; }
+    const bool=v=> v===true||v==='true';
+    const kidKey=el=>{
+      for(const k of ['children','child','childrens','subComponents','items','windows','components']){
+        if(Array.isArray(el[k])) return el[k];
+      }
+      return null;
+    };
+    let id=0;
+    function walk(el,parent){
+      if(!el||typeof el!=='object') return;
+      if(Array.isArray(el)){ for(const c of el) walk(c,parent); return; }
+      // 鸿蒙字段在 attributes 子对象下；兼容扁平结构
+      const a = el.attributes || el;
+      const hasType = a.type||a.className||a.class||el.type;
+      if(hasType||a.bounds||el.bounds){
+        const o={
+          id:id++, parent, children:[],
+          text: a.text||a.label||a.name||a.value||a.title||a.originalText||'',
+          rid: a.id||a.resourceId||a.resource_id||a.componentId||a.key||a.accessibilityId||'',
+          cls: a.type||a.className||a.class||el.type||'',
+          pkg: a.bundleName||a.package||a.bundle||a.abilityName||'',
+          desc: a.description||a.desc||a.accessibilityText||a.accessibility_text||'',
+          hint: a.hint||a.placeholder||'',
+          clickable: bool(a.clickable ?? a.isClickable ?? a.clickableAttr),
+          long: bool(a.longClickable ?? a.long_clickable ?? a.isLongClickable),
+          scrollable: bool(a.scrollable ?? a.isScrollable),
+          checkable: bool(a.checkable),
+          checked: bool(a.checked),
+          enabled: (a.enabled===undefined||a.enabled==='')?true:bool(a.enabled),
+          focusable: bool(a.focusable),
+          focused: bool(a.focused),
+          selected: bool(a.selected),
+          visible: (a.visible===undefined||a.visible==='')?true:bool(a.visible),
+          index: a.index||el.index||0,
+          bounds: normalizeBounds(a.bounds||el.bounds)
+        };
+        nodes.push(o);byId.set(o.id,o);
+        const kids=kidKey(el);
+        if(kids) for(const c of kids) walk(c,o);
+      } else {
+        const kids=kidKey(el);
+        if(kids) for(const c of kids) walk(c,parent);
+      }
+    }
+    walk(data,null);
     rootEl=nodes[0]||null;
   }
 
