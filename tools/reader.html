@@ -382,11 +382,14 @@ let notes=[];
 let readingRecords={};
 let pageNoteMap=new Map();
 let scrollSaveTimer=null; // 滚动保存防抖定时器
+let _restoring=false; // 恢复阅读时暂停落盘，防止用过渡态 scrollY 覆盖原记录
 
 // 立即执行：设置主题，防止闪屏
 (function(){
-  var savedTheme=localStorage.getItem("reader_theme");
-  if(savedTheme)document.documentElement.setAttribute("data-theme",savedTheme);
+  try{
+    var savedTheme=localStorage.getItem("reader_theme");
+    if(savedTheme)document.documentElement.setAttribute("data-theme",savedTheme);
+  }catch(e){}
 })();
 
 document.addEventListener("DOMContentLoaded",function(){
@@ -475,13 +478,21 @@ function applyRestoredContent(name,record,data){
   document.getElementById("fileName").textContent=fileName;
   document.getElementById("emptyState").style.display="none";
   document.getElementById("contentArea").style.display="block";
+  _restoring=true;
   processContent();
   renderPage(false);
   updateProgress();
   updateNavButtons();
-  saveReadingRecord();
+  // 滚到目标位置后再解除 _restoring 并保存，避免渲染途中用 scrollY=0 覆盖原记录
   if(record.scrollY!==undefined){
-    setTimeout(function(){window.scrollTo({top:record.scrollY,behavior:"auto"});},200);
+    setTimeout(function(){
+      window.scrollTo({top:record.scrollY,behavior:"auto"});
+      _restoring=false;
+      saveReadingRecord();
+    },200);
+  }else{
+    _restoring=false;
+    saveReadingRecord();
   }
   if(record.ttsParaIndex!==undefined){
     setTimeout(function(){restoreTtsPosition(record);},300);
@@ -538,6 +549,9 @@ function autoRestoreLastReading(){
     }else{
       renderHistory();
     }
+  }).catch(function(){
+    renderHistory();
+    showToast("恢复阅读缓存失败");
   });
 }
 
@@ -600,6 +614,7 @@ function restoreHistory(encodedName){
   var name=decodeURIComponent(encodedName);
   var record=readingRecords[name];
   if(!record){showToast("记录已失效");return;}
+  if(fileName&&totalPages>0)saveReadingRecord();
   getFileFromDB(name).then(function(data){
     if(data&&data.content){
       applyRestoredContent(name,record,data);
@@ -610,7 +625,7 @@ function restoreHistory(encodedName){
       document.getElementById("fileInput").click();
       window._targetPage=record.page;window._targetFileName=name;
     }
-  });
+  }).catch(function(){showToast("读取缓存失败");});
 }
 
 // 编码检测：BOM 优先，其次严格 UTF-8，最后回退 GBK（兼容 Windows 中文 txt）
@@ -684,7 +699,7 @@ function finishFileLoad(){
     showToast("已恢复至第 "+(currentPage+1)+" 页");
   }
   window._targetPage=undefined;window._targetFileName=undefined;
-  renderPage(true);updateProgress();updateNavButtons();saveReadingRecord();renderHistory();
+  renderPage(true);updateProgress();updateNavButtons();renderHistory();
   var toolbarBtn=document.getElementById("toolbarTtsBtn");if(toolbarBtn)toolbarBtn.style.display="";
 }
 
@@ -734,14 +749,14 @@ function renderPage(shouldScroll){
   document.getElementById("chapterTitle").textContent=title;
   document.getElementById("contentText").innerHTML=html;
   if(shouldScroll){
-    window.scrollTo({top:0,behavior:"smooth"});
+    window.scrollTo({top:0,behavior:"auto"});
   }
   var tocItems=document.querySelectorAll(".toc-item");
   for(var i=0;i<tocItems.length;i++){
     tocItems[i].classList.remove("current");
     if(parseInt(tocItems[i].dataset.page)===currentPage)tocItems[i].classList.add("current");
   }
-  saveReadingRecord();
+  saveReadingRecord(shouldScroll?0:undefined);
 }
 
 function setupNotePreview(){
@@ -885,10 +900,12 @@ function renderNotes(){
   if(currentFileNotes.length===0){container.innerHTML="<div class=\"empty-notes\">暂无书评，选中文字即可添加段落书评</div>";return;}
   container.innerHTML=currentFileNotes.map(function(note){
     var nid=(typeof note.id==="number"&&isFinite(note.id))?note.id:0;
+    var npage=parseInt(note.page,10)||0;
+    var npara=(note.paraIndex!==undefined)?(parseInt(note.paraIndex,10)||0):undefined;
     var html="<div class=\"note-item\">";
     if(note.isSelection)html+="<div style=\"font-size:13px;color:var(--accent);margin-bottom:8px;padding:8px;background:rgba(139,115,85,0.1);border-radius:6px;font-style:italic\">「"+escapeHtml(note.text)+"」</div>";
     html+="<div class=\"note-text\">"+escapeHtml(note.noteText||note.text)+"</div>";
-    html+="<div class=\"note-meta\"><span>第"+(note.page+1)+"页"+(note.paraIndex!==undefined?" · 段落"+(note.paraIndex+1):"")+" · "+escapeHtml(note.timestamp)+"</span><span class=\"note-delete\" onclick=\"deleteNote("+nid+")\">删除</span></div></div>";
+    html+="<div class=\"note-meta\"><span>第"+(npage+1)+"页"+(npara!==undefined?" · 段落"+(npara+1):"")+" · "+escapeHtml(note.timestamp)+"</span><span class=\"note-delete\" onclick=\"deleteNote("+nid+")\">删除</span></div></div>";
     return html;
   }).join("");
 }
@@ -908,9 +925,10 @@ function saveNotes(){try{localStorage.setItem("reader_notes",JSON.stringify(note
 function loadNotes(){var saved=localStorage.getItem("reader_notes");if(saved){try{notes=JSON.parse(saved)||[];}catch(e){notes=[];}}renderNotes();}
 
 // 保存阅读记录 - 同时保存滚动位置
-function saveReadingRecord(){
+function saveReadingRecord(forcedScrollY){
+  if(_restoring)return;
   if(!fileName||totalPages===0)return;
-  var scrollY=window.scrollY||document.documentElement.scrollTop||0;
+  var scrollY=(typeof forcedScrollY==="number")?forcedScrollY:(window.scrollY||document.documentElement.scrollTop||0);
   var record={
     page:currentPage,
     totalPages:totalPages,
@@ -919,14 +937,11 @@ function saveReadingRecord(){
     scrollY:scrollY,
     lastRead:new Date().toISOString()
   };
-  // 朗读位置即阅读位置：统一保存当前朗读/阅读段落
+  // 仅在主动朗读（非暂停）时保存朗读段落位置；停止/暂停后由滚动位置决定阅读点，避免旧朗读点反复覆盖
   var ttsPos=window._ttsReadingPos&&window._ttsReadingPos[fileName];
-  if(ttsIsPlaying&&ttsCurrentParaIndex>=0&&ttsCurrentParaIndex<ttsParagraphs.length){
+  if(ttsIsPlaying&&!ttsIsPaused&&ttsCurrentParaIndex>=0&&ttsCurrentParaIndex<ttsParagraphs.length){
     record.ttsParaIndex=ttsCurrentParaIndex;
     record.ttsCharOffset=ttsPos&&ttsPos.page===currentPage?ttsPos.charOffset:0;
-  }else if(ttsPos&&ttsPos.page===currentPage&&ttsPos.paraIndex>=0){
-    record.ttsParaIndex=ttsPos.paraIndex;
-    record.ttsCharOffset=ttsPos.charOffset||0;
   }
   readingRecords[fileName]=record;
   var entries=Object.entries(readingRecords);
@@ -1137,12 +1152,6 @@ function updateTtsReadingPosition(charIndex){
     charOffset:approxOffset,
     lastRead:new Date().toISOString()
   };
-  if(readingRecords[fileName]){
-    readingRecords[fileName].page=currentPage;
-    readingRecords[fileName].ttsParaIndex=ttsCurrentParaIndex;
-    readingRecords[fileName].ttsCharOffset=approxOffset;
-    readingRecords[fileName].lastRead=new Date().toISOString();
-  }
   // 防抖落盘：朗读时 onboundary 每词触发，避免高频写 localStorage
   clearTimeout(ttsSaveTimer);
   ttsSaveTimer=setTimeout(function(){if(ttsIsPlaying)saveReadingRecord();},1000);
@@ -1165,7 +1174,6 @@ function advanceTts(){
       _ttsAdvancing=false;
       updateProgress();
       updateNavButtons();
-      saveReadingRecord();
       // 新页面渲染后重新获取段落并从当前阅读点开始
       setTimeout(function(){
         ttsParagraphs=getTtsParagraphs();
