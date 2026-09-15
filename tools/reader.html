@@ -257,6 +257,7 @@ body{
   .tts-speed-select{padding:4px 6px;font-size:12px}
 }
 </style>
+<script>try{if("scrollRestoration" in history)history.scrollRestoration="manual";}catch(e){}</script>
 </head>
 <body>
 <div class="selection-popup" id="selectionPopup" onclick="addSelectionNote()">✎ 写书评</div>
@@ -363,7 +364,7 @@ body{
 </div>
 <div class="setting-item">
 <label class="setting-label">关于</label>
-<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.9<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>自动识别 UTF-8 / GBK / UTF-16 编码<br>选中文字即可添加段落书评<br><span id="fileEncodingInfo"></span></div>
+<div style="font-size:13px;color:var(--sec);line-height:1.6">本地文本阅读器 v3.10<br>所有数据保存在本地，不会上传服务器<br>支持 .txt .md .log 等纯文本格式<br>自动识别 UTF-8 / GBK / UTF-16 编码<br>选中文字即可添加段落书评<br><span id="fileEncodingInfo"></span></div>
 </div>
 </div>
 </div>
@@ -398,6 +399,7 @@ document.addEventListener("DOMContentLoaded",function(){
     setupAutoHide();setupScrollHandler();setupSelectionHandler();setupNotePreview();
     setupContextMenuBlock();
     setupScrollSave();
+    setupLifecycle();
     initTTS();
   }
   initDB().then(function(){
@@ -1029,6 +1031,16 @@ function setupScrollSave(){
       }
     },500); // 500ms防抖
   },{passive:true});
+}
+
+// 页面进入后台或被关闭/杀掉时：暂停朗读（避免后台 speechSynthesis 静默推进到未读位置）并立即保存当前位置
+function setupLifecycle(){
+  function pauseAndSave(){
+    if(ttsIsPlaying&&!ttsIsPaused)pauseTts();
+    saveReadingRecord();
+  }
+  document.addEventListener("visibilitychange",function(){ if(document.hidden)pauseAndSave(); });
+  window.addEventListener("pagehide",pauseAndSave);
 }
 
 
