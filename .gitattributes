@@ -1,0 +1,2 @@
+# 统一使用 LF 行尾，避免 autocrlf 在 Windows 上把 LF 转成 CRLF 产生告警
+* text=auto eol=lf
