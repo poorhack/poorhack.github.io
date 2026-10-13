@@ -37,6 +37,17 @@
         .stage.found .guide .box { border-color: #fff; }
         @keyframes flash { 0%,100% { filter: none; } 50% { filter: brightness(1.8); } }
 
+        /* 结果弹窗：叠加在摄像头预览位置 */
+        .popup { position: absolute; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; padding: 10px; z-index: 5; }
+        .popup.show { display: flex; }
+        .popup-card { background: #fff; border-radius: 10px; padding: 10px; width: 100%; max-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; box-shadow: 0 6px 20px rgba(0,0,0,.35); animation: pop .18s ease-out; }
+        @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .popup-title { font-size: 12px; color: #6a6f79; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .popup-title .ok { color: #15803d; font-weight: bold; }
+        .popup-text { font-size: 13px; word-break: break-all; overflow: auto; flex: 1; max-height: 116px; background: #f4f5f7; padding: 8px; border-radius: 6px; white-space: pre-wrap; }
+        .popup-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .popup-actions button { flex: 1; min-width: 0; padding: 7px 6px; font-size: 12px; }
+
         .result { margin-top: 12px; }
         .result textarea { width: 100%; box-sizing: border-box; font-family: inherit; font-size: 13px; padding: 10px; border: 1px solid #bbb; border-radius: 6px; resize: vertical; min-height: 60px; word-break: break-all; }
         .hint { color: #6a6f79; font-size: 12px; margin-top: 6px; }
@@ -78,6 +89,17 @@
         <div class="guide">
             <div class="box"></div>
             <div class="laser"></div>
+        </div>
+        <div class="popup" id="popup">
+            <div class="popup-card">
+                <div class="popup-title">识别结果 <span class="ok">✓</span></div>
+                <div class="popup-text" id="popupText"></div>
+                <div class="popup-actions">
+                    <button id="popupCopy">复制</button>
+                    <button id="popupOpen">打开链接</button>
+                    <button id="popupClose" class="primary">继续扫描</button>
+                </div>
+            </div>
         </div>
     </div>
     <div class="hint" id="status">未启动。建议在 HTTPS / localhost 环境运行（getUserMedia 需安全上下文）。</div>
@@ -122,6 +144,11 @@
     var canvas = document.getElementById('scanCanvas');
     var ctx = canvas.getContext('2d', { willReadFrequently: true });
     var stage = document.getElementById('stage');
+    var popup = document.getElementById('popup');
+    var popupText = document.getElementById('popupText');
+    var popupCopy = document.getElementById('popupCopy');
+    var popupOpen = document.getElementById('popupOpen');
+    var popupClose = document.getElementById('popupClose');
 
     var stream = null;
     var rafId = 0;
@@ -129,6 +156,8 @@
     var lastTs = 0;
     var history = [];
     var audioCtx = null;
+    var popupShown = false;
+    var popupData = '';
 
     function setStatus(msg, cls) {
         statusEl.textContent = msg;
@@ -225,6 +254,41 @@
     function escapeHtml(s) { return (s + '').replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function escapeAttr(s) { return escapeHtml(s); }
 
+    function copyToClipboard(text) {
+        if (!text) return;
+        var done = function () { setStatus('已复制到剪贴板。', 'ok'); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () { fallback(); });
+        } else { fallback(); }
+        function fallback() {
+            var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); done(); } catch (e) {} document.body.removeChild(ta);
+        }
+    }
+
+    function showPopup(data) {
+        popupData = data;
+        popupText.textContent = data;
+        popupOpen.disabled = !isUrl(data);
+        popupClose.textContent = (stream && contChk.checked) ? '继续扫描' : '关闭';
+        popupShown = true;
+        popup.classList.add('show');
+        // 重启 pop 动画
+        popup.querySelector('.popup-card').style.animation = 'none';
+        void popup.offsetWidth;
+        popup.querySelector('.popup-card').style.animation = '';
+    }
+
+    function hidePopup() {
+        popup.classList.remove('show');
+        popupShown = false;
+        // 连续模式下若摄像头仍在运行，恢复扫描循环
+        if (stream && contChk.checked) {
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(scanFrame);
+        }
+    }
+
     function handleResult(data) {
         resultText.value = data;
         openBtn.disabled = !isUrl(data);
@@ -232,6 +296,7 @@
         if (data !== lastData || now - lastTs > 1500) {
             beep();
             addHistory(data);
+            showPopup(data);
             lastData = data; lastTs = now;
         }
         stage.classList.add('found');
@@ -256,7 +321,7 @@
                 if (!contChk.checked) { stopScan(); return; }
             }
         } catch (e) {}
-        rafId = requestAnimationFrame(scanFrame);
+        if (!popupShown) rafId = requestAnimationFrame(scanFrame);
     }
 
     async function startScan() {
@@ -266,6 +331,7 @@
         var constraints = { video: id ? { deviceId: { exact: id } } : { facingMode: 'environment' }, audio: false };
         try {
             stopTracks();
+            popup.classList.remove('show'); popupShown = false;
             setStatus('正在启动摄像头...');
             stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
@@ -284,6 +350,7 @@
         cancelAnimationFrame(rafId);
         stopTracks();
         video.srcObject = null;
+        popup.classList.remove('show'); popupShown = false;
         startBtn.disabled = false; stopBtn.disabled = true;
         setStatus('已停止扫描。');
     }
@@ -301,14 +368,7 @@
     select.addEventListener('change', function () {
         if (stream) startScan();
     });
-    copyBtn.addEventListener('click', function () {
-        if (!resultText.value) return;
-        var done = function () { setStatus('已复制到剪贴板。', 'ok'); };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(resultText.value).then(done).catch(function () { fallbackCopy(); });
-        } else { fallbackCopy(); }
-        function fallbackCopy() { resultText.select(); try { document.execCommand('copy'); done(); } catch (e) {} }
-    });
+    copyBtn.addEventListener('click', function () { copyToClipboard(resultText.value); });
     openBtn.addEventListener('click', function () {
         if (isUrl(resultText.value)) window.open(resultText.value.trim(), '_blank', 'noopener,noreferrer');
     });
@@ -317,6 +377,12 @@
         var t = e.target;
         if (t.classList.contains('x')) { resultText.value = t.getAttribute('data-v'); openBtn.disabled = !isUrl(resultText.value); }
     });
+    // 结果弹窗按钮
+    popupCopy.addEventListener('click', function () { copyToClipboard(popupData); });
+    popupOpen.addEventListener('click', function () {
+        if (isUrl(popupData)) window.open(popupData.trim(), '_blank', 'noopener,noreferrer');
+    });
+    popupClose.addEventListener('click', hidePopup);
     window.addEventListener('devicechange', refreshCameras);
 
     // 初始化
