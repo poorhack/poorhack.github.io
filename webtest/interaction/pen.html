@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html{color-scheme:light dark}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Pen Input Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Layout: single-column test bench — device on top, signature pad in the middle, comparison table below */
+:root {
+  --bg: #eef1ee;
+  --surface: #ffffff;
+  --pad: #fbfcfa;
+  --ink: #16211d;
+  --muted: #5a6862;
+  --line: #d3dad5;
+  --line-strong: #a9b5ae;
+  --accent: #0b6e4f;
+  --accent-soft: #dcefe6;
+  --stroke: #1c3e9c;
+  --pred: #c86a1a;
+  --ok: #1d7a45;
+  --warn: #9a6200;
+  --warn-soft: #fbefd6;
+  --bad: #b3261e;
+  --bad-soft: #f9e0dd;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1412; --surface: #161f1c; --pad: #111916; --ink: #e4ebe7; --muted: #93a29a;
+    --line: #29342f; --line-strong: #44524b; --accent: #43c393; --accent-soft: #173a2d;
+    --stroke: #9db6ff; --pred: #f0a25a; --ok: #5fd08f; --warn: #e8b04b; --warn-soft: #3a2e14;
+    --bad: #ff8a80; --bad-soft: #3d1c1a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1412; --surface: #161f1c; --pad: #111916; --ink: #e4ebe7; --muted: #93a29a;
+  --line: #29342f; --line-strong: #44524b; --accent: #43c393; --accent-soft: #173a2d;
+  --stroke: #9db6ff; --pred: #f0a25a; --ok: #5fd08f; --warn: #e8b04b; --warn-soft: #3a2e14;
+  --bad: #ff8a80; --bad-soft: #3d1c1a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.mono, .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px; padding: 8px 14px; min-height: 40px; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+button.danger { color: var(--bad); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+input[type="text"], input[type="number"], textarea { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 10px; min-height: 40px; width: 100%; color: var(--ink); }
+textarea { font-family: var(--f-mono); font-size: 0.8rem; min-height: 120px; resize: vertical; }
+
+header.top { display: grid; gap: 14px; }
+header.top .lead { max-width: 64ch; color: var(--muted); }
+.device { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.device label { font-weight: 600; font-size: 0.9rem; }
+.device .detected { font-size: 0.85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.device .detected span b { color: var(--ink); font-weight: 600; }
+.note { font-size: 0.85rem; border-radius: 8px; padding: 8px 10px; }
+.note.warn { background: var(--warn-soft); color: var(--ink); }
+.note.bad { background: var(--bad-soft); color: var(--ink); }
+
+details.box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+details.box > summary { padding: 12px 14px; cursor: pointer; font-family: var(--f-display); font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+details.box > summary::-webkit-details-marker { display: none; }
+details.box > summary::after { content: "+"; font-family: var(--f-mono); color: var(--muted); }
+details.box[open] > summary::after { content: "−"; }
+details.box .inner { padding: 0 14px 14px; display: grid; gap: 10px; }
+.checklist { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; max-width: 70ch; }
+
+/* Test steps */
+.steps { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.step { flex: 0 0 auto; display: grid; gap: 2px; text-align: left; padding: 8px 12px; min-width: 112px; }
+.step .n { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); }
+.step .name { font-weight: 600; }
+.step .cnt { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); }
+.step.done .cnt { color: var(--ok); }
+.step[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.hint { font-size: 0.95rem; max-width: 70ch; }
+
+/* Pad */
+.padzone { display: grid; gap: 10px; }
+.pad { position: relative; height: clamp(280px, 46vh, 540px); border: 1px solid var(--line-strong); border-radius: 10px; background: var(--pad); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.pad canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.pad .baseline { position: absolute; left: 6%; right: 6%; bottom: 26%; border-bottom: 1px dashed var(--line-strong); pointer-events: none; }
+.pad .baseline::before { content: "×"; position: absolute; left: -2px; bottom: 2px; font-family: var(--f-display); font-size: 1.4rem; color: var(--line-strong); }
+.hud { position: absolute; top: 8px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); pointer-events: none; font-variant-numeric: tabular-nums; }
+.hud b { color: var(--ink); font-weight: 500; }
+.pbar { display: inline-block; width: 70px; height: 6px; background: var(--line); border-radius: 3px; vertical-align: middle; overflow: hidden; }
+.pbar i { display: block; height: 100%; width: 0; background: var(--stroke); }
+.padwarn { position: absolute; left: 10px; right: 10px; bottom: 10px; pointer-events: none; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls .spacer { flex: 1 1 auto; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.9rem; }
+.opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; min-height: 32px; }
+.opts input { width: 18px; height: 18px; accent-color: var(--accent); }
+.status { font-size: 0.85rem; color: var(--muted); }
+
+/* Live result */
+.cur { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.cur div { background: var(--surface); padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.cur .k { font-size: 0.78rem; color: var(--muted); }
+.cur .v { font-family: var(--f-mono); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.cur .v small { font-size: 0.75rem; color: var(--muted); }
+
+/* Comparison */
+section.cmp { display: grid; gap: 12px; }
+.cmp-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: end; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-family: var(--f-display); font-size: 0.85rem; background: var(--bg); position: sticky; top: 0; }
+tbody tr:last-child td, tbody tr:last-child th { border-bottom: 0; }
+th.rowh { font-weight: 600; min-width: 190px; }
+th.rowh small { display: block; font-weight: 400; color: var(--muted); font-size: 0.76rem; }
+td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.best { color: var(--ok); font-weight: 500; }
+td.best::after { content: " ●"; font-size: 0.6rem; vertical-align: middle; }
+tr.group th { background: var(--bg); font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); padding-block: 6px; }
+.diag { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.diag .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.diag ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.diag li { font-size: 0.88rem; padding-left: 14px; position: relative; }
+.diag li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.diag li.bad::before { background: var(--bad); }
+.diag li.warn::before { background: var(--warn); }
+.diag li.ok::before { background: var(--ok); }
+.empty { padding: 18px; color: var(--muted); font-size: 0.92rem; }
+.row-actions { display: flex; gap: 6px; }
+.row-actions button { min-height: 32px; padding: 4px 10px; font-size: 0.82rem; }
+.tag { font-family: var(--f-mono); font-size: 0.75rem; padding: 1px 6px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); white-space: nowrap; }
+.inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.inline-form input { width: 140px; }
+ol.steps-text { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; max-width: 70ch; }
+
+/* Video mode */
+body.video .wrap > *:not(.padzone) { display: none; }
+body.video .padzone > *:not(.pad) { display: none; }
+body.video .pad { position: fixed; inset: 0; height: auto; border-radius: 0; border: 0; z-index: 20; }
+body.video .hud { display: none; }
+#videoExit { display: none; }
+body.video #videoExit { display: block; position: fixed; z-index: 21; top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(10px + env(safe-area-inset-right, 0px)); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Digital signature · tablet test</div>
+    <h1>Pen Input Test</h1>
+    <p class="lead">Measures how often and with what data the pen reaches the browser: sampling, pressure, tilt and event latency. Run the same steps on each tablet; the results line up side by side in the table below.</p>
+    <div class="device">
+      <label for="devLabel">Device and browser name</label>
+      <input id="devLabel" type="text" placeholder="e.g. Huawei MatePad 11.5 · Chrome" autocomplete="off">
+      <div class="detected" id="detected"><span>Reading device info…</span></div>
+      <div id="devNotes" class="note warn" hidden></div>
+    </div>
+  </header>
+
+  <details class="box" id="prep">
+    <summary>Before you start</summary>
+    <div class="inner">
+      <ul class="checklist">
+        <li>Set the screen refresh rate to the highest value the device supports (90/120 Hz).</li>
+        <li>Turn off power saving mode and keep the battery at 50% or higher.</li>
+        <li>Update the browser. Save each browser under its own name, e.g. “Huawei MatePad 11.5 · Chrome” and “… · Huawei Browser”.</li>
+        <li>Turn off “Desktop site” mode.</li>
+        <li>Make sure the pen is charged and paired. On Huawei, note the connection type (NearLink or Bluetooth).</li>
+        <li>Close background apps. Have the same person run all tests in the same posture.</li>
+        <li>Record each step at least 3 times. The table shows the median of the runs.</li>
+      </ul>
+    </div>
+  </details>
+
+  <section class="padzone" aria-label="Measurement area">
+    <div class="steps" id="steps" role="group" aria-label="Test steps"></div>
+    <p class="hint" id="hint"></p>
+    <div class="pad" id="pad">
+      <div class="baseline"></div>
+      <div class="hud" id="hud">
+        <span>input <b id="hType">–</b></span>
+        <span>pressure <b id="hP">–</b> <span class="pbar"><i id="hPbar"></i></span></span>
+        <span>tilt <b id="hTilt">–</b></span>
+        <span>points/s <b id="hRate">–</b></span>
+        <span>queue <b id="hLat">–</b></span>
+        <span>display <b id="hHz">–</b></span>
+      </div>
+      <div class="padwarn"><div id="padWarn" class="note bad" hidden></div></div>
+    </div>
+    <div class="controls">
+      <button class="primary" id="saveBtn" type="button">Save run</button>
+      <button id="clearBtn" type="button">Clear</button>
+      <button id="videoBtn" type="button">Video mode</button>
+      <span class="spacer"></span>
+      <span class="status" id="saveStatus"></span>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optDesync"> Low-latency drawing</label>
+      <label><input type="checkbox" id="optPredict" checked> Show predicted points</label>
+      <label><input type="checkbox" id="optAll"> Also record non-pen input</label>
+    </div>
+    <div class="cur" id="cur"></div>
+  </section>
+
+  <section class="cmp">
+    <div class="cmp-head">
+      <div>
+        <div class="eyebrow">Results</div>
+        <h2>Device comparison</h2>
+      </div>
+      <div class="row-actions">
+        <button id="copyTsv" type="button">Copy table</button>
+      </div>
+    </div>
+    <p class="status" id="storeStatus">Loading runs…</p>
+    <div class="tablewrap"><table id="cmpTable"></table></div>
+    <div class="diag" id="diag"></div>
+  </section>
+
+  <details class="box">
+    <summary>Runs <span class="muted mono" id="runCount"></span></summary>
+    <div class="inner">
+      <div class="tablewrap"><table id="runsTable"></table></div>
+    </div>
+  </details>
+
+  <details class="box" id="videoBox">
+    <summary>End-to-end latency: video measurement</summary>
+    <div class="inner">
+      <p class="muted" style="max-width:70ch">The browser can’t measure the real delay between the pen tip and the ink; the touch layer and the display itself add to it. Use slow-motion video to see the latency the user actually feels.</p>
+      <ol class="steps-text">
+        <li>Turn on “Video mode”; the pad fills the screen and the stroke gets thicker.</li>
+        <li>Set a phone to slow motion (240 fps is ideal, 120 fps also works) and film the screen from above.</li>
+        <li>Draw a straight line with the pen at a steady speed and stop abruptly.</li>
+        <li>Step through the video frame by frame. Count the frames from when the pen tip stops until the ink catches up with it.</li>
+        <li>Latency (ms) = frames × 1000 ÷ fps. At 240 fps one frame ≈ 4.2 ms.</li>
+        <li>Measure at least 5 times on each device and enter each result below.</li>
+      </ol>
+      <div class="inline-form">
+        <label for="e2eVal" class="muted">Measured latency</label>
+        <input id="e2eVal" type="number" inputmode="decimal" min="1" max="500" step="0.1" placeholder="ms">
+        <button id="e2eAdd" type="button">Add to this device</button>
+        <span class="status" id="e2eStatus"></span>
+      </div>
+    </div>
+  </details>
+
+  <details class="box">
+    <summary>Data transfer</summary>
+    <div class="inner">
+      <p class="muted" style="max-width:70ch">Copy all runs as JSON to move them to another browser or keep them with a report. To import, paste the JSON into the box.</p>
+      <textarea id="jsonBox" spellcheck="false" aria-label="JSON data"></textarea>
+      <div class="row-actions">
+        <button id="jsonCopy" type="button">Copy all runs</button>
+        <button id="jsonImport" type="button">Import from box</button>
+        <span class="status" id="jsonStatus"></span>
+      </div>
+    </div>
+  </details>
+
+  <details class="box">
+    <summary>What the measurements show</summary>
+    <div class="inner">
+      <ul class="checklist">
+        <li><b>Pen sampling:</b> recorded points ÷ drawing time. Coalesced points (getCoalescedEvents) are included; the signature’s biometric data is made of these points.</li>
+        <li><b>Digitizer rate:</b> calculated from the median interval between consecutive points. Shows how often the pen and screen sample in hardware.</li>
+        <li><b>Points per event:</b> a value near 1 means the browser delivers one point per display frame, so the hardware’s real rate isn’t reaching the page.</li>
+        <li><b>Event queue latency:</b> the time between the OS creating an event and the page handling it. It isn’t end-to-end latency; it shows whether events wait in the browser.</li>
+        <li><b>Distinct pressure values in 400 samples:</b> how many different pressure values appear in the same number of samples, for a fair comparison across devices. Most meaningful in the pressure ramp test.</li>
+        <li><b>Estimated pressure resolution:</b> calculated from the smallest pressure step seen (1 ÷ step). A value below the pen’s spec suggests the browser rounds the data.</li>
+        <li><b>Low-latency drawing:</b> opens the canvas in “desynchronized” mode. If latency drops visibly with it on, the signature app can use the same setting.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+<button id="videoExit" type="button">Exit video mode</button>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const TESTS = [
+    { id: "imza", name: "Signature", accept: "pen", hint: "Sign your real signature at your normal speed. Save after each signature and repeat at least 3 times." },
+    { id: "rampa", name: "Pressure ramp", accept: "pen", hint: "Draw one slow horizontal line: start very light and increase the pressure to your firmest by the end. This test shows pressure resolution best." },
+    { id: "hafif", name: "Light pressure", accept: "pen", hint: "Draw a few lines barely pressing, just enough to leave a mark." },
+    { id: "sert", name: "Firm pressure", accept: "pen", hint: "Draw a few lines pressing firmly." },
+    { id: "hizli", name: "Fast zigzag", accept: "pen", hint: "Draw zigzags as fast as you can for 3–4 seconds. This is the test that stresses sampling and latency." },
+    { id: "parmak", name: "Finger", accept: "touch", hint: "Sign with your finger instead of the pen. Shows whether real pressure is reported for fingers." },
+    { id: "avuc", name: "Palm", accept: "pen", hint: "Sign with the pen while resting your palm on the screen. Non-pen touches are counted but not drawn." }
+  ];
+  const TEST_NAME = Object.fromEntries(TESTS.map((t) => [t.id, t.name]));
+  TEST_NAME.video = "Video measurement";
+  const LS_RUNS = "kalemOlcum.runs.v1";
+  const LS_LABEL = "kalemOlcum.label.v1";
+  const ls = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* no storage */ } }
+  };
+
+  const S = {
+    test: TESTS[0], desync: false, predict: true, acceptAll: false,
+    run: null, cur: null, runs: [], db: null, store: "local",
+    device: {}, frames: [], desyncActive: false, label: ""
+  };
+  const support = {
+    coalesced: typeof PointerEvent !== "undefined" && "getCoalescedEvents" in PointerEvent.prototype,
+    predicted: typeof PointerEvent !== "undefined" && "getPredictedEvents" in PointerEvent.prototype,
+    raw: "onpointerrawupdate" in window
+  };
+
+  function newRun() {
+    return { strokes: [], events: [], raw: { n: 0, lat: [] }, predictedCount: 0, hover: false, eraser: false, barrel: false,
+      ignored: {}, otherDuringPen: 0, types: {}, seenPen: false, touchInPenTest: 0 };
+  }
+  S.run = newRun();
+
+  /* ---------- helpers ---------- */
+  function quant(arr, p) {
+    if (!arr || !arr.length) return null;
+    const a = [...arr].sort((x, y) => x - y);
+    const i = (a.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i);
+    return a[lo] + (a[hi] - a[lo]) * (i - lo);
+  }
+  const median = (a) => quant(a, 0.5);
+  const fmt = (v, d = 0) => (v == null || !isFinite(v)) ? "–" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  /* ---------- device info ---------- */
+  async function detectDevice() {
+    const n = navigator, ua = n.userAgent || "";
+    const d = { ua, model: "", browser: "Unknown", browserVersion: "", os: "", screen: screen.width + "×" + screen.height, dpr: window.devicePixelRatio || 1, touchPoints: n.maxTouchPoints || 0, desktopMode: false };
+    const pick = (re) => { const r = ua.match(re); return r ? r[1] : ""; };
+    if (/SamsungBrowser\//.test(ua)) { d.browser = "Samsung Internet"; d.browserVersion = pick(/SamsungBrowser\/([\d.]+)/); }
+    else if (/HuaweiBrowser\//.test(ua)) { d.browser = "Huawei Browser"; d.browserVersion = pick(/HuaweiBrowser\/([\d.]+)/); }
+    else if (/EdgA?\//.test(ua)) { d.browser = "Edge"; d.browserVersion = pick(/EdgA?\/([\d.]+)/); }
+    else if (/Firefox\//.test(ua)) { d.browser = "Firefox"; d.browserVersion = pick(/Firefox\/([\d.]+)/); }
+    else if (/CriOS\//.test(ua)) { d.browser = "Chrome (iPadOS)"; d.browserVersion = pick(/CriOS\/([\d.]+)/); }
+    else if (/Chrome\//.test(ua)) { d.browser = "Chrome"; d.browserVersion = pick(/Chrome\/([\d.]+)/); }
+    else if (/Safari\//.test(ua)) { d.browser = "Safari"; d.browserVersion = pick(/Version\/([\d.]+)/); }
+    const av = ua.match(/Android ([\d.]+)/);
+    if (av) d.os = "Android " + av[1];
+    const am = ua.match(/Android [\d.]+; ([^;)]+)/);
+    if (am) { const m = am[1].replace(/\s*Build\/.*$/, "").trim(); if (m && m !== "K") d.model = m; }
+    if (/iPad/.test(ua)) { d.model = "iPad"; d.os = "iPadOS"; }
+    if (/Macintosh/.test(ua) && d.touchPoints > 1) { d.model = "iPad"; d.os = "iPadOS (reports as Mac)"; d.desktopMode = true; }
+    if (/X11; Linux x86_64/.test(ua) && d.touchPoints > 1) d.desktopMode = true;
+    const uad = n.userAgentData;
+    if (uad && uad.getHighEntropyValues) {
+      try {
+        const h = await uad.getHighEntropyValues(["model", "platformVersion"]);
+        if (h.model) d.model = h.model;
+        if (!d.os && uad.platform) d.os = uad.platform + (h.platformVersion ? " " + h.platformVersion : "");
+      } catch (e) { /* not permitted */ }
+    }
+    return d;
+  }
+
+  function renderDevice() {
+    const d = S.device;
+    $("#detected").innerHTML =
+      `<span>Browser <b>${esc(d.browser)} ${esc(d.browserVersion)}</b></span>` +
+      `<span>OS <b>${esc(d.os || "–")}</b></span>` +
+      `<span>Model <b>${esc(d.model || "unavailable")}</b></span>` +
+      `<span>Screen <b>${esc(d.screen)} @${fmt(d.dpr, 2)}x</b></span>` +
+      `<span>Coalesced events <b>${support.coalesced ? "yes" : "no"}</b></span>` +
+      `<span>Raw updates <b>${support.raw ? "yes" : "no"}</b></span>`;
+    const notes = [];
+    if (d.desktopMode) notes.push("Desktop site mode appears to be on. The device model can’t be read; turn it off before testing.");
+    const el = $("#devNotes");
+    el.hidden = !notes.length;
+    el.textContent = notes.join(" ");
+  }
+
+  /* ---------- display refresh measurement ---------- */
+  let lastFrame = 0;
+  function frameTick(t) {
+    if (lastFrame) { const dt = t - lastFrame; if (dt > 2 && dt < 60) { S.frames.push(dt); if (S.frames.length > 180) S.frames.shift(); } }
+    lastFrame = t;
+    requestAnimationFrame(frameTick);
+  }
+  requestAnimationFrame(frameTick);
+  const displayHz = () => { const m = median(S.frames); return m ? 1000 / m : null; };
+  setInterval(() => { $("#hHz").textContent = fmt(displayHz(), 0) + " Hz"; }, 1000);
+
+  /* ---------- canvas ---------- */
+  const pad = $("#pad");
+  let ink, inkCtx, pred, predCtx;
+  function makeCanvases() {
+    pad.querySelectorAll("canvas").forEach((c) => c.remove());
+    ink = document.createElement("canvas");
+    pred = document.createElement("canvas");
+    pad.prepend(pred); pad.prepend(ink);
+    inkCtx = S.desync ? ink.getContext("2d", { desynchronized: true }) : ink.getContext("2d");
+    predCtx = pred.getContext("2d");
+    S.desyncActive = !!(S.desync && inkCtx.getContextAttributes && inkCtx.getContextAttributes().desynchronized);
+    sizeCanvases();
+  }
+  function sizeCanvases() {
+    const r = pad.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    for (const [c, x] of [[ink, inkCtx], [pred, predCtx]]) {
+      c.width = Math.max(1, Math.round(r.width * dpr));
+      c.height = Math.max(1, Math.round(r.height * dpr));
+      x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      x.lineCap = "round"; x.lineJoin = "round";
+    }
+    redrawAll();
+  }
+  let inkColor = "#1c3e9c", predColor = "#c86a1a";
+  function readColors() { inkColor = cssVar("--stroke") || inkColor; predColor = cssVar("--pred") || predColor; }
+  const widthFor = (p) => (document.body.classList.contains("video") ? 4 : 1) * (0.9 + (p > 0 ? p : 0.5) * 4.2);
+  function seg(a, b) {
+    inkCtx.strokeStyle = inkColor;
+    inkCtx.lineWidth = widthFor(b.p);
+    inkCtx.beginPath(); inkCtx.moveTo(a.x, a.y); inkCtx.lineTo(b.x, b.y); inkCtx.stroke();
+  }
+  function dot(a) {
+    inkCtx.fillStyle = inkColor;
+    inkCtx.beginPath(); inkCtx.arc(a.x, a.y, widthFor(a.p) / 2, 0, Math.PI * 2); inkCtx.fill();
+  }
+  function clearPred() { predCtx.clearRect(0, 0, pred.width, pred.height); }
+  function redrawAll() {
+    if (!inkCtx) return;
+    readColors();
+    inkCtx.clearRect(0, 0, ink.width, ink.height);
+    clearPred();
+    const strokes = S.cur ? [...S.run.strokes, S.cur] : S.run.strokes;
+    for (const s of strokes) {
+      if (!s.samples.length) continue;
+      dot(s.samples[0]);
+      for (let i = 1; i < s.samples.length; i++) seg(s.samples[i - 1], s.samples[i]);
+    }
+  }
+
+  /* ---------- pointer events ---------- */
+  let rect = null;
+  const accepts = (e) => S.acceptAll || e.pointerType === S.test.accept;
+  function sampleOf(ev) {
+    return { t: ev.timeStamp, x: ev.clientX - rect.left, y: ev.clientY - rect.top, p: ev.pressure, tx: ev.tiltX || 0, ty: ev.tiltY || 0,
+      alt: typeof ev.altitudeAngle === "number" ? ev.altitudeAngle : null };
+  }
+  function flags(e) {
+    if (e.pointerType === "pen") {
+      S.run.seenPen = true;
+      if (e.buttons === 0) S.run.hover = true;
+      if (e.buttons & 32) S.run.eraser = true;
+      if (e.buttons & 2) S.run.barrel = true;
+    }
+  }
+  pad.addEventListener("pointerdown", (e) => {
+    const run = S.run;
+    run.types[e.pointerType] = (run.types[e.pointerType] || 0) + 1;
+    flags(e);
+    e.preventDefault();
+    if (!accepts(e) || (S.cur && S.cur.id !== e.pointerId)) {
+      run.ignored[e.pointerType] = (run.ignored[e.pointerType] || 0) + 1;
+      if (S.cur && S.cur.type === "pen") run.otherDuringPen++;
+      if (S.test.accept === "pen" && e.pointerType === "touch" && !run.seenPen) run.touchInPenTest++;
+      updateWarn();
+      return;
+    }
+    rect = pad.getBoundingClientRect();
+    try { pad.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    S.cur = { id: e.pointerId, type: e.pointerType, samples: [sampleOf(e)] };
+    dot(S.cur.samples[0]);
+    hud(e, null);
+    updateWarn();
+  });
+  pad.addEventListener("pointermove", (e) => {
+    flags(e);
+    if (!S.cur || S.cur.id !== e.pointerId) { if (e.pointerType === "pen" && e.buttons === 0) hud(e, null); return; }
+    const now = performance.now();
+    const list = support.coalesced ? e.getCoalescedEvents() : [];
+    const evs = list.length ? list : [e];
+    const lat = now - e.timeStamp;
+    S.run.events.push({ lat, age: now - evs[0].timeStamp, n: evs.length });
+    let prev = S.cur.samples[S.cur.samples.length - 1];
+    for (const ce of evs) { const s = sampleOf(ce); if (s.t < prev.t) continue; seg(prev, s); S.cur.samples.push(s); prev = s; }
+    if (support.predicted) {
+      const pr = e.getPredictedEvents();
+      if (pr.length) S.run.predictedCount += pr.length;
+      if (S.predict) {
+        clearPred();
+        if (pr.length) {
+          predCtx.strokeStyle = predColor; predCtx.lineWidth = widthFor(prev.p); predCtx.globalAlpha = 0.6;
+          predCtx.beginPath(); predCtx.moveTo(prev.x, prev.y);
+          for (const pe of pr) predCtx.lineTo(pe.clientX - rect.left, pe.clientY - rect.top);
+          predCtx.stroke(); predCtx.globalAlpha = 1;
+        }
+      }
+    }
+    hud(e, lat);
+  });
+  if (support.raw) {
+    pad.addEventListener("pointerrawupdate", (e) => {
+      if (!S.cur || S.cur.id !== e.pointerId) return;
+      S.run.raw.n++;
+      S.run.raw.lat.push(performance.now() - e.timeStamp);
+    });
+  }
+  function endStroke(e) {
+    if (!S.cur || S.cur.id !== e.pointerId) return;
+    S.run.strokes.push(S.cur);
+    S.cur = null;
+    clearPred();
+    renderCurrent();
+  }
+  pad.addEventListener("pointerup", endStroke);
+  pad.addEventListener("pointercancel", endStroke);
+  pad.addEventListener("contextmenu", (e) => e.preventDefault());
+  pad.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+
+  let hudPending = null, hudQueued = false;
+  function hud(e, lat) {
+    hudPending = { type: e.pointerType, p: e.pressure, tx: e.tiltX || 0, ty: e.tiltY || 0, lat };
+    if (hudQueued) return;
+    hudQueued = true;
+    requestAnimationFrame(() => {
+      hudQueued = false;
+      const h = hudPending; if (!h) return;
+      $("#hType").textContent = h.type || "–";
+      $("#hP").textContent = fmt(h.p, 3);
+      $("#hPbar").style.width = Math.round((h.p || 0) * 100) + "%";
+      $("#hTilt").textContent = (h.tx || h.ty) ? h.tx + "° / " + h.ty + "°" : "0";
+      if (h.lat != null) $("#hLat").textContent = fmt(h.lat, 1) + " ms";
+      if (S.cur && S.cur.samples.length > 10) {
+        const sm = S.cur.samples, span = sm[sm.length - 1].t - sm[0].t;
+        if (span > 0) $("#hRate").textContent = fmt((sm.length - 1) / span * 1000, 0);
+      }
+      hudPending = null;
+    });
+  }
+  function updateWarn() {
+    const r = S.run, el = $("#padWarn");
+    let msg = "";
+    if (r.touchInPenTest > 0 && !r.seenPen && !S.acceptAll)
+      msg = "No pen detected: the browser reports this input as “touch”. If you drew with the pen, that’s an important finding; to measure it, turn on “Also record non-pen input”.";
+    else if (S.test.accept === "touch" && (r.ignored.pen || 0) > 0 && !S.acceptAll)
+      msg = "This step uses a finger; pen input isn’t recorded.";
+    el.hidden = !msg; el.textContent = msg;
+  }
+
+  /* ---------- metrics ---------- */
+  function computeMetrics(run, extra) {
+    const strokes = run.strokes.filter((s) => s.samples.length);
+    const all = strokes.flatMap((s) => s.samples);
+    let activeMs = 0, intervals = 0; const dts = [];
+    for (const s of strokes) {
+      const sm = s.samples;
+      if (sm.length < 2) continue;
+      activeMs += sm[sm.length - 1].t - sm[0].t;
+      intervals += sm.length - 1;
+      for (let i = 1; i < sm.length; i++) { const d = sm[i].t - sm[i - 1].t; if (d > 0.05 && d < 100) dts.push(d); }
+    }
+    const sec = activeMs / 1000;
+    const lat = run.events.map((e) => e.lat).filter((v) => v >= 0 && v < 1000);
+    const age = run.events.map((e) => e.age).filter((v) => v >= 0 && v < 1000);
+    const rawLat = run.raw.lat.filter((v) => v >= 0 && v < 1000);
+    const ps = all.map((s) => s.p).filter((p) => p > 0);
+    const r5 = (v) => Math.round(v * 1e5) / 1e5;
+    const uniqSet = new Set(ps.map(r5));
+    const uniq400 = new Set(ps.slice(0, 400).map(r5)).size;
+    const sorted = [...uniqSet].sort((a, b) => a - b);
+    let minGap = Infinity;
+    for (let i = 1; i < sorted.length; i++) { const g = sorted[i] - sorted[i - 1]; if (g > 0 && g < minGap) minGap = g; }
+    const constant = ps.length > 0 && uniqSet.size === 1;
+    const hist = new Array(10).fill(0);
+    for (const p of ps) hist[Math.min(9, Math.floor(p * 10))]++;
+    const dtMed = median(dts);
+    const typeCounts = {};
+    for (const s of strokes) typeCounts[s.type] = (typeCounts[s.type] || 0) + 1;
+    const mainType = Object.keys(typeCounts).sort((a, b) => typeCounts[b] - typeCounts[a])[0] || null;
+    return {
+      mainType, strokes: strokes.length, samples: all.length, events: run.events.length, activeMs: Math.round(activeMs),
+      sampleRate: sec > 0.2 ? intervals / sec : null,
+      eventRate: sec > 0.2 ? run.events.length / sec : null,
+      rawRate: sec > 0.2 && run.raw.n ? run.raw.n / sec : null,
+      perEvent: run.events.length ? run.events.reduce((a, e) => a + e.n, 0) / run.events.length : null,
+      digitizerHz: dtMed ? 1000 / dtMed : null,
+      queueP50: median(lat), queueP95: quant(lat, 0.95), ageP50: median(age), rawQueueP50: median(rawLat),
+      pMin: ps.length ? Math.min(...ps) : null, pMax: ps.length ? Math.max(...ps) : null,
+      pMean: ps.length ? ps.reduce((a, b) => a + b, 0) / ps.length : null,
+      pUnique: uniqSet.size, pUniq400: ps.length ? uniq400 : null, pN400: Math.min(400, ps.length),
+      pLevels: !constant && isFinite(minGap) ? Math.round(1 / minGap) : null, pConstant: constant, pConstVal: constant ? sorted[0] : null,
+      tilt: all.some((s) => s.tx || s.ty || (s.alt != null && s.alt < Math.PI / 2 - 0.01)),
+      hover: run.hover, eraser: run.eraser, barrel: run.barrel,
+      predicted: run.predictedCount > 0, coalesced: support.coalesced, rawSupported: support.raw,
+      displayHz: displayHz(), desync: S.desyncActive,
+      otherDuringPen: run.otherDuringPen, ignored: run.ignored, touchAsPen: run.touchInPenTest > 0 && !run.seenPen,
+      hist, ...(extra || {})
+    };
+  }
+
+  function renderCurrent() {
+    const m = computeMetrics(S.run);
+    const cells = [
+      ["Strokes / points", `${m.strokes} <small>/</small> ${fmt(m.samples)}`],
+      ["Pen sampling", `${fmt(m.sampleRate)} <small>points/s</small>`],
+      ["Digitizer", `${fmt(m.digitizerHz)} <small>Hz</small>`],
+      ["Points per event", fmt(m.perEvent, 1)],
+      ["Queue p50 / p95", `${fmt(m.queueP50, 1)} <small>/</small> ${fmt(m.queueP95, 1)} <small>ms</small>`],
+      ["Pressure range", m.pMin == null ? "–" : m.pConstant ? `constant ${fmt(m.pConstVal, 2)}` : `${fmt(m.pMin * 100)}–${fmt(m.pMax * 100)}%`],
+      [`Distinct pressure (${m.pN400 || 0} samples)`, fmt(m.pUniq400)],
+      ["Display", `${fmt(m.displayHz)} <small>Hz</small>`]
+    ];
+    $("#cur").innerHTML = cells.map(([k, v]) => `<div><span class="k">${esc(k)}</span><span class="v">${v}</span></div>`).join("");
+  }
+
+  /* ---------- test steps ---------- */
+  function countFor(label, testId) { return S.runs.filter((r) => r.label === label && r.test === testId).length; }
+  function renderSteps() {
+    const label = S.label;
+    $("#steps").innerHTML = TESTS.map((t, i) => {
+      const c = label ? countFor(label, t.id) : 0;
+      return `<button type="button" class="step${c >= 3 ? " done" : ""}" data-id="${t.id}" aria-pressed="${t.id === S.test.id}">
+        <span class="n">${String(i + 1).padStart(2, "0")}</span><span class="name">${esc(t.name)}</span><span class="cnt">${c} ${c === 1 ? "run" : "runs"}</span></button>`;
+    }).join("");
+    $("#hint").textContent = S.test.hint;
+  }
+  $("#steps").addEventListener("click", (e) => {
+    const b = e.target.closest(".step"); if (!b) return;
+    const t = TESTS.find((x) => x.id === b.dataset.id); if (!t || t.id === S.test.id) return;
+    S.test = t; resetRun(); renderSteps();
+  });
+
+  function resetRun() { S.run = newRun(); S.cur = null; redrawAll(); renderCurrent(); updateWarn(); }
+
+  /* ---------- storage ---------- */
+  function setStoreStatus() {
+    $("#storeStatus").textContent = S.store === "db"
+      ? "Runs are kept in a shared list; every tablet that opens this page sees the same table."
+      : "Runs are kept in this browser only. To compare devices, copy the runs from “Data transfer” and combine them in one browser.";
+  }
+  function loadLocal() { S.runs = ls.get(LS_RUNS, []); if (!Array.isArray(S.runs)) S.runs = []; renderAll(); }
+  async function saveDoc(doc) {
+    doc.id = doc.id || ("r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+    S.runs = [doc, ...S.runs.filter((r) => r.id !== doc.id)];
+    ls.set(LS_RUNS, S.runs);
+    renderAll();
+  }
+  async function deleteDoc(id) {
+    S.runs = S.runs.filter((r) => r.id !== id); ls.set(LS_RUNS, S.runs); renderAll();
+  }
+  function slimDevice() { const d = S.device; return { browser: d.browser, browserVersion: d.browserVersion, os: d.os, model: d.model, screen: d.screen, dpr: d.dpr, ua: d.ua, desktopMode: d.desktopMode }; }
+
+  /* ---------- save ---------- */
+  function requireLabel() {
+    const v = $("#devLabel").value.trim();
+    if (!v) { $("#devLabel").focus(); return null; }
+    return v;
+  }
+  $("#saveBtn").addEventListener("click", async () => {
+    const st = $("#saveStatus");
+    const label = requireLabel();
+    if (!label) { st.textContent = "Enter the device and browser name first."; return; }
+    const m = computeMetrics(S.run);
+    if (m.samples < 20) { st.textContent = "Draw on the pad before saving."; return; }
+    const doc = { ts: Date.now(), label, test: S.test.id, device: slimDevice(), m };
+    st.textContent = "Saving…";
+    const nth = countFor(label, S.test.id) + 1;
+    try { await saveDoc(doc); st.textContent = `${TEST_NAME[S.test.id]} saved (run ${nth}).`; resetRun(); }
+    catch (e) { st.textContent = "Couldn’t save: " + (e && e.code === "quota_exceeded" ? "the run limit is full; delete old runs." : "check the connection and try again."); }
+  });
+  $("#clearBtn").addEventListener("click", () => { resetRun(); $("#saveStatus").textContent = ""; });
+
+  $("#e2eAdd").addEventListener("click", async () => {
+    const st = $("#e2eStatus");
+    const label = requireLabel();
+    if (!label) { st.textContent = "Enter the device name at the top of the page first."; return; }
+    const v = parseFloat(String($("#e2eVal").value).replace(",", "."));
+    if (!(v > 0 && v < 1000)) { st.textContent = "Enter a value between 1 and 1000 ms."; return; }
+    try { await saveDoc({ ts: Date.now(), label, test: "video", device: slimDevice(), m: { e2e: v } }); $("#e2eVal").value = ""; st.textContent = `${fmt(v, 1)} ms added.`; }
+    catch (e) { st.textContent = "Couldn’t add it; try again."; }
+  });
+
+  /* ---------- comparison ---------- */
+  function summarize(label) {
+    const runs = S.runs.filter((r) => r.label === label);
+    const pen = runs.filter((r) => r.test !== "parmak" && r.test !== "video" && r.m);
+    const finger = runs.filter((r) => r.test === "parmak" && r.m);
+    const video = runs.filter((r) => r.test === "video" && r.m);
+    const med = (arr, k) => median(arr.map((r) => r.m[k]).filter((v) => v != null && isFinite(v)));
+    const max = (arr, k) => { const v = arr.map((r) => r.m[k]).filter((x) => x != null && isFinite(x)); return v.length ? Math.max(...v) : null; };
+    const min = (arr, k) => { const v = arr.map((r) => r.m[k]).filter((x) => x != null && isFinite(x)); return v.length ? Math.min(...v) : null; };
+    const any = (arr, k) => arr.some((r) => r.m[k]);
+    const latest = runs.slice().sort((a, b) => b.ts - a.ts)[0];
+    const palm = runs.filter((r) => r.test === "avuc" && r.m);
+    return {
+      label, n: runs.length, nPen: pen.length, device: latest ? latest.device || {} : {},
+      displayHz: med(runs.filter((r) => r.m && r.m.displayHz), "displayHz"),
+      sampleRate: med(pen, "sampleRate"), digitizerHz: med(pen, "digitizerHz"), eventRate: med(pen, "eventRate"),
+      perEvent: med(pen, "perEvent"), rawRate: med(pen, "rawRate"),
+      queueP50: med(pen, "queueP50"), queueP95: med(pen, "queueP95"), ageP50: med(pen, "ageP50"),
+      pMin: min(pen, "pMin"), pMax: max(pen, "pMax"), pUniq400: max(pen, "pUniq400"), pLevels: max(pen, "pLevels"),
+      pConstant: pen.length > 0 && pen.every((r) => r.m.pConstant),
+      tilt: any(pen, "tilt"), hover: any(pen, "hover"), predicted: any(pen, "predicted"), coalesced: pen.length ? any(pen, "coalesced") : null,
+      touchAsPen: any(pen, "touchAsPen"),
+      fingerN: finger.length, fingerConst: finger.length ? finger.every((r) => r.m.pConstant || r.m.pMin == null) : null,
+      palmN: palm.length, palmOther: palm.reduce((a, r) => a + (r.m.otherDuringPen || 0), 0),
+      e2e: median(video.map((r) => r.m.e2e)), e2eN: video.length
+    };
+  }
+
+  const ROWS = [
+    { g: "Device" },
+    { k: "browser", t: "Browser", f: (s) => esc(`${s.device.browser || "–"} ${s.device.browserVersion || ""}`) },
+    { k: "model", t: "Model (as reported by the browser)", f: (s) => esc(s.device.model || "unavailable") },
+    { k: "displayHz", t: "Display refresh", u: "Hz", d: 0, best: "hi" },
+    { k: "n", t: "Runs", sub: "pen tests / all", f: (s) => `${s.nPen} / ${s.n}`, num: true },
+    { g: "Data density" },
+    { k: "sampleRate", t: "Pen sampling", u: "points/s", d: 0, best: "hi" },
+    { k: "digitizerHz", t: "Digitizer rate", u: "Hz", d: 0, best: "hi" },
+    { k: "eventRate", t: "Browser event rate", u: "events/s", d: 0 },
+    { k: "perEvent", t: "Points per event", sub: "near 1 = coalesced points not delivered", d: 1, best: "hi" },
+    { k: "rawRate", t: "Raw event rate", sub: "pointerrawupdate", u: "events/s", d: 0 },
+    { g: "Latency" },
+    { k: "queueP50", t: "Event queue p50", sub: "not end-to-end", u: "ms", d: 1, best: "lo" },
+    { k: "queueP95", t: "Event queue p95", u: "ms", d: 1, best: "lo" },
+    { k: "ageP50", t: "Oldest point age p50", sub: "time for a point to reach the page", u: "ms", d: 1, best: "lo" },
+    { k: "e2e", t: "End-to-end latency", sub: "video measurement, median", u: "ms", d: 1, best: "lo", f: (s) => s.e2e == null ? "–" : `${fmt(s.e2e, 1)} ms <span class="muted">(${s.e2eN})</span>` },
+    { g: "Pressure and tilt" },
+    { k: "pRange", t: "Pressure range", f: (s) => s.pConstant ? "constant (no pressure)" : s.pMin == null ? "–" : `${fmt(s.pMin * 100)}–${fmt(s.pMax * 100)}%`, num: true },
+    { k: "pUniq400", t: "Distinct pressure values in 400 samples", sub: "best run", d: 0, best: "hi" },
+    { k: "pLevels", t: "Estimated pressure resolution", sub: "1 ÷ smallest step", u: "levels", d: 0, best: "hi" },
+    { k: "tilt", t: "Tilt", f: (s) => s.nPen ? (s.tilt ? "yes" : "no") : "–" },
+    { k: "hover", t: "Hover detection", f: (s) => s.nPen ? (s.hover ? "yes" : "no") : "–" },
+    { k: "predicted", t: "Predicted events", f: (s) => s.nPen ? (s.predicted ? "yes" : "no") : "–" },
+    { k: "finger", t: "Finger pressure", f: (s) => s.fingerN ? (s.fingerConst ? "none (constant)" : "varies") : "–" },
+    { k: "palm", t: "Non-pen touches in palm test", sub: "detected, not drawn", f: (s) => s.palmN ? `${s.palmOther}` : "–", num: true }
+  ];
+
+  function diagnose(s) {
+    const out = [];
+    if (!s.nPen && !s.e2eN) return [["", "No pen test runs yet."]];
+    if (s.touchAsPen) out.push(["bad", "The browser reports the pen as “touch”. Pen data (pressure, tilt) may not reach the page separately; try another browser."]);
+    if (s.coalesced === false) out.push(["bad", "The browser doesn’t support coalesced events (getCoalescedEvents); only one point per display frame can be captured."]);
+    if (s.displayHz && s.displayHz < 75) out.push(["warn", `The display is running at about ${fmt(s.displayHz)} Hz. If the device supports 90/120 Hz, check the refresh rate setting and power saving, then repeat the test.`]);
+    if (s.perEvent != null && s.perEvent < 1.3 && s.sampleRate && s.displayHz && s.sampleRate < s.displayHz * 1.3)
+      out.push(["warn", `Sampling (${fmt(s.sampleRate)} points/s) matches the display rate. The browser delivers one point per frame, so the pen’s real sampling rate may not be reaching the page. Try another browser or an updated version.`]);
+    if (s.queueP50 != null && s.queueP50 > 8) out.push(["warn", `Events wait about ${fmt(s.queueP50, 1)} ms in the browser (median). The browser holds events until the next frame, or the page is busy.`]);
+    if (s.rawRate && s.eventRate && s.rawRate > s.eventRate * 1.5) out.push(["", `Raw events (pointerrawupdate) arrive more often, at ${fmt(s.rawRate)}/s; the signature app could use them to reduce latency.`]);
+    if (s.pConstant) out.push(["bad", "The pen isn’t sending pressure; the value is the same at every point."]);
+    else if (s.pUniq400 != null && s.pUniq400 < 60 && s.nPen) out.push(["warn", `Only ${s.pUniq400} distinct pressure values in 400 samples. Run the pressure ramp test and check again.`]);
+    if (s.palmN && s.palmOther > 0) out.push(["ok", `${s.palmOther} non-pen touches were detected in the palm test and kept out of the drawing.`]);
+    if (!s.device.model || s.device.model === "iPad") out.push(["", s.device.model === "iPad" ? "Safari doesn’t expose the device model to the web; evidence will only show “iPad”." : "The device model couldn’t be read from the browser; evidence needs another source, such as the MDM device ID."]);
+    if (!out.length) out.push(["ok", "No clear problems in the measurements."]);
+    return out;
+  }
+
+  function renderCompare() {
+    const labels = [...new Set(S.runs.map((r) => r.label))].sort((a, b) => a.localeCompare(b, "en"));
+    const table = $("#cmpTable");
+    if (!labels.length) {
+      table.innerHTML = `<tbody><tr><td class="empty">No runs yet. Enter the device name, pick a test step, draw on the pad and press “Save run”. Each tablet becomes a column in this table.</td></tr></tbody>`;
+      $("#diag").innerHTML = ""; return;
+    }
+    const sums = labels.map(summarize);
+    let html = `<thead><tr><th class="rowh">Metric</th>${sums.map((s) => `<th>${esc(s.label)}</th>`).join("")}</tr></thead><tbody>`;
+    for (const row of ROWS) {
+      if (row.g) { html += `<tr class="group"><th colspan="${sums.length + 1}">${esc(row.g)}</th></tr>`; continue; }
+      let bestIdx = -1;
+      if (row.best && sums.length > 1) {
+        const vals = sums.map((s) => s[row.k]);
+        const valid = vals.map((v, i) => [v, i]).filter(([v]) => v != null && isFinite(v));
+        if (valid.length > 1) bestIdx = valid.sort((a, b) => row.best === "hi" ? b[0] - a[0] : a[0] - b[0])[0][1];
+      }
+      html += `<tr><th class="rowh">${esc(row.t)}${row.sub ? `<small>${esc(row.sub)}</small>` : ""}</th>`;
+      sums.forEach((s, i) => {
+        const val = row.f ? row.f(s) : (s[row.k] == null ? "–" : `${fmt(s[row.k], row.d)}${row.u ? ` <span class="muted">${row.u}</span>` : ""}`);
+        const isNum = row.num || (!row.f && true) || row.k === "e2e";
+        html += `<td class="${isNum ? "num" : ""}${i === bestIdx ? " best" : ""}">${val}</td>`;
+      });
+      html += `</tr>`;
+    }
+    table.innerHTML = html + `</tbody>`;
+    $("#diag").innerHTML = sums.map((s) => `<div class="card"><h3>${esc(s.label)}</h3><ul>${diagnose(s).map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join("")}</ul></div>`).join("");
+    S.lastSums = sums;
+  }
+
+  function renderRuns() {
+    $("#runCount").textContent = S.runs.length ? `(${S.runs.length})` : "";
+    const t = $("#runsTable");
+    if (!S.runs.length) { t.innerHTML = `<tbody><tr><td class="empty">No runs.</td></tr></tbody>`; return; }
+    const rows = S.runs.slice().sort((a, b) => b.ts - a.ts);
+    t.innerHTML = `<thead><tr><th>Time</th><th>Device</th><th>Test</th><th>Sampling</th><th>Queue p50</th><th>Pressure (400)</th><th></th></tr></thead><tbody>` +
+      rows.map((r) => {
+        const m = r.m || {};
+        const when = new Date(r.ts).toLocaleString("en-US", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+        const rate = r.test === "video" ? `${fmt(m.e2e, 1)} ms (video)` : `${fmt(m.sampleRate)} /s`;
+        return `<tr><td class="num">${esc(when)}</td><td>${esc(r.label)}</td><td><span class="tag">${esc(TEST_NAME[r.test] || r.test)}</span></td>
+          <td class="num">${rate}</td><td class="num">${r.test === "video" ? "–" : fmt(m.queueP50, 1) + " ms"}</td><td class="num">${r.test === "video" ? "–" : fmt(m.pUniq400)}</td>
+          <td><div class="row-actions"><button type="button" class="danger" data-del="${esc(r.id)}">Delete</button></div></td></tr>`;
+      }).join("") + `</tbody>`;
+  }
+  $("#runsTable").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-del]"); if (!b) return;
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Confirm?"; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ""; b.textContent = "Delete"; } }, 3000); return; }
+    b.disabled = true;
+    try { await deleteDoc(b.dataset.del); } catch (err) { b.disabled = false; b.textContent = "Couldn’t delete"; }
+  });
+
+  function renderAll() { renderSteps(); renderCompare(); renderRuns(); }
+
+  /* ---------- copy ---------- */
+  async function copyText(text, statusEl, okMsg, fallbackEl) {
+    try { await navigator.clipboard.writeText(text); statusEl.textContent = okMsg; }
+    catch (e) {
+      if (fallbackEl) { fallbackEl.value = text; fallbackEl.focus(); fallbackEl.select(); statusEl.textContent = "Couldn’t copy automatically; the text in the box is selected, so copy it manually."; }
+      else statusEl.textContent = "Couldn’t copy.";
+    }
+  }
+  $("#copyTsv").addEventListener("click", () => {
+    const sums = S.lastSums || [];
+    if (!sums.length) return;
+    const strip = (h) => { const d = document.createElement("div"); d.innerHTML = h; return d.textContent.trim(); };
+    const lines = [["Metric", ...sums.map((s) => s.label)].join("\t")];
+    for (const row of ROWS) {
+      if (row.g) continue;
+      lines.push([row.t, ...sums.map((s) => strip(row.f ? row.f(s) : (s[row.k] == null ? "–" : `${fmt(s[row.k], row.d)}${row.u ? " " + row.u : ""}`)))].join("\t"));
+    }
+    copyText(lines.join("\n"), $("#storeStatus"), "Table copied; paste it into Excel or a report.", $("#jsonBox"));
+  });
+  $("#jsonCopy").addEventListener("click", () => {
+    const text = JSON.stringify(S.runs, null, 1);
+    $("#jsonBox").value = text;
+    copyText(text, $("#jsonStatus"), `${S.runs.length} runs copied.`, $("#jsonBox"));
+  });
+  $("#jsonImport").addEventListener("click", async () => {
+    const st = $("#jsonStatus");
+    let data;
+    try { data = JSON.parse($("#jsonBox").value); } catch (e) { st.textContent = "The text in the box isn’t valid JSON."; return; }
+    if (!Array.isArray(data)) data = [data];
+    const ok = data.filter((r) => r && typeof r === "object" && typeof r.label === "string" && r.m && typeof r.m === "object" && typeof r.test === "string");
+    if (!ok.length) { st.textContent = "No valid runs to import."; return; }
+    st.textContent = "Importing…";
+    let n = 0;
+    for (const r of ok) {
+      const doc = { ts: Number(r.ts) || Date.now(), label: r.label.slice(0, 120), test: r.test.slice(0, 20), device: r.device && typeof r.device === "object" ? r.device : {}, m: r.m };
+      if (typeof r.id === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(r.id)) doc.id = r.id;
+      if (S.runs.some((x) => x.id === doc.id)) continue;
+      try { await saveDoc(doc); n++; } catch (e) { break; }
+    }
+    st.textContent = `${n} runs added.`;
+  });
+
+  /* ---------- options ---------- */
+  $("#optDesync").addEventListener("change", (e) => { S.desync = e.target.checked; makeCanvases(); });
+  $("#optPredict").addEventListener("change", (e) => { S.predict = e.target.checked; clearPred(); });
+  $("#optAll").addEventListener("change", (e) => { S.acceptAll = e.target.checked; updateWarn(); });
+  $("#devLabel").addEventListener("input", (e) => { S.label = e.target.value.trim(); ls.set(LS_LABEL, e.target.value); renderSteps(); });
+  $("#videoBtn").addEventListener("click", () => { document.body.classList.add("video"); requestAnimationFrame(sizeCanvases); });
+  $("#videoExit").addEventListener("click", () => { document.body.classList.remove("video"); requestAnimationFrame(sizeCanvases); });
+
+  let rsz = 0;
+  window.addEventListener("resize", () => { cancelAnimationFrame(rsz); rsz = requestAnimationFrame(sizeCanvases); });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll); } catch (e) { /* older browser */ }
+  new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  /* ---------- start ---------- */
+  const savedLabel = ls.get(LS_LABEL, "");
+  if (typeof savedLabel === "string") { $("#devLabel").value = savedLabel; S.label = savedLabel.trim(); }
+  makeCanvases();
+  renderCurrent();
+  loadLocal();
+  setStoreStatus();
+  detectDevice().then((d) => { S.device = d; renderDevice(); });
+})();
+</script>
+
+</body>
+</html>
