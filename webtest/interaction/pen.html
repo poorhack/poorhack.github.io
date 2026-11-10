@@ -168,7 +168,7 @@ body.video #videoExit { display: block; position: fixed; z-index: 21; top: calc(
     <p class="lead">Measures how often and with what data the pen reaches the browser: sampling, pressure, tilt and event latency. Run the same steps on each tablet; the results line up side by side in the table below.</p>
     <div class="device">
       <label for="devLabel">Device and browser name</label>
-      <input id="devLabel" type="text" placeholder="e.g. Huawei MatePad 11.5 · Chrome" autocomplete="off">
+      <input id="devLabel" type="text" placeholder="e.g. Tablet 11.5 · Chrome" autocomplete="off">
       <div class="detected" id="detected"><span>Reading device info…</span></div>
       <div id="devNotes" class="note warn" hidden></div>
     </div>
@@ -180,9 +180,9 @@ body.video #videoExit { display: block; position: fixed; z-index: 21; top: calc(
       <ul class="checklist">
         <li>Set the screen refresh rate to the highest value the device supports (90/120 Hz).</li>
         <li>Turn off power saving mode and keep the battery at 50% or higher.</li>
-        <li>Update the browser. Save each browser under its own name, e.g. “Huawei MatePad 11.5 · Chrome” and “… · Huawei Browser”.</li>
+        <li>Update the browser. Save each browser under its own name, e.g. “Tablet 11.5 · Chrome” and “… · System Browser”.</li>
         <li>Turn off “Desktop site” mode.</li>
-        <li>Make sure the pen is charged and paired. On Huawei, note the connection type (NearLink or Bluetooth).</li>
+        <li>Make sure the pen is charged and paired. On some tablets, note the connection type (NearLink or Bluetooth).</li>
         <li>Close background apps. Have the same person run all tests in the same posture.</li>
         <li>Record each step at least 3 times. The table shows the median of the runs.</li>
       </ul>
@@ -349,7 +349,6 @@ body.video #videoExit { display: block; position: fixed; z-index: 21; top: calc(
     const d = { ua, model: "", browser: "Unknown", browserVersion: "", os: "", screen: screen.width + "×" + screen.height, dpr: window.devicePixelRatio || 1, touchPoints: n.maxTouchPoints || 0, desktopMode: false };
     const pick = (re) => { const r = ua.match(re); return r ? r[1] : ""; };
     if (/SamsungBrowser\//.test(ua)) { d.browser = "Samsung Internet"; d.browserVersion = pick(/SamsungBrowser\/([\d.]+)/); }
-    else if (/HuaweiBrowser\//.test(ua)) { d.browser = "Huawei Browser"; d.browserVersion = pick(/HuaweiBrowser\/([\d.]+)/); }
     else if (/EdgA?\//.test(ua)) { d.browser = "Edge"; d.browserVersion = pick(/EdgA?\/([\d.]+)/); }
     else if (/Firefox\//.test(ua)) { d.browser = "Firefox"; d.browserVersion = pick(/Firefox\/([\d.]+)/); }
     else if (/CriOS\//.test(ua)) { d.browser = "Chrome (iPadOS)"; d.browserVersion = pick(/CriOS\/([\d.]+)/); }
