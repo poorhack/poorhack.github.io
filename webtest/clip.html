@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Clipboard null-text PermissionService crash repro</title>
+<style>
+  body { font: 16px/1.6 sans-serif; padding: 16px; }
+  button { display: block; width: 100%; margin: 12px 0; padding: 18px;
+           font-size: 18px; background: #ffd54f; border: 0; border-radius: 8px; }
+  button.danger { background: #ef5350; color: #fff; }
+  .log { white-space: pre-wrap; background: #f5f5f5; padding: 10px;
+         border-radius: 6px; font-size: 13px; max-height: 240px; overflow: auto; }
+  .note { background: #fff8e1; padding: 10px; border-radius: 6px; font-size: 14px; }
+</style>
+</head>
+<body>
+<h3>Huawei WebView 剪贴板空字符串触发 PermissionService 杀进程复现</h3>
+
+<div class="note">
+  <b>复现原理</b>：调用 <code>document.execCommand('copy'/'cut')</code> 时，进入
+  <code>ClipboardCommands::JsRequestWriteClipboard</code>。当无选区(Range)且 copy 事件
+  未被 <code>preventDefault()</code> 时，<code>GetJSDataTransfer</code> 返回
+  <b>null WTF::String</b>，经 Mojo 序列化为 null 指针，命中
+  <code>ClipboardPermissionDescriptor_Data::Validate</code> 的
+  <code>clipboard_text</code> 非空校验 →
+  <code>VALIDATION_ERROR_UNEXPECTED_NULL_POINTER (null field 3)</code> →
+  <code>reason 123 (RPH_MOJO_PROCESS_ERROR)</code> → 渲染进程被杀 (code -1)。
+  <br><br>
+  <b>前置条件</b>：页面需用户手势激活(transient activation)，故每个按钮需手动点击触发。
+</div>
+
+<button onclick="case1()">场景1：无选区 + 无 preventDefault（最易复现）</button>
+<button class="danger" onclick="case2()">场景2：无选区 + copy 事件不 preventDefault（显式）</button>
+<button onclick="case3()">场景3：无选区 + 有 preventDefault 但 setData 空串</button>
+<button onclick="case4()">场景4：循环触发 10 次（放大崩溃概率）</button>
+<button onclick="clearLog()">清空日志</button>
+
+<h4>日志</h4>
+<div class="log" id="log"></div>
+
+<script>
+function log(msg) {
+  const el = document.getElementById('log');
+  const t = new Date().toLocaleTimeString();
+  el.textContent = '[' + t + '] ' + msg + '\n' + el.textContent;
+}
+function clearLog() { document.getElementById('log').textContent = ''; }
+
+// 不要在 copy/cut 事件里 preventDefault，让 GetJSDataTransfer 走 else 分支
+// 返回 String() (null String)。也不要事先 select 任何内容，保证无 Range 选区。
+
+function case1() {
+  log('case1: execCommand("copy") 无选区无 preventDefault');
+  try {
+    document.execCommand('copy');
+    log('case1: execCommand returned (renderer may already be dying)');
+  } catch (e) {
+    log('case1: exception ' + e);
+  }
+}
+
+function case2() {
+  // 显式不加 preventDefault，确认走 null String 路径
+  document.addEventListener('copy', function noop(e) {
+    // 故意不调用 e.preventDefault()
+    document.removeEventListener('copy', noop);
+  }, { once: true });
+  log('case2: execCommand("cut") 无选区无 preventDefault');
+  try { document.execCommand('cut'); } catch (e) { log('case2: ' + e); }
+}
+
+function case3() {
+  // 即便 preventDefault，但 setData('text/plain', '') 空字符串
+  // 注意：空字符串 '' 在 WTF::String 中是 empty String 而非 null String，
+  // 此场景应 *不* 触发崩溃，用于对照验证根因是 null vs empty 的区别。
+  document.addEventListener('copy', function(e) {
+    e.preventDefault();
+    e.clipboardData.setData('text/plain', '');
+    document.removeEventListener('copy', arguments.callee);
+  }, { once: true });
+  log('case3: preventDefault + setData empty (对照：应不崩溃)');
+  try { document.execCommand('copy'); } catch (e) { log('case3: ' + e); }
+}
+
+function case4() {
+  log('case4: 循环 10 次触发无选区 copy');
+  let i = 0;
+  const tick = () => {
+    if (i++ >= 10) { log('case4: done'); return; }
+    try { document.execCommand('copy'); } catch (e) { log('case4 iter ' + i + ' err ' + e); }
+    setTimeout(tick, 50);  // 间隔避免被合批
+  };
+  tick();
+}
+
+// 提示：如果页面打开后没有任何用户手势，execCommand 不会进入权限申请分支
+// (CanWriteClipboard 要求 JavaScriptCanAccessClipboard 或 transient activation)。
+// 所以必须点击按钮触发。
+log('页面已加载。请逐个点击按钮触发复现（需用户手势）。');
+</script>
+</body>
+</html>
