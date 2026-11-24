@@ -33,9 +33,6 @@
 
 <div id="copy" class="tab-panel">
     <button id="copyButton">navigator.clipboard.writeText 复制文本</button>
-    <div class="note">scheme 跳转链接（hwbrowser / hwwebview netlog）：</div>
-    <a href="hwbrowser://net-export">点击跳转到 hwbrowser netlog</a><br>
-    <a href="hwwebview://net-export">点击跳转到 hwwebview netlog</a>
     <script>
         document.getElementById('copyButton').addEventListener('click', async function() {
             try {
@@ -46,12 +43,33 @@
                 alert('复制失败，请手动复制');
             }
         });
-        document.addEventListener('keydown', function(e) { console.log('keydown:', e.key, 'Code:', e.code); });
-        document.addEventListener('keypress', function(e) { console.log('keypress:', e.key, 'Code:', e.code); });
-        document.addEventListener('keyup', function(e) { console.log('keyup:', e.key, 'Code:', e.code); });
     </script>
 </div>
 
+<div id="copy2" class="tab-panel">
+    <input id="myInput" type="text"/>复制文本2<br>
+    <button id="copyBtn">document.execCommand('copy') 复制文本</button>
+    <script>
+        function copyFromInput(inputElement) {
+          // 1. 选中输入框内的文本
+          inputElement.select();
+          inputElement.setSelectionRange(0, 99999); // 兼容移动端
+        
+          try {
+            // 2. 执行复制命令，返回布尔值表示是否成功
+            const success = document.execCommand('copy');
+            console.log(success ? '复制成功' : '复制失败');
+          } catch (err) {
+            console.error('复制出错：', err);
+          }
+        }
+        
+        // 必须在用户点击等交互事件中调用
+        document.querySelector('#copyBtn').addEventListener('click', () => {
+          copyFromInput(document.querySelector('#myInput'));
+        });
+    </script>
+</div>
 <script>
     document.querySelectorAll('.tab-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
